@@ -53,9 +53,9 @@ supabase/migrations/  schema + RLS
 ## Fases
 
 - [x] **Base**: projeto, schema completo, design system, navegação, login.
-- [ ] **Fase 1**: coleção física completa (busca, edições, grade, lista de compras).
-- [ ] **Fase 2**: leitura online + lembretes (web push + e-mail).
-- [ ] **Fase 3**: foto da estante e cadastro por voz, com tela de revisão compartilhada.
+- [x] **Fase 1**: coleção física completa (busca, edições, grade, lista de compras). Testada com Supabase real.
+- [~] **Fase 2**: "Onde parei" e lembretes por data prontos; falta o aviso por notificação (web push) e publicar o Worker diário.
+- [x] **Fase 3**: foto da estante e cadastro por voz, com tela de revisão compartilhada. Falta testar com a chave do Gemini.
 - [ ] **Fase 4**: extras.
 
 Detalhes de configuração e o que falta em cada fase: ver `README.md`.

@@ -10,11 +10,10 @@ cp .env.example .env.local   # preencha com os dados do Supabase
 npm run dev                  # http://localhost:5173
 ```
 
-Para testar a leitura por foto localmente (Pages Functions), copie `.dev.vars.example` para `.dev.vars`, preencha e rode:
-
-```bash
-npm run build && npm run pages:dev   # http://localhost:8788
-```
+Para testar **foto e voz** localmente (Pages Functions + Gemini):
+1. Copie `.dev.vars.example` para `.dev.vars` e preencha (a `GEMINI_API_KEY` vem do AI Studio).
+2. Em um terminal: `npm run pages:dev` (servidor da Cloudflare em http://localhost:8788).
+3. Em outro: `npm run dev` e abra http://localhost:5173. As chamadas `/api` são repassadas para o 8788.
 
 ## Configuração (uma vez só)
 
@@ -49,9 +48,11 @@ O e-mail padrão do Supabase só entrega para os membros do projeto e tem limite
 
    Alternativa: conectar o repositório do GitHub em **Pages → Create → Connect to Git** (build: `npm run build`, saída: `dist`) para publicar a cada push.
 
-### 4. Gemini (fase 3)
+### 4. Gemini (foto e voz)
 1. aistudio.google.com → **Get API key** → crie a chave (grátis, sem cartão).
-2. Veja os limites da sua conta em aistudio.google.com/rate-limit e ajuste `SCAN_DAILY_LIMIT`.
+2. Local: cole em `.dev.vars` (`GEMINI_API_KEY=`). Produção: variável secreta `GEMINI_API_KEY` no projeto da Cloudflare Pages.
+3. Veja os limites da sua conta em aistudio.google.com/rate-limit e ajuste `SCAN_DAILY_LIMIT` (cota por pessoa por dia, somando foto e voz).
+4. Se o modelo padrão (`gemini-flash-lite-latest`) errar muito nas lombadas, troque `GEMINI_MODEL` por um Flash maior.
 
 ### 5. Lembretes (fase 2)
 O aviso principal é por notificação no aparelho (web push, grátis). E-mail de lembrete fica para quando houver domínio próprio.

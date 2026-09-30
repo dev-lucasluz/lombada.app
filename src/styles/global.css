@@ -1,3 +1,27 @@
+/* Fontes hospedadas no próprio site (só o subconjunto latino) e pré-carregadas
+   no index.html: chegam junto com a página, sem cadeia até o Google e sem "pulo". */
+@font-face {
+  font-family: "Anybody";
+  src: url("/fonts/anybody.woff2") format("woff2");
+  font-weight: 100 900;
+  font-stretch: 50% 150%;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/geist.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Zen Kaku Gothic New";
+  src: url("/fonts/zen-kaku-700.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
 /*
   Lombada — design tokens
   Papel off-white e tinta quase preta, como página de mangá. Amarelo (ação e
@@ -22,7 +46,8 @@
   --danger: #c0271d;
   --halftone: radial-gradient(circle at center, rgb(255 255 255 / 0.14) 1.2px, transparent 1.6px) 0 0 / 9px 9px;
 
-  --font-display: "Anybody", "Arial Narrow", system-ui, sans-serif;
+  --font-display: "Anybody", "Arial Narrow", system-ui, sans-serif; /* marca, título do login, números */
+  --font-heading: "Zen Kaku Gothic New", "Geist", system-ui, sans-serif; /* títulos dentro do app */
   --font-body: "Geist", system-ui, sans-serif;
 
   /* Escala tipográfica modular (1.25) */
@@ -108,10 +133,9 @@ body {
 h1,
 h2,
 h3 {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-stretch: 78%;
-  line-height: 1.05;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.15;
   letter-spacing: -0.01em;
   margin: 0;
   text-wrap: balance;

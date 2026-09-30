@@ -11,5 +11,5 @@
     "noEmit": true,
     "isolatedModules": true
   },
-  "include": ["functions", "workers"]
+  "include": ["functions", "workers", "server"]
 }

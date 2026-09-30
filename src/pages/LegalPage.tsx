@@ -28,7 +28,7 @@ export function PrivacyPage() {
         <h2>Quais dados coletamos</h2>
         <ul>
           <li>Da sua conta: nome e e-mail. Usamos só para identificar você no app e enviar a confirmação de conta, a redefinição de senha e os lembretes. A senha é guardada criptografada pelo Supabase e ninguém tem acesso a ela.</li>
-          <li>O que você cadastra: coleção de volumes, histórico de leitura, links e lembretes.</li>
+          <li>O que você cadastra: coleção de volumes, capítulos em que parou, links e lembretes.</li>
           <li>Não coletamos senhas, dados de pagamento, localização ou dados de navegação para publicidade.</li>
         </ul>
       </section>
@@ -74,8 +74,8 @@ export function TermsPage() {
       <section>
         <h2>O serviço</h2>
         <p>
-          O Lombada é um projeto pessoal e gratuito para organizar coleções de mangás e livros físicos e o
-          histórico de leitura. Ele é oferecido como está, sem garantia de disponibilidade contínua.
+          O Lombada é um projeto pessoal e gratuito para organizar coleções de mangás e livros físicos e anotar
+          em que capítulo parou nos mangás. Ele é oferecido como está, sem garantia de disponibilidade contínua.
         </p>
       </section>
       <section>

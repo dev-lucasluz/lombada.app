@@ -32,10 +32,10 @@ export function ReadingPage() {
     <div className="page">
       <header className="page-head">
         <div>
-          <h1>Leitura</h1>
-          <p>Onde você parou em cada mangá que lê online.</p>
+          <h1>Onde parei</h1>
+          <p>O capítulo em que você parou em cada mangá que lê em outros sites.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setEditing("new")}>Registrar leitura</button>
+        <button className="btn btn-primary" onClick={() => setEditing("new")}>Anotar mangá</button>
       </header>
 
       {editing && <ReadingForm entry={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
@@ -45,9 +45,9 @@ export function ReadingPage() {
 
       {data && data.length === 0 && !editing && (
         <div className="empty">
-          <h2>Nenhuma leitura registrada</h2>
+          <h2>Nenhum mangá anotado</h2>
           <p>Anote o mangá e o capítulo em que parou. Quando voltar a ler, ele estará aqui.</p>
-          <button className="btn btn-primary" onClick={() => setEditing("new")}>Registrar a primeira leitura</button>
+          <button className="btn btn-primary" onClick={() => setEditing("new")}>Anotar o primeiro mangá</button>
         </div>
       )}
 
@@ -59,7 +59,7 @@ export function ReadingPage() {
                 <h2>{e.title}</h2>
                 <div className="reading-sub">
                   <span className="status-pill" data-status={e.status}>{READING_STATUS_LABEL[e.status]}</span>
-                  <span>Última leitura em {dateFmt.format(new Date(e.last_read_at))}</span>
+                  <span>Atualizado em {dateFmt.format(new Date(e.last_read_at))}</span>
                   {e.latest_released_chapter !== null && <span>Lançado até o {formatChapter(e.latest_released_chapter)}</span>}
                 </div>
                 {e.notes && <p className="hint">{e.notes}</p>}
@@ -137,7 +137,7 @@ function ReadingForm({ entry, onClose }: { entry: ReadingEntry | null; onClose: 
         save.mutate();
       }}
     >
-      <h2>{entry ? "Editar leitura" : "Registrar leitura"}</h2>
+      <h2>{entry ? "Editar anotação" : "Anotar mangá"}</h2>
       <div className="form-grid">
         <div className="field span-2">
           <label htmlFor="r-title">Mangá</label>
@@ -169,7 +169,7 @@ function ReadingForm({ entry, onClose }: { entry: ReadingEntry | null; onClose: 
         </div>
       </div>
       <div className="head-actions">
-        <button className="btn btn-primary" type="submit" disabled={save.isPending}>Salvar leitura</button>
+        <button className="btn btn-primary" type="submit" disabled={save.isPending}>Salvar</button>
         <button className="btn btn-ghost" type="button" onClick={onClose}>Cancelar</button>
       </div>
       {entry && (

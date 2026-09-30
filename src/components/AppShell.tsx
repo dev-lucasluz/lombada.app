@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { Icon, type IconName } from "./Icon";
 import { useAuth } from "../lib/auth";
@@ -7,9 +8,9 @@ import "./AppShell.css";
 const NAV: { to: string; label: string; icon: IconName }[] = [
   { to: "/", label: "Início", icon: "home" },
   { to: "/colecao", label: "Coleção", icon: "shelf" },
-  { to: "/leitura", label: "Leitura", icon: "book" },
+  { to: "/onde-parei", label: "Onde parei", icon: "book" },
   { to: "/lembretes", label: "Lembretes", icon: "bell" },
-  { to: "/estante", label: "Foto", icon: "camera" },
+  { to: "/foto-e-voz", label: "Foto e voz", icon: "camera" },
 ];
 
 export function AppShell() {
@@ -41,7 +42,9 @@ export function AppShell() {
         </div>
       </nav>
       <main className="shell-main">
-        <Outlet />
+        <Suspense fallback={<div className="page"><p className="muted">Carregando…</p></div>}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

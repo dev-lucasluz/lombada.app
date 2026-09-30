@@ -1,0 +1,140 @@
+.quick .segmented button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.quick-input {
+  max-width: 720px;
+}
+
+.quick-photo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.quick-photo .btn {
+  cursor: pointer;
+}
+
+.quick-photo .btn.is-busy {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.quick-preview {
+  max-height: 140px;
+  width: auto;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--line);
+}
+
+/* Botão de microfone: grande e redondo para o dedo */
+.quick-mic {
+  justify-self: start;
+  min-height: 56px;
+  padding-inline: 1.3rem 1.5rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.quick-mic svg {
+  color: var(--accent);
+}
+
+.quick-mic.is-listening {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 22%, transparent);
+  animation: mic-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes mic-pulse {
+  50% {
+    box-shadow: 0 0 0 9px color-mix(in oklab, var(--accent) 8%, transparent);
+  }
+}
+
+/* ---------- Revisão ---------- */
+.review-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.review-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.review-item.is-saved {
+  opacity: 0.65;
+}
+
+.review-check {
+  padding-top: 2px;
+}
+
+.review-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.review-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.review-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+}
+
+.review-warn,
+.review-ok {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+}
+
+.review-warn {
+  background: var(--marker);
+  color: var(--marker-ink);
+}
+
+.review-ok {
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+.review-volumes {
+  display: grid;
+  gap: 0.7rem;
+}
+
+@media (min-width: 640px) {
+  .review-volumes {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quick-mic.is-listening {
+    animation: none;
+  }
+}

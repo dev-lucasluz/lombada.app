@@ -4,12 +4,18 @@ import { ThemeToggle } from "../components/ThemeToggle";
 import { Icon, type IconName } from "../components/Icon";
 import "./LoginPage.css";
 
-// Prateleira de exemplo: alturas variadas e três vãos para mostrar "o que falta".
-const DEMO = [
-  { h: 92, hue: 264 }, { h: 88, hue: 264 }, { h: 92, hue: 264 }, { h: 0, hue: 0 },
-  { h: 90, hue: 264 }, { h: 94, hue: 25 }, { h: 94, hue: 25 }, { h: 94, hue: 25 },
-  { h: 0, hue: 0 }, { h: 0, hue: 0 }, { h: 86, hue: 160 }, { h: 86, hue: 160 },
-  { h: 88, hue: 160 }, { h: 86, hue: 160 }, { h: 96, hue: 330 }, { h: 96, hue: 330 },
+// Estante de exemplo. Em cima, uma série de mangá com volumes faltando (4, 9 e 10);
+// embaixo, livros avulsos com títulos em inglês e japonês e uma pilha deitada.
+const SERIES_MISSING = new Set([4, 9, 10]);
+const SERIES = Array.from({ length: 10 }, (_, i) => i + 1);
+
+const LOOSE_BOOKS: { title: string; hue: number; h: number; jp?: boolean }[] = [
+  { title: "ATLAS", hue: 250, h: 84 },
+  { title: "物語", hue: 330, h: 92, jp: true },
+  { title: "POEMS", hue: 140, h: 76 },
+  { title: "NOVEL", hue: 60, h: 96 },
+  { title: "夢", hue: 200, h: 80, jp: true },
+  { title: "HISTORY", hue: 25, h: 90 },
 ];
 
 /**
@@ -18,13 +24,61 @@ const DEMO = [
  */
 const FEATURES: { icon: IconName; title: string; text: string; soon?: boolean }[] = [
   { icon: "shelf", title: "Coleção por edição", text: "Marque os volumes que tem e veja na hora quais faltam." },
-  { icon: "search", title: "Busca de mangás e livros", text: "Capa, autor e total de volumes vêm prontos do catálogo." },
+  { icon: "search", title: "Busca no catálogo", text: "Capa, autor e total de volumes de mangás e livros vêm prontos." },
   { icon: "list", title: "Lista de compras", text: "Tudo o que falta, série por série, para levar à loja." },
-  { icon: "book", title: "Leitura online", text: "Guarde em que capítulo parou e continue depois." },
+  { icon: "book", title: "Onde parei", text: "Anote o capítulo em que parou nos mangás que lê em outros sites." },
   { icon: "bell", title: "Lembretes", text: "Escolha um dia para ser avisado, como a volta de um hiato." },
-  { icon: "camera", title: "Foto da estante", text: "Fotografe a prateleira e o app lê as lombadas.", soon: true },
-  { icon: "mic", title: "Cadastro por voz", text: "Diga “tenho Naruto do 1 ao 10” e pronto.", soon: true },
+  { icon: "camera", title: "Foto da estante", text: "Fotografe a prateleira e o app lê as lombadas para você revisar." },
+  { icon: "mic", title: "Cadastro por voz", text: "Diga “tenho Naruto do 1 ao 10” e revise antes de salvar." },
 ];
+
+/**
+ * Estante animada. No PC aparece grande ao lado do formulário; no celular,
+ * a versão `mini` fica no topo para caber na primeira tela sem rolar.
+ */
+function Bookcase({ className, mini = false }: { className: string; mini?: boolean }) {
+  return (
+    <div className={className} aria-hidden="true">
+      <div className={mini ? "case is-mini" : "case"}>
+        <div className="case-row">
+          {SERIES.map((n, i) =>
+            SERIES_MISSING.has(n) ? (
+              <span key={n} className="case-book is-gap" style={{ "--i": i } as CSSProperties}>
+                <span className="case-plus">+</span>
+                <span className="num">{n}</span>
+              </span>
+            ) : (
+              <span key={n} className="case-book" style={{ "--h": "94%", "--hue": 264, "--i": i } as CSSProperties}>
+                <span className="case-title is-jp">冒険</span>
+                <span className="num">{n}</span>
+              </span>
+            ),
+          )}
+        </div>
+        <div className="case-row">
+          {LOOSE_BOOKS.map((b, i) => (
+            <span
+              key={b.title}
+              className="case-book is-loose"
+              style={{ "--h": `${b.h}%`, "--hue": b.hue, "--i": i + 10 } as CSSProperties}
+            >
+              <span className={b.jp ? "case-title is-jp" : "case-title"}>{b.title}</span>
+            </span>
+          ))}
+          <span className="case-stack" style={{ "--i": 16 } as CSSProperties}>
+            <span style={{ "--hue": 300, width: "92%" } as CSSProperties} />
+            <span style={{ "--hue": 90, width: "100%" } as CSSProperties} />
+            <span style={{ "--hue": 30, width: "84%" } as CSSProperties} />
+          </span>
+        </div>
+      </div>
+      <p className="login-caption">
+        <span>Tem 1–3, 5–8</span>
+        <span className="login-missing">Faltam 4, 9–10</span>
+      </p>
+    </div>
+  );
+}
 
 export function LoginPage() {
   return (
@@ -35,8 +89,11 @@ export function LoginPage() {
           <img src="/favicon.svg" alt="" width={40} height={40} />
           Lombada
         </span>
-        <h1>Sua estante, volume por volume.</h1>
-        <p>Para quem coleciona mangás e livros físicos e acompanha leituras online.</p>
+        <div className="login-hero">
+          <h1>Sua estante, volume por volume.</h1>
+          <Bookcase className="login-art login-art-mini" mini />
+        </div>
+        <p>Para quem coleciona mangás e livros físicos e quer lembrar onde parou de ler.</p>
         <AuthPanel />
         <p className="login-legal">
           Ao entrar, você concorda com os <a href="/termos">termos de uso</a> e a{" "}
@@ -45,23 +102,7 @@ export function LoginPage() {
       </div>
 
       <div className="login-side">
-        <div className="login-art" aria-hidden="true">
-          <div className="login-shelf">
-            {DEMO.map((s, i) => (
-              <span
-                key={i}
-                className={s.h ? "login-spine" : "login-spine is-gap"}
-                style={{ "--h": `${s.h || 80}%`, "--hue": s.hue, "--i": i } as CSSProperties}
-              >
-                <span className="num">{i + 1}</span>
-              </span>
-            ))}
-          </div>
-          <p className="login-caption">
-            <span>Tem 1–3, 5–8, 11–16</span>
-            <span className="login-missing">Faltam 4, 9–10</span>
-          </p>
-        </div>
+        <Bookcase className="login-art login-art-full" />
 
         <section className="login-features" aria-labelledby="features-title">
           <h2 id="features-title">O que tem no app</h2>

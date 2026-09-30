@@ -31,7 +31,8 @@ export function HomePage() {
   const reminders = useQuery({ queryKey: ["reminders"], queryFn: listReminders });
 
   const fullName = (session?.user.user_metadata?.full_name as string | undefined) ?? "";
-  const firstName = fullName.split(" ")[0];
+  const rawFirst = fullName.trim().split(" ")[0] ?? "";
+  const firstName = rawFirst ? rawFirst[0].toLocaleUpperCase("pt-BR") + rawFirst.slice(1) : "";
   const totalOwned = collection.data?.reduce((sum, c) => sum + c.owned.length, 0) ?? 0;
   const seriesCount = collection.data?.length ?? 0;
 
@@ -130,11 +131,11 @@ function ReadingBlock({ data }: { data: ReadingEntry[] | undefined }) {
 
   return (
     <section className="block block-reading">
-      <BlockHead title="Leitura" to="/leitura" linkLabel="Ver tudo" />
+      <BlockHead title="Onde parei" to="/onde-parei" linkLabel="Ver tudo" />
       {data && recent.length === 0 && (
         <div className="block-empty">
-          <p>Anote em que capítulo parou nos mangás que lê online.</p>
-          <Link to="/leitura" className="btn btn-ghost">Registrar leitura</Link>
+          <p>Anote o capítulo em que parou nos mangás que você lê em outros sites.</p>
+          <Link to="/onde-parei" className="btn btn-ghost">Anotar onde parei</Link>
         </div>
       )}
       <ul className="home-reading">
@@ -244,11 +245,16 @@ function PhotoBlock() {
         ))}
         <span className="photo-frame" />
       </div>
-      <h2>Foto da estante</h2>
-      <p>Fotografe uma prateleira e o app lê as lombadas para você revisar e salvar.</p>
-      <Link to="/estante" className="btn photo-btn">
-        <Icon name="camera" size={20} /> Tirar foto
-      </Link>
+      <h2>Foto e voz</h2>
+      <p>Fotografe uma prateleira ou diga quais volumes tem. Você revisa antes de salvar.</p>
+      <div className="photo-actions">
+        <Link to="/foto-e-voz" className="btn photo-btn">
+          <Icon name="camera" size={20} /> Tirar foto
+        </Link>
+        <Link to="/foto-e-voz?modo=voz" className="btn photo-btn-ghost">
+          <Icon name="mic" size={20} /> Falar
+        </Link>
+      </div>
     </section>
   );
 }

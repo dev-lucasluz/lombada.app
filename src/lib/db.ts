@@ -180,7 +180,7 @@ export async function setVolumesOwned(collectionId: string, volumes: number[], o
 }
 
 // ---------------------------------------------------------------------------
-// Leitura online
+// Onde parei (capítulo dos mangás lidos em outros sites)
 // ---------------------------------------------------------------------------
 export async function listReading(): Promise<ReadingEntry[]> {
   return check(

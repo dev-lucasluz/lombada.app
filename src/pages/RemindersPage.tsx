@@ -59,7 +59,7 @@ export function RemindersPage() {
             <input id="rm-date" className="input" type="date" min={today} required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
           </div>
           <div className="field">
-            <label htmlFor="rm-reading">Leitura relacionada (opcional)</label>
+            <label htmlFor="rm-reading">Mangá relacionado (opcional)</label>
             <select id="rm-reading" className="input" value={form.readingId} onChange={(e) => setForm({ ...form, readingId: e.target.value })}>
               <option value="">Nenhuma</option>
               {reading.data?.map((r) => (

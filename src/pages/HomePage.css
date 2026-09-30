@@ -298,6 +298,21 @@
   filter: brightness(0.96);
 }
 
+.photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.photo-btn-ghost {
+  border-color: rgb(255 255 255 / 0.35);
+  color: #f2f1ec;
+}
+
+.photo-btn-ghost:hover {
+  border-color: rgb(255 255 255 / 0.7);
+}
+
 /* ---------- Grade responsiva ---------- */
 @media (min-width: 700px) {
   .home-grid {
