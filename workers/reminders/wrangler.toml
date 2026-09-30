@@ -1,0 +1,17 @@
+name = "lombada-lembretes"
+main = "index.ts"
+compatibility_date = "2026-09-30"
+
+# Todo dia às 11:00 UTC (08:00 em Brasília)
+[triggers]
+crons = ["0 11 * * *"]
+
+[vars]
+APP_URL = "https://lombada.pages.dev"
+MAIL_FROM_NAME = "Lombada"
+
+# Segredos (rodar dentro de workers/reminders):
+#   npx wrangler secret put SUPABASE_URL
+#   npx wrangler secret put SUPABASE_SECRET_KEY
+#   npx wrangler secret put BREVO_API_KEY
+#   npx wrangler secret put MAIL_FROM_EMAIL

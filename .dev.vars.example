@@ -1,0 +1,7 @@
+# Segredos das Pages Functions (Cloudflare). Copie para .dev.vars para rodar local.
+# Em produção: Cloudflare → Pages → projeto → Settings → Variables and Secrets.
+SUPABASE_URL=https://SEU-PROJETO.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+GEMINI_API_KEY=sua-chave-do-ai-studio
+GEMINI_MODEL=gemini-flash-lite-latest
+SCAN_DAILY_LIMIT=30

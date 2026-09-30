@@ -1,0 +1,56 @@
+# Lombada — plano do projeto
+
+App web gratuito para registrar coleções físicas de mangás e livros e o histórico de leitura de mangás online. Multiusuário (você e amigos), funciona igual no celular, tablet e PC.
+
+## O que o app faz
+
+1. **Login com e-mail e senha** (Supabase Auth, e-mails enviados pelo SMTP do Gmail): criar conta com confirmação por e-mail, esqueci a senha, redefinir senha.
+2. **Coleção física**
+   - Busca a obra no AniList (mangá) ou Google Books (livro).
+   - Cada obra tem **edições** (ex.: Naruto → "Naruto Gold, Panini, 72 vol."). Edições são compartilhadas entre usuários e editáveis, porque o total de volumes no Brasil não bate com o japonês.
+   - Grade de volumes: clique marca/desmarca, Shift+clique marca um intervalo. Mostra "Tem: 1–30 · Faltam: 31–50".
+   - Lista de compras gerada a partir do que falta.
+3. **Leitura online**
+   - Histórico: obra, último capítulo lido, link, status (lendo, em hiato, pausado, concluído, abandonado), data.
+   - **Lembretes por data** definidos pelo usuário ("me avise em 15/10: volta do hiato").
+   - Sem verificação automática de capítulo novo (decisão: MangaDex não é confiável).
+4. **Foto da estante** (fase 3)
+   - Foto → Gemini Flash-Lite lê as lombadas → tela de revisão → salva.
+   - Foto não é armazenada. Limite por usuário/dia para não esgotar a cota grátis.
+5. **Extras** (fase 4): código de barras (ISBN), empréstimos, estatísticas, exportar CSV.
+
+## Stack (custo zero)
+
+| Parte | Tecnologia |
+|---|---|
+| Front | React + Vite + TypeScript (SPA), React Router, TanStack Query |
+| Hospedagem | Cloudflare Pages |
+| Backend leve | Cloudflare Pages Functions (`functions/`) — chamada ao Gemini |
+| Tarefa diária | Cloudflare Worker com cron (`workers/reminders/`) — envia lembretes |
+| Banco + login | Supabase (Postgres + RLS + Auth por e-mail e senha) |
+| IA de visão | Gemini API, plano grátis do AI Studio |
+| E-mails de conta | SMTP do Gmail com senha de app (grátis, sem domínio) |
+| Lembretes | Web Push (grátis). E-mail só se houver domínio próprio no futuro |
+
+## Estrutura
+
+```
+src/
+  lib/          supabase, catálogo (AniList/Google Books), utilitários de faixas de volume
+  components/   AppShell (navegação), VolumeGrid, SpineStrip, etc.
+  pages/        Login, Colecao, Edicao, Adicionar, Leitura, Lembretes, Estante (foto)
+  styles/       tokens e estilos globais
+functions/api/  scan-shelf.ts (Gemini)
+workers/reminders/  cron diário de lembretes
+supabase/migrations/  schema + RLS
+```
+
+## Fases
+
+- [x] **Base**: projeto, schema completo, design system, navegação, login.
+- [ ] **Fase 1**: coleção física completa (busca, edições, grade, lista de compras).
+- [ ] **Fase 2**: leitura online + lembretes (web push + e-mail).
+- [ ] **Fase 3**: foto da estante com Gemini.
+- [ ] **Fase 4**: extras.
+
+Detalhes de configuração e o que falta em cada fase: ver `README.md`.
