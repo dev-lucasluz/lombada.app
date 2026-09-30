@@ -1,0 +1,337 @@
+/*
+  Início em blocos. A coleção é o bloco dominante; a foto da estante é o único
+  bloco invertido (tinta com retícula de mangá), para puxar o olho para a função nova.
+*/
+.home {
+  max-width: 1280px;
+}
+
+.home-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+.block {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+  padding: 1.1rem 1.2rem 1.25rem;
+  border-radius: var(--radius-l);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  min-width: 0;
+}
+
+.block-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.block-head h2 {
+  font-size: var(--step-1);
+}
+
+.block-link {
+  font-size: var(--step--1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.block-empty {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+  color: var(--ink-soft);
+}
+
+/* ---------- Coleção ---------- */
+.home-series {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.home-series-item {
+  display: flex;
+  gap: 0.85rem;
+  padding: 0.6rem;
+  margin: -0.1rem -0.6rem;
+  border-radius: var(--radius-m);
+  color: inherit;
+  text-decoration: none;
+}
+
+.home-series-item:hover {
+  background: var(--surface-sunk);
+}
+
+.home-series-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.3rem;
+  align-content: start;
+}
+
+.home-series-body strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-series-body .strip {
+  height: 26px;
+}
+
+.home-series-count {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
+/* ---------- Leitura ---------- */
+.home-reading,
+.home-reminders,
+.home-shopping {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.home-reading li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.home-reading li:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.home-reading-info {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  font-size: var(--step--1);
+}
+
+.home-reading-info strong {
+  font-size: var(--step-0);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-reading-info .status-pill {
+  justify-self: start;
+}
+
+.home-reading-chapter {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.home-reading-chapter .num {
+  font-size: var(--step-3);
+  line-height: 1;
+}
+
+/* ---------- Lembretes ---------- */
+.home-reminders {
+  gap: 0.6rem;
+}
+
+.home-reminders li {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.home-date {
+  flex: none;
+  width: 52px;
+  padding: 0.35rem 0;
+  display: grid;
+  justify-items: center;
+  line-height: 1;
+  border-radius: var(--radius-m);
+  background: var(--surface-sunk);
+}
+
+.home-date .num {
+  font-size: var(--step-2);
+}
+
+.home-date small {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.home-reminders li.is-due .home-date {
+  background: var(--marker);
+  color: var(--marker-ink);
+}
+
+.home-reminders li.is-due .home-date small {
+  color: var(--marker-ink);
+}
+
+.home-reminder-text {
+  display: grid;
+  min-width: 0;
+}
+
+/* ---------- Lista de compras ---------- */
+.home-shopping-total {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.home-shopping-total mark {
+  font-size: var(--step-4);
+  line-height: 1;
+  padding: 0 0.15em;
+  margin-right: 0.15em;
+  border-radius: 4px;
+  background: var(--marker);
+  color: var(--marker-ink);
+}
+
+.home-shopping {
+  gap: 0.45rem;
+}
+
+.home-shopping li {
+  display: grid;
+  font-size: var(--step--1);
+}
+
+.home-shopping li strong {
+  font-size: var(--step-0);
+}
+
+/* ---------- Foto da estante (bloco invertido) ---------- */
+.block-photo {
+  background: var(--halftone), #1c1c1f;
+  border-color: transparent;
+  color: #f2f1ec;
+}
+
+:root[data-theme="dark"] .block-photo {
+  border-color: var(--line);
+}
+
+.block-photo p {
+  opacity: 0.85;
+}
+
+.photo-art {
+  position: relative;
+  height: 74px;
+  display: flex;
+  align-items: end;
+  gap: 4px;
+  padding: 0 10px 4px;
+  border-bottom: 4px solid currentColor;
+}
+
+.photo-spine {
+  flex: 1;
+  max-width: 18px;
+  border-radius: 2px 2px 0 0;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.photo-spine:nth-child(2n) {
+  opacity: 0.8;
+}
+
+/* As duas primeiras lombadas repetem o ícone: amarelo e verde. */
+.photo-spine:nth-child(1) {
+  background: #ffd23f;
+  opacity: 1;
+}
+
+.photo-spine:nth-child(2) {
+  background: #4cc38a;
+  opacity: 1;
+}
+
+.photo-spine:nth-child(4).is-gap {
+  border-color: #ff8a3d;
+  opacity: 1;
+}
+
+.photo-spine.is-gap {
+  background: none;
+  border: 1.5px dashed currentColor;
+  border-bottom: none;
+}
+
+.photo-frame {
+  position: absolute;
+  inset: -6px auto 8px 0;
+  width: 150px;
+  border: 2px solid var(--marker);
+  border-radius: 6px;
+}
+
+.photo-btn {
+  justify-self: start;
+  background: var(--action);
+  color: var(--action-ink);
+}
+
+.photo-btn:hover {
+  filter: brightness(0.96);
+}
+
+/* ---------- Grade responsiva ---------- */
+@media (min-width: 700px) {
+  .home-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .block-collection {
+    grid-column: span 2;
+  }
+
+  .home-series {
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1180px) {
+  .home-grid {
+    grid-template-columns: repeat(12, 1fr);
+  }
+
+  .block-collection {
+    grid-column: span 8;
+    grid-row: span 2;
+  }
+
+  .block-reading {
+    grid-column: span 4;
+    grid-row: span 2;
+  }
+
+  .block-reminders,
+  .block-shopping,
+  .block-photo {
+    grid-column: span 4;
+  }
+}

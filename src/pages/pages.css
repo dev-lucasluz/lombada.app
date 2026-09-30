@@ -286,7 +286,7 @@
 }
 
 .result:hover {
-  border-color: var(--ai);
+  border-color: var(--accent);
 }
 
 .result h3 {

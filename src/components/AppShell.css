@@ -23,7 +23,7 @@
 }
 
 .shell-brand,
-.shell-account {
+.shell-tools {
   display: none;
 }
 
@@ -44,7 +44,7 @@
 }
 
 .shell-link.active svg {
-  color: var(--ai);
+  color: var(--accent);
 }
 
 @media (min-width: 900px) {
@@ -89,20 +89,34 @@
     color: var(--ink);
   }
 
-  .shell-account {
+  .shell-tools {
     margin-top: auto;
     display: grid;
+    gap: 0.25rem;
+  }
+
+  .shell-tool {
+    width: 68px;
+    min-height: 56px;
+    display: grid;
     place-items: center;
-    gap: 4px;
+    align-content: center;
+    gap: 3px;
     background: none;
     border: none;
+    border-radius: var(--radius-m);
     color: var(--ink-faint);
     font-size: 0.72rem;
     font-weight: 600;
     cursor: pointer;
   }
 
-  .shell-account img {
+  .shell-tool:hover {
+    background: var(--surface-sunk);
+    color: var(--ink);
+  }
+
+  .shell-tool img {
     border-radius: 50%;
   }
 

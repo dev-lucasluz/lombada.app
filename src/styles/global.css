@@ -1,26 +1,29 @@
 /*
   Lombada — design tokens
-  Ideia: a coleção é uma prateleira. Volumes que você tem são lombadas coloridas;
-  os que faltam são vãos tracejados. A cor forte fica nas lombadas; o resto da
-  interface é tinta índigo sobre papel frio, com o amarelo-marca-texto só para destaque.
+  Papel off-white e tinta quase preta, como página de mangá. Amarelo (ação e
+  "o que falta") vem do ícone; violeta marca links, foco e item ativo.
+  A retícula de pontos (--halftone) é o único ornamento e aparece em um lugar só.
 */
 :root {
-  --paper: #f5f6f8;
+  --paper: #f4f4f0;
   --surface: #ffffff;
-  --surface-sunk: #eceef4;
-  --ink: #1b2140;
-  --ink-soft: #565d7c;
-  --ink-faint: #8a90aa;
-  --line: #dde0ea;
-  --gap: #b9bed2;
-  --ai: #2f3f9e;          /* índigo "ai-iro": ações e links */
-  --ai-contrast: #ffffff;
-  --marker: #ffd23f;      /* marca-texto: destaque pontual */
-  --marker-ink: #1b2140;
-  --danger: #b3261e;
+  --surface-sunk: #e9e9e3;
+  --ink: #1c1c1f;
+  --ink-soft: #55555c;
+  --ink-faint: #85858c;
+  --line: #deded7;
+  --gap: #b4b4ae;
+  --accent: #6a3fd6;        /* violeta: links, foco, item ativo */
+  --accent-contrast: #ffffff;
+  --action: #ffd23f;        /* amarelo: botão principal */
+  --action-ink: #1c1c1f;
+  --marker: #ffd23f;        /* realce: o que falta, hiato, completa */
+  --marker-ink: #1c1c1f;
+  --danger: #c0271d;
+  --halftone: radial-gradient(circle at center, rgb(255 255 255 / 0.14) 1.2px, transparent 1.6px) 0 0 / 9px 9px;
 
   --font-display: "Anybody", "Arial Narrow", system-ui, sans-serif;
-  --font-body: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, sans-serif;
+  --font-body: "Geist", system-ui, sans-serif;
 
   /* Escala tipográfica modular (1.25) */
   --step--1: 0.8rem;
@@ -32,8 +35,8 @@
   --step-5: 3.052rem;
 
   --radius-s: 4px;
-  --radius-m: 10px;
-  --radius-l: 18px;
+  --radius-m: 8px;
+  --radius-l: 14px;
 
   --nav-h: 64px;
   --rail-w: 88px;
@@ -44,34 +47,40 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #121630;
-    --surface: #1b2045;
-    --surface-sunk: #171b3b;
-    --ink: #eceef8;
-    --ink-soft: #a9aecb;
-    --ink-faint: #7a80a3;
-    --line: #2c3263;
-    --gap: #6068a3;
-    --ai: #9aa6ff;
-    --ai-contrast: #121630;
-    --marker: #ffd84d;
+    --paper: #18181a;
+    --surface: #222225;
+    --surface-sunk: #121214;
+    --ink: #f2f1ec;
+    --ink-soft: #b9b9bf;
+    --ink-faint: #8c8c93;
+    --line: #333337;
+    --gap: #5f5f66;
+    --accent: #b39dff;
+    --accent-contrast: #18181a;
+    --action: #ffd23f;
+    --action-ink: #18181a;
+    --marker: #ffd23f;
+    --marker-ink: #18181a;
     --danger: #ff8a80;
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --paper: #121630;
-  --surface: #1b2045;
-  --surface-sunk: #171b3b;
-  --ink: #eceef8;
-  --ink-soft: #a9aecb;
-  --ink-faint: #7a80a3;
-  --line: #2c3263;
-  --gap: #6068a3;
-  --ai: #9aa6ff;
-  --ai-contrast: #121630;
-  --marker: #ffd84d;
+  --paper: #18181a;
+  --surface: #222225;
+  --surface-sunk: #121214;
+  --ink: #f2f1ec;
+  --ink-soft: #b9b9bf;
+  --ink-faint: #8c8c93;
+  --line: #333337;
+  --gap: #5f5f66;
+  --accent: #b39dff;
+  --accent-contrast: #18181a;
+  --action: #ffd23f;
+  --action-ink: #18181a;
+  --marker: #ffd23f;
+  --marker-ink: #18181a;
   --danger: #ff8a80;
   color-scheme: dark;
 }
@@ -101,7 +110,7 @@ h2,
 h3 {
   font-family: var(--font-display);
   font-weight: 800;
-  font-stretch: 80%;
+  font-stretch: 78%;
   line-height: 1.05;
   letter-spacing: -0.01em;
   margin: 0;
@@ -118,7 +127,7 @@ p {
 }
 
 a {
-  color: var(--ai);
+  color: var(--accent);
   text-underline-offset: 3px;
 }
 
@@ -136,7 +145,7 @@ textarea {
 }
 
 :focus-visible {
-  outline: 3px solid var(--ai);
+  outline: 3px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--radius-s);
 }
@@ -174,11 +183,12 @@ textarea {
 }
 
 .btn-primary {
-  background: var(--ai);
-  color: var(--ai-contrast);
+  background: var(--action);
+  color: var(--action-ink);
+  border-color: var(--action);
 }
 
-.btn-primary:hover { filter: brightness(1.08); }
+.btn-primary:hover { filter: brightness(0.96); }
 
 .btn-ghost {
   background: transparent;
@@ -216,7 +226,7 @@ textarea {
 
 .input:focus-visible {
   outline: none;
-  border-color: var(--ai);
+  border-color: var(--accent);
 }
 
 /* ---------- Página ---------- */

@@ -11,6 +11,7 @@ type AuthState = {
   /** Retorna true se a conta precisa ser confirmada pelo e-mail antes de entrar. */
   signUp: (name: string, email: string, password: string) => Promise<boolean>;
   sendPasswordReset: (email: string) => Promise<void>;
+  resendConfirmation: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -36,7 +37,11 @@ export function authErrorMessage(error: unknown): string {
     case "same_password":
       return "A nova senha precisa ser diferente da atual.";
     default:
-      return "Algo deu errado. Verifique a conexão e tente de novo.";
+      console.error("Erro de autenticação", error);
+      if (/sending|smtp|email/i.test(e?.message ?? "")) {
+        return "Não conseguimos enviar o e-mail de confirmação. Confira a configuração de SMTP do Supabase.";
+      }
+      return `Algo deu errado (${e?.message ?? "sem detalhes"}). Tente de novo em alguns segundos.`;
   }
 }
 
@@ -82,6 +87,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async sendPasswordReset(email) {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin,
+      });
+      if (error) throw error;
+    },
+
+    async resendConfirmation(email) {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: window.location.origin },
       });
       if (error) throw error;
     },

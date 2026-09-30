@@ -3,14 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#F5F6F8" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#121630" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#F4F4F0" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#18181A" media="(prefers-color-scheme: dark)" />
+    <script>
+      // Aplica o tema salvo antes do primeiro desenho, para não piscar.
+      try {
+        var t = localStorage.getItem("theme");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
     <meta name="description" content="Sua coleção de mangás e livros físicos e o histórico do que você lê online." />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,400..900&family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,400..900&family=Geist:wght@400..700&display=swap"
       rel="stylesheet"
     />
     <title>Lombada</title>

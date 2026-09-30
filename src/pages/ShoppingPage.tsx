@@ -19,7 +19,7 @@ export function ShoppingPage() {
 
   return (
     <div className="page">
-      <Link to="/" className="back-link"><Icon name="back" size={18} /> Coleção</Link>
+      <Link to="/colecao" className="back-link"><Icon name="back" size={18} /> Coleção</Link>
       <header className="page-head">
         <div>
           <h1>Lista de compras</h1>

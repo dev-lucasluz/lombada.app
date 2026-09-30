@@ -6,6 +6,7 @@ import { AppShell } from "./components/AppShell";
 import { LoginPage, ResetPasswordPage } from "./pages/LoginPage";
 import { SetupPage } from "./pages/SetupPage";
 import { CollectionPage } from "./pages/CollectionPage";
+import { HomePage } from "./pages/HomePage";
 import { EditionPage } from "./pages/EditionPage";
 import { ShoppingPage } from "./pages/ShoppingPage";
 import { AddPage } from "./pages/AddPage";
@@ -29,7 +30,8 @@ export function App() {
   return (
     <Routes>
       <Route element={<AppShell />}>
-        <Route index element={<CollectionPage />} />
+        <Route index element={<HomePage />} />
+        <Route path="colecao" element={<CollectionPage />} />
         <Route path="colecao/:id" element={<EditionPage />} />
         <Route path="compras" element={<ShoppingPage />} />
         <Route path="adicionar" element={<AddPage />} />

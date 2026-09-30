@@ -17,7 +17,12 @@ App web gratuito para registrar coleções físicas de mangás e livros e o hist
 4. **Foto da estante** (fase 3)
    - Foto → Gemini Flash-Lite lê as lombadas → tela de revisão → salva.
    - Foto não é armazenada. Limite por usuário/dia para não esgotar a cota grátis.
-5. **Extras** (fase 4): código de barras (ISBN), empréstimos, estatísticas, exportar CSV.
+5. **Cadastro por voz** (fase 3, junto com a foto)
+   - A pessoa fala: "tenho Naruto do 1 ao 10, falta o 11, tenho do 12 ao 20".
+   - Reconhecimento de fala do próprio navegador (Web Speech API): grátis, sem chave. Funciona no Chrome, Edge e Safari; no Firefox, o botão some.
+   - O texto vira dados (título + volumes) com o Gemini grátis; o app busca a obra no catálogo.
+   - Usa **a mesma tela de revisão** da foto da estante antes de salvar.
+6. **Extras** (fase 4): código de barras (ISBN), empréstimos, estatísticas, exportar CSV.
 
 ## Stack (custo zero)
 
@@ -50,7 +55,7 @@ supabase/migrations/  schema + RLS
 - [x] **Base**: projeto, schema completo, design system, navegação, login.
 - [ ] **Fase 1**: coleção física completa (busca, edições, grade, lista de compras).
 - [ ] **Fase 2**: leitura online + lembretes (web push + e-mail).
-- [ ] **Fase 3**: foto da estante com Gemini.
+- [ ] **Fase 3**: foto da estante e cadastro por voz, com tela de revisão compartilhada.
 - [ ] **Fase 4**: extras.
 
 Detalhes de configuração e o que falta em cada fase: ver `README.md`.

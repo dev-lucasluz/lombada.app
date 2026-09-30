@@ -1,12 +1,13 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { Icon, type IconName } from "./Icon";
 import { useAuth } from "../lib/auth";
+import { ThemeToggle } from "./ThemeToggle";
 import "./AppShell.css";
 
 const NAV: { to: string; label: string; icon: IconName }[] = [
-  { to: "/", label: "Coleção", icon: "shelf" },
+  { to: "/", label: "Início", icon: "home" },
+  { to: "/colecao", label: "Coleção", icon: "shelf" },
   { to: "/leitura", label: "Leitura", icon: "book" },
-  { to: "/adicionar", label: "Adicionar", icon: "plus" },
   { to: "/lembretes", label: "Lembretes", icon: "bell" },
   { to: "/estante", label: "Foto", icon: "camera" },
 ];
@@ -31,10 +32,13 @@ export function AppShell() {
             </li>
           ))}
         </ul>
-        <button className="shell-account" onClick={signOut} title="Sair da conta">
-          {avatar ? <img src={avatar} alt="" width={32} height={32} /> : <Icon name="out" />}
-          <span>Sair</span>
-        </button>
+        <div className="shell-tools">
+          <ThemeToggle className="shell-tool" withLabel />
+          <button className="shell-tool" onClick={signOut} title="Sair da conta">
+            {avatar ? <img src={avatar} alt="" width={28} height={28} /> : <Icon name="out" />}
+            <span>Sair</span>
+          </button>
+        </div>
       </nav>
       <main className="shell-main">
         <Outlet />

@@ -44,7 +44,7 @@ export function EditionPage() {
     mutationFn: () => removeFromCollection(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["collection"] });
-      navigate("/");
+      navigate("/colecao");
     },
   });
 
@@ -53,7 +53,7 @@ export function EditionPage() {
     return (
       <div className="page">
         <p className="error">Não encontramos essa série na sua coleção.</p>
-        <Link to="/" className="back-link"><Icon name="back" size={18} /> Voltar para a coleção</Link>
+        <Link to="/colecao" className="back-link"><Icon name="back" size={18} /> Voltar para a coleção</Link>
       </div>
     );
   }
@@ -65,7 +65,7 @@ export function EditionPage() {
 
   return (
     <div className="page">
-      <Link to="/" className="back-link"><Icon name="back" size={18} /> Coleção</Link>
+      <Link to="/colecao" className="back-link"><Icon name="back" size={18} /> Coleção</Link>
 
       <header className="edition-head">
         <Cover url={edition.work.cover_url} title={edition.work.title} size="l" />
