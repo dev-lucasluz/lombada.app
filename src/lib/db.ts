@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { CatalogResult } from "./catalog";
+import { demoDb, isDemo } from "./demo";
 
 // ---------------------------------------------------------------------------
 // Tipos (espelham supabase/migrations/0001_schema.sql)
@@ -77,6 +78,7 @@ function check<T>(result: { data: T; error: { message: string } | null }): T {
 
 /** Encontra a obra pelo id externo ou cadastra no catálogo compartilhado. */
 export async function ensureWork(r: CatalogResult): Promise<Work> {
+  if (isDemo) return demoDb.ensureWork(r);
   const column = r.source === "anilist" ? "anilist_id" : "google_books_id";
   const externalId = r.source === "anilist" ? Number(r.externalId) : r.externalId;
 
@@ -101,16 +103,19 @@ export async function ensureWork(r: CatalogResult): Promise<Work> {
 }
 
 export async function listEditions(workId: string): Promise<Edition[]> {
+  if (isDemo) return demoDb.listEditions(workId);
   return check(
     await supabase.from("editions").select("*").eq("work_id", workId).order("created_at"),
   ) as Edition[];
 }
 
 export async function createEdition(input: Omit<Edition, "id">): Promise<Edition> {
+  if (isDemo) return demoDb.createEdition(input);
   return check(await supabase.from("editions").insert(input).select("*").single()) as Edition;
 }
 
 export async function updateEdition(id: string, patch: Partial<Omit<Edition, "id" | "work_id">>) {
+  if (isDemo) return demoDb.updateEdition(id, patch);
   check(await supabase.from("editions").update(patch).eq("id", id));
 }
 
@@ -128,6 +133,7 @@ function toItem(row: CollectionRow): CollectionItem {
 }
 
 export async function listCollection(): Promise<CollectionItem[]> {
+  if (isDemo) return demoDb.listCollection();
   const rows = check(
     await supabase.from("collections").select(COLLECTION_SELECT).order("created_at", { ascending: false }),
   ) as unknown as CollectionRow[];
@@ -135,6 +141,7 @@ export async function listCollection(): Promise<CollectionItem[]> {
 }
 
 export async function getCollectionItem(id: string): Promise<CollectionItem> {
+  if (isDemo) return demoDb.getCollectionItem(id);
   const row = check(
     await supabase.from("collections").select(COLLECTION_SELECT).eq("id", id).single(),
   ) as unknown as CollectionRow;
@@ -143,6 +150,7 @@ export async function getCollectionItem(id: string): Promise<CollectionItem> {
 
 /** Adiciona a edição à coleção do usuário (ou devolve a existente). */
 export async function addToCollection(editionId: string): Promise<string> {
+  if (isDemo) return demoDb.addToCollection(editionId);
   const row = check(
     await supabase
       .from("collections")
@@ -154,10 +162,12 @@ export async function addToCollection(editionId: string): Promise<string> {
 }
 
 export async function removeFromCollection(collectionId: string) {
+  if (isDemo) return demoDb.removeFromCollection(collectionId);
   check(await supabase.from("collections").delete().eq("id", collectionId));
 }
 
 export async function setVolumesOwned(collectionId: string, volumes: number[], owned: boolean) {
+  if (isDemo) return demoDb.setVolumesOwned(collectionId, volumes, owned);
   if (volumes.length === 0) return;
   if (owned) {
     check(
@@ -183,6 +193,7 @@ export async function setVolumesOwned(collectionId: string, volumes: number[], o
 // Onde parei (capítulo dos mangás lidos em outros sites)
 // ---------------------------------------------------------------------------
 export async function listReading(): Promise<ReadingEntry[]> {
+  if (isDemo) return demoDb.listReading();
   return check(
     await supabase.from("reading_entries").select("*").order("last_read_at", { ascending: false }),
   ) as ReadingEntry[];
@@ -191,6 +202,7 @@ export async function listReading(): Promise<ReadingEntry[]> {
 export type ReadingInput = Partial<Omit<ReadingEntry, "id">> & { title: string };
 
 export async function saveReading(input: ReadingInput & { id?: string }): Promise<ReadingEntry> {
+  if (isDemo) return demoDb.saveReading(input);
   const { id, ...fields } = input;
   const query = id
     ? supabase.from("reading_entries").update(fields).eq("id", id)
@@ -199,6 +211,7 @@ export async function saveReading(input: ReadingInput & { id?: string }): Promis
 }
 
 export async function deleteReading(id: string) {
+  if (isDemo) return demoDb.deleteReading(id);
   check(await supabase.from("reading_entries").delete().eq("id", id));
 }
 
@@ -206,6 +219,7 @@ export async function deleteReading(id: string) {
 // Lembretes
 // ---------------------------------------------------------------------------
 export async function listReminders(): Promise<(Reminder & { reading: { title: string } | null })[]> {
+  if (isDemo) return demoDb.listReminders();
   return check(
     await supabase
       .from("reminders")
@@ -215,9 +229,11 @@ export async function listReminders(): Promise<(Reminder & { reading: { title: s
 }
 
 export async function createReminder(input: Omit<Reminder, "id" | "sent_at">) {
+  if (isDemo) return demoDb.createReminder(input);
   check(await supabase.from("reminders").insert(input));
 }
 
 export async function deleteReminder(id: string) {
+  if (isDemo) return demoDb.deleteReminder(id);
   check(await supabase.from("reminders").delete().eq("id", id));
 }

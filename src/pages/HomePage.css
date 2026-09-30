@@ -9,7 +9,7 @@
 .home-grid {
   display: grid;
   gap: 16px;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .block {
@@ -316,7 +316,7 @@
 /* ---------- Grade responsiva ---------- */
 @media (min-width: 700px) {
   .home-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .block-collection {
@@ -324,14 +324,14 @@
   }
 
   .home-series {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 1.5rem;
   }
 }
 
 @media (min-width: 1180px) {
   .home-grid {
-    grid-template-columns: repeat(12, 1fr);
+    grid-template-columns: repeat(12, minmax(0, 1fr));
   }
 
   .block-collection {

@@ -30,7 +30,8 @@ App de coleção de mangás/livros físicos e histórico de leitura online. Leia
 ## Comandos
 - `npm run dev` — front em http://localhost:5173
 - `npm run build` — typecheck (`tsc -b`) + build. Rode antes de dar uma tarefa por concluída.
-- `npm run pages:dev` — front + Functions em http://localhost:8788
+- `npm run pages:dev` — build + Functions (foto e voz) em http://localhost:8788; com ele aberto, o `npm run dev` repassa `/api` para lá
+- `npm run dev:demo` — **modo demonstração** em http://localhost:5174: pula o login e usa dados de exemplo no navegador (`src/lib/demo.ts`), para testar as telas internas sem conta. Voz usa um interpretador local simples; foto não funciona nesse modo. Só existe em desenvolvimento (`import.meta.env.DEV`); confira com `grep -r lombada-demo dist/` após o build que nada vazou.
 
 ## Próximos passos (em ordem)
 1. **Fase 1 — validar com Supabase real**: testar login, busca, criar edição, marcar volumes, lista de compras. Corrigir o que aparecer.

@@ -4,6 +4,8 @@
  * pessoa confirmou na tela de revisão.
  */
 import { supabase } from "./supabase";
+import { isDemo } from "./demo";
+import { parseRanges } from "./ranges";
 import { searchManga, type CatalogResult } from "./catalog";
 import {
   addToCollection,
@@ -68,7 +70,28 @@ export async function scanShelfPhoto(imageBase64: string): Promise<DetectedSerie
   return groupSpines(spines);
 }
 
+/**
+ * Só no modo demonstração (sem login não há IA): entende frases simples como
+ * "tenho Naruto do 1 ao 10, falta o 11, tenho do 12 ao 20; One Piece do 1 ao 5".
+ */
+function demoParseVoice(text: string): DetectedSeries[] {
+  return text
+    .split(/;|\s+e\s+(?=[A-ZÀ-Ú])/)
+    .map((part, i) => {
+      const clean = part.replace(/\btenho\b/gi, " ");
+      const title = clean.split(/\bdo\b|\bfalta\b|\d/i)[0].replace(/[,.]/g, " ").trim();
+      const [have, ...missingParts] = clean.split(/\bfaltam?\b/i);
+      const rest = missingParts.join(" ");
+      const lateHave = rest.split(",").slice(1).join(" ");
+      const missing = parseRanges(rest.split(",")[0].replace(/\b(o|os)\b/gi, " "));
+      const owned = parseRanges(`${have} ${lateHave}`.replace(/\bdo\b/gi, " ").replace(/\bao\b/gi, "-"));
+      return { key: `d${i}`, title, owned, missing };
+    })
+    .filter((s) => s.title && (s.owned.length || s.missing.length));
+}
+
 export async function parseVoiceText(text: string): Promise<DetectedSeries[]> {
+  if (isDemo) return demoParseVoice(text);
   const { series } = await postAi<{ series: { title: string; owned: number[]; missing: number[] }[] }>(
     "/api/parse-voice",
     { text },

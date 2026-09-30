@@ -15,6 +15,12 @@ Para testar **foto e voz** localmente (Pages Functions + Gemini):
 2. Em um terminal: `npm run pages:dev` (servidor da Cloudflare em http://localhost:8788).
 3. Em outro: `npm run dev` e abra http://localhost:5173. As chamadas `/api` são repassadas para o 8788.
 
+Para ver as telas internas sem fazer login, use o **modo demonstração** (dados de exemplo só no navegador, nada vai para o Supabase):
+
+```bash
+npm run dev:demo   # http://localhost:5174
+```
+
 ## Configuração (uma vez só)
 
 ### 1. Supabase (banco + login)

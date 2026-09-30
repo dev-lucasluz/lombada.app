@@ -1,6 +1,10 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { AuthError, Session } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "./supabase";
+import { demoDb, isDemo } from "./demo";
+
+// Sessão falsa do modo demonstração (só em desenvolvimento; ver demo.ts).
+const DEMO_SESSION = { user: { id: "demo", email: "demo@lombada.local", user_metadata: { full_name: "Visitante" } } } as unknown as Session;
 
 type AuthState = {
   session: Session | null;
@@ -46,12 +50,12 @@ export function authErrorMessage(error: unknown): string {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(isSupabaseConfigured);
+  const [session, setSession] = useState<Session | null>(isDemo ? DEMO_SESSION : null);
+  const [loading, setLoading] = useState(isSupabaseConfigured && !isDemo);
   const [recovering, setRecovering] = useState(false);
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured || isDemo) return;
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
@@ -107,6 +111,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
 
     async signOut() {
+      if (isDemo) {
+        // No modo demonstração, "Sair" restaura os dados de exemplo.
+        demoDb.resetAll();
+        window.location.assign("/");
+        return;
+      }
       await supabase.auth.signOut();
     },
   };

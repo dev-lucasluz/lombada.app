@@ -84,8 +84,12 @@ export async function callGemini<T>(env: AiEnv, parts: GeminiPart[], responseSch
     throw new HttpError(502, "A leitura por IA falhou. Tente de novo.");
   }
 
-  const body = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-  const text = body.candidates?.[0]?.content?.parts?.[0]?.text ?? "[]";
+  const body = (await res.json()) as {
+    candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] } }[];
+  };
+  // Modelos com raciocínio podem mandar partes de "pensamento" antes da resposta.
+  const answer = body.candidates?.[0]?.content?.parts ?? [];
+  const text = answer.filter((p) => p.text && !p.thought).pop()?.text ?? "[]";
   try {
     return JSON.parse(text) as T;
   } catch {

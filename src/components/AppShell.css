@@ -54,9 +54,11 @@
   }
 
   .shell-nav {
+    /* `inset` vem antes de `top`: na ordem inversa ele zerava o top e a barra rolava junto */
+    inset: auto;
     position: sticky;
     top: 0;
-    inset: auto;
+    align-self: start;
     height: 100dvh;
     padding: 1.25rem 0;
     border-top: none;
@@ -75,6 +77,17 @@
   }
 
   .shell-brand {
+    display: block;
+    padding: 4px;
+    border-radius: 12px;
+    transition: transform 120ms ease-out;
+  }
+
+  .shell-brand:hover {
+    transform: translateY(-2px);
+  }
+
+  .shell-brand img {
     display: block;
   }
 
@@ -123,4 +136,16 @@
   .shell-main .page {
     padding-bottom: 3rem;
   }
+}
+
+/* Faixa do modo demonstração (só em desenvolvimento) */
+.demo-bar {
+  max-width: none;
+  margin: 0;
+  padding: 0.45rem 16px;
+  font-size: var(--step--1);
+  font-weight: 600;
+  text-align: center;
+  background: var(--marker);
+  color: var(--marker-ink);
 }

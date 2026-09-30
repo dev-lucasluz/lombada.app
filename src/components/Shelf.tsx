@@ -12,7 +12,7 @@ type ShelfProps = {
 export function SpineStrip({ total, owned, color }: ShelfProps) {
   const count = Math.max(total, 1);
   return (
-    <div className="strip" style={{ "--spine": color } as CSSProperties} aria-hidden="true">
+    <div className={count > 40 ? "strip is-dense" : "strip"} style={{ "--spine": color } as CSSProperties} aria-hidden="true">
       {Array.from({ length: count }, (_, i) => (
         <span key={i} className={owned.has(i + 1) ? "strip-spine is-owned" : "strip-spine"} />
       ))}

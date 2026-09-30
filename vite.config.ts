@@ -8,5 +8,7 @@ export default defineConfig({
     // As rotas /api (foto e voz) rodam no servidor local da Cloudflare:
     // deixe `npm run pages:dev` aberto em outro terminal para testá-las.
     proxy: { "/api": "http://localhost:8788" },
+    // No Windows o observador de arquivos às vezes perde alterações; a varredura é mais confiável.
+    watch: { usePolling: true, interval: 300 },
   },
 });

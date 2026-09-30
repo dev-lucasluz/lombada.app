@@ -1,8 +1,9 @@
 import { Suspense } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import { Icon, type IconName } from "./Icon";
 import { useAuth } from "../lib/auth";
 import { ThemeToggle } from "./ThemeToggle";
+import { isDemo } from "../lib/demo";
 import "./AppShell.css";
 
 const NAV: { to: string; label: string; icon: IconName }[] = [
@@ -20,9 +21,9 @@ export function AppShell() {
   return (
     <div className="shell">
       <nav className="shell-nav" aria-label="Navegação principal">
-        <span className="shell-brand" aria-hidden="true">
-          <img src="/favicon.svg" alt="" width={36} height={36} />
-        </span>
+        <Link to="/" className="shell-brand" title="Voltar para o início" aria-label="Lombada, voltar para o início">
+          <img src="/favicon.svg" alt="" width={40} height={40} />
+        </Link>
         <ul>
           {NAV.map((item) => (
             <li key={item.to}>
@@ -42,6 +43,11 @@ export function AppShell() {
         </div>
       </nav>
       <main className="shell-main">
+        {isDemo && (
+          <p className="demo-bar" role="status">
+            Modo demonstração: dados de exemplo só neste navegador, nada vai para o Supabase. “Sair” restaura os dados.
+          </p>
+        )}
         <Suspense fallback={<div className="page"><p className="muted">Carregando…</p></div>}>
           <Outlet />
         </Suspense>
