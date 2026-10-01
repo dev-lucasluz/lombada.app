@@ -5,6 +5,7 @@ import { useAuth } from "../lib/auth";
 import { ThemeToggle } from "./ThemeToggle";
 import { isDemo } from "../lib/demo";
 import { QuickAddJobProvider } from "../lib/quickAddJob";
+import { useAvatar } from "../lib/useAvatar";
 import { FeedbackNotice } from "./FeedbackNotice";
 import { FeedbackButton } from "./FeedbackButton";
 import "./AppShell.css";
@@ -20,8 +21,8 @@ const NAV: { to: string; label: string; icon: IconName; only?: "desktop" | "mobi
 ];
 
 export function AppShell() {
-  const { signOut, session } = useAuth();
-  const avatar = session?.user.user_metadata?.avatar_url as string | undefined;
+  const { signOut } = useAuth();
+  const avatar = useAvatar();
 
   return (
     <QuickAddJobProvider>
@@ -42,7 +43,7 @@ export function AppShell() {
         </ul>
         <div className="shell-tools">
           <NavLink to="/perfil" className="shell-tool shell-profile" title="Meu perfil">
-            {avatar ? <img src={avatar} alt="" width={28} height={28} /> : <Icon name="user" />}
+            {avatar ? <img src={avatar} alt="" width={28} height={28} referrerPolicy="no-referrer" style={{ borderRadius: "50%", objectFit: "cover" }} /> : <Icon name="user" />}
             <span>Perfil</span>
           </NavLink>
           <ThemeToggle className="shell-tool" withLabel />

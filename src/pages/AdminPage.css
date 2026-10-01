@@ -17,3 +17,5 @@
 .feedback-kind.kind-erro { color: var(--accent); }
 
 .feedback-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.feedback-photo img { max-width: min(100%, 520px); border-radius: var(--radius-m); border: 1px solid var(--line); }

@@ -2,10 +2,13 @@ import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { authErrorMessage, useAuth } from "../lib/auth";
-import { disableShare, enableShare, getShareToken, isAdmin, listCollection, listReading, renewShare } from "../lib/db";
+import { disableShare, enableShare, getMyAvatar, getShareToken, isAdmin, listCollection, listReading, renewShare, setMyAvatar } from "../lib/db";
 import { missingVolumes } from "../lib/ranges";
 import { isStandalone } from "../components/BookShelf";
+import { Icon } from "../components/Icon";
 import { isDemo } from "../lib/demo";
+import { useAvatar } from "../lib/useAvatar";
+import { prepareAvatar } from "../lib/quickAdd";
 import { seriesHues, volumeColor } from "../lib/spineColor";
 import { PasswordInput } from "../components/PasswordInput";
 import "./pages.css";
@@ -51,6 +54,18 @@ export function ProfilePage() {
     URL.revokeObjectURL(url);
   };
 
+  const qc = useQueryClient();
+  const avatarUrl = useAvatar();
+  const customPhoto = useQuery({ queryKey: ["profile-avatar"], queryFn: getMyAvatar, staleTime: 5 * 60_000 });
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const savePhoto = useMutation({
+    mutationFn: async (file: File | null) => setMyAvatar(file ? await prepareAvatar(file) : null),
+    onSuccess: () => {
+      setPhotoError(null);
+      qc.invalidateQueries({ queryKey: ["profile-avatar"] });
+    },
+    onError: (err) => setPhotoError(err instanceof Error ? err.message : "Não foi possível salvar a foto."),
+  });
   const hasPassword = ((user?.app_metadata?.providers as string[] | undefined) ?? ["email"]).includes("email");
 
   return (
@@ -58,11 +73,33 @@ export function ProfilePage() {
       <section className="profile-hero" aria-labelledby="profile-name">
         <div className="profile-hero-top">
           <div className="profile-who">
-            <span className="profile-avatar" aria-hidden="true">{displayName.slice(0, 1).toLocaleUpperCase("pt-BR")}</span>
+            <div className="profile-photo">
+              <label className="profile-photo-pick" title="Trocar a foto">
+                <Avatar url={avatarUrl} name={displayName} />
+                <span className="profile-photo-badge" aria-hidden="true"><Icon name="camera" size={16} /></span>
+                <span className="visually-hidden">Trocar a foto do perfil</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="visually-hidden"
+                  disabled={isDemo || savePhoto.isPending}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (file) savePhoto.mutate(file);
+                  }}
+                />
+              </label>
+            </div>
             <div className="profile-id">
               <h1 id="profile-name">{displayName}</h1>
               <span>{user?.email ?? ""}</span>
               {memberSince && <small>No Lombada desde {memberSince}</small>}
+              {savePhoto.isPending && <small role="status">Salvando a foto…</small>}
+              {photoError && <small className="error" role="alert">{photoError}</small>}
+              {customPhoto.data && !savePhoto.isPending && (
+                <button type="button" className="profile-photo-remove" onClick={() => savePhoto.mutate(null)}>Remover foto</button>
+              )}
             </div>
           </div>
 
@@ -139,6 +176,25 @@ export function ProfilePage() {
       </div>
     </div>
   );
+}
+
+/** Foto da conta Google; sem foto (ou se ela falhar ao carregar), a inicial do nome. */
+function Avatar({ url, name }: { url: string | null; name: string }) {
+  const [failed, setFailed] = useState(false);
+  if (url && !failed) {
+    return (
+      <img
+        className="profile-avatar is-photo"
+        src={url}
+        alt={`Foto de ${name}`}
+        width={72}
+        height={72}
+        referrerPolicy="no-referrer"
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+  return <span className="profile-avatar" aria-hidden="true">{name.slice(0, 1).toLocaleUpperCase("pt-BR")}</span>;
 }
 
 /** A coleção inteira como uma faixa de lombadas: uma por volume, nas cores da Coleção. */

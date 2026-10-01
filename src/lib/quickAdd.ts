@@ -232,3 +232,60 @@ export async function saveToCollection(target: MatchTarget, owned: number[], mis
   await setVolumesOwned(collectionId, missing, false);
   return collectionId;
 }
+
+/**
+ * Prepara a foto do feedback: redesenha numa imagem nova (isso apaga localização e outros dados
+ * escondidos da foto original), reduz para caber e devolve um JPEG em data URL de até ~330 KB.
+ */
+export async function prepareFeedbackImage(file: File): Promise<string> {
+  if (!/^image\/(jpeg|png|webp|heic|heif)$/i.test(file.type)) throw new Error("Use uma imagem JPG, PNG ou WebP.");
+  if (file.size > 8 * 1024 * 1024) throw new Error("A imagem é muito grande (mais de 8 MB).");
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    throw new Error("Não foi possível abrir essa imagem. Tente um JPG ou PNG.");
+  }
+  const MAX_CHARS = 440_000;
+  for (const maxSide of [1280, 1024, 800]) {
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#fff"; // PNG com fundo transparente vira fundo branco
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    for (const quality of [0.8, 0.65, 0.5]) {
+      const url = canvas.toDataURL("image/jpeg", quality);
+      if (url.length <= MAX_CHARS) return url;
+    }
+  }
+  throw new Error("Não foi possível reduzir a imagem o bastante. Tente outra foto.");
+}
+
+/**
+ * Prepara a foto de perfil: recorta um quadrado do centro, reduz para 256 px e converte para
+ * JPEG (o que também apaga localização e outros dados escondidos da foto original).
+ */
+export async function prepareAvatar(file: File): Promise<string> {
+  if (!/^image\/(jpeg|png|webp|heic|heif)$/i.test(file.type)) throw new Error("Use uma imagem JPG, PNG ou WebP.");
+  if (file.size > 8 * 1024 * 1024) throw new Error("A imagem é muito grande (mais de 8 MB).");
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    throw new Error("Não foi possível abrir essa imagem. Tente um JPG ou PNG.");
+  }
+  const side = Math.min(bitmap.width, bitmap.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, 256, 256);
+  ctx.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, 256, 256);
+  const url = canvas.toDataURL("image/jpeg", 0.85);
+  if (url.length > 80_000) throw new Error("Não foi possível reduzir a imagem o bastante. Tente outra.");
+  return url;
+}

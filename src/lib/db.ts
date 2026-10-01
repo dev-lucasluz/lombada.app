@@ -312,17 +312,26 @@ export type Feedback = {
   user_agent: string | null;
   status: FeedbackStatus;
   created_at: string;
+  /** Há foto anexada (a imagem em si só é baixada quando o admin pede). */
+  has_image?: boolean;
 };
 
-export async function sendFeedback(input: { kind: FeedbackKind; message: string }) {
+export async function sendFeedback(input: { kind: FeedbackKind; message: string; image?: string | null }) {
   if (isDemo) return;
   const { error } = await supabase.from("feedback").insert({
     kind: input.kind,
     message: input.message,
     page: window.location.pathname.slice(0, 200),
     user_agent: navigator.userAgent.slice(0, 300),
+    ...(input.image ? { image_data: input.image } : {}),
   });
   if (error) {
+    if (input.image && (error.code === "PGRST204" || error.code === "42703")) {
+      throw new Error("O envio de fotos ainda não foi ativado neste servidor. Envie só o texto.");
+    }
+    if (error.code === "23514") {
+      throw new Error("A foto não foi aceita. Tente outra imagem (JPG ou PNG).");
+    }
     throw new Error(
       error.code === "42P01" || error.code === "PGRST205"
         ? "O envio de feedback ainda não foi ativado neste servidor."
@@ -337,10 +346,26 @@ export async function isAdmin(): Promise<boolean> {
   return !error && data === true;
 }
 
+const FEEDBACK_COLUMNS = "id, user_email, kind, message, page, user_agent, status, created_at";
+
+/** Lista sem as imagens (pesadas): `has_image` indica se há foto para baixar depois. */
 export async function listFeedback(): Promise<Feedback[]> {
-  const { data, error } = await supabase.from("feedback").select("*").order("created_at", { ascending: false }).limit(300);
+  const query = (columns: string) =>
+    supabase.from("feedback").select(columns).order("created_at", { ascending: false }).limit(300);
+  let result = await query(`${FEEDBACK_COLUMNS}, has_image`);
+  // Migração 0011 ainda não rodou: lista sem a informação de foto.
+  if (result.error && (result.error.code === "42703" || result.error.code === "PGRST204")) {
+    result = await query(FEEDBACK_COLUMNS);
+  }
+  if (result.error) throw new Error(result.error.message);
+  return result.data as unknown as Feedback[];
+}
+
+/** Baixa a foto de um feedback (só o administrador consegue). */
+export async function getFeedbackImage(id: string): Promise<string | null> {
+  const { data, error } = await supabase.from("feedback").select("image_data").eq("id", id).maybeSingle();
   if (error) throw new Error(error.message);
-  return data as Feedback[];
+  return (data as { image_data: string | null } | null)?.image_data ?? null;
 }
 
 export async function setFeedbackStatus(id: string, status: FeedbackStatus) {
@@ -427,4 +452,31 @@ export async function listFeedbackUpdates(): Promise<FeedbackUpdate[]> {
 
 export async function ackFeedback(id: string) {
   await supabase.rpc("ack_feedback", { feedback_id: id });
+}
+
+// ---------------------------------------------------------------------------
+// Foto de perfil (migração 0012)
+// ---------------------------------------------------------------------------
+export async function getMyAvatar(): Promise<string | null> {
+  if (isDemo) return null;
+  const uid = (await supabase.auth.getUser()).data.user?.id;
+  if (!uid) return null;
+  const { data, error } = await supabase.from("profiles").select("avatar_url").eq("id", uid).maybeSingle();
+  if (error) return null;
+  return (data as { avatar_url: string | null } | null)?.avatar_url ?? null;
+}
+
+/** Salva a foto (JPEG em data URL, já reduzida) ou apaga com nulo. */
+export async function setMyAvatar(url: string | null) {
+  if (isDemo) return;
+  const uid = (await supabase.auth.getUser()).data.user?.id;
+  if (!uid) throw new Error("Sua sessão expirou. Entre de novo.");
+  const { error } = await supabase.from("profiles").update({ avatar_url: url }).eq("id", uid);
+  if (error) {
+    throw new Error(
+      error.code === "23514"
+        ? "A foto não foi aceita. Tente outra imagem (JPG ou PNG)."
+        : "Não foi possível salvar a foto agora. Tente de novo.",
+    );
+  }
 }

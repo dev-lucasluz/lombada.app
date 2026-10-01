@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { deleteFeedback, isAdmin, listFeedback, setFeedbackStatus, type Feedback, type FeedbackStatus } from "../lib/db";
+import { deleteFeedback, getFeedbackImage, isAdmin, listFeedback, setFeedbackStatus, type Feedback, type FeedbackStatus } from "../lib/db";
 import "./pages.css";
 import "./AdminPage.css";
 
@@ -78,6 +78,7 @@ function FeedbackRow({ f, onStatus, onDelete }: { f: Feedback; onStatus: (s: Fee
         {f.page && <span>em {f.page}</span>}
       </div>
       <p className="feedback-text">{f.message}</p>
+      {f.has_image && <FeedbackPhoto id={f.id} />}
       {f.user_agent && <small className="hint">{f.user_agent}</small>}
       <div className="head-actions">
         {f.status !== "lido" && <button className="btn btn-ghost" onClick={() => onStatus("lido")}>Marcar como lido</button>}
@@ -86,5 +87,24 @@ function FeedbackRow({ f, onStatus, onDelete }: { f: Feedback; onStatus: (s: Fee
         <button className="btn btn-ghost" onClick={onDelete}>Apagar</button>
       </div>
     </li>
+  );
+}
+
+/** A foto só é baixada quando o administrador clica (a lista não carrega todas de uma vez). */
+function FeedbackPhoto({ id }: { id: string }) {
+  const [open, setOpen] = useState(false);
+  const photo = useQuery({ queryKey: ["feedback-photo", id], queryFn: () => getFeedbackImage(id), enabled: open, staleTime: Infinity });
+  return (
+    <div className="feedback-photo">
+      {!open ? (
+        <button className="btn btn-ghost" onClick={() => setOpen(true)}>Ver foto anexada</button>
+      ) : photo.isLoading ? (
+        <span className="muted">Carregando a foto…</span>
+      ) : photo.data ? (
+        <img src={photo.data} alt="Foto anexada ao feedback" />
+      ) : (
+        <span className="error">Não foi possível carregar a foto.</span>
+      )}
+    </div>
   );
 }

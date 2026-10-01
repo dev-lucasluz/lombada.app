@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { sendFeedback, type FeedbackKind } from "../lib/db";
+import { prepareFeedbackImage } from "../lib/quickAdd";
 import "./FeedbackButton.css";
 
 const KINDS: { value: FeedbackKind; label: string }[] = [
@@ -20,11 +21,19 @@ export function FeedbackButton() {
   const [kind, setKind] = useState<FeedbackKind>("ideia");
   const [message, setMessage] = useState("");
   const textRef = useRef<HTMLTextAreaElement>(null);
+  // Foto opcional, já reduzida e convertida para JPEG (data URL).
+  const [image, setImage] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [preparing, setPreparing] = useState(false);
 
   const send = useMutation({ mutationFn: sendFeedback });
 
   const close = () => {
-    if (send.isSuccess) setMessage("");
+    if (send.isSuccess) {
+      setMessage("");
+      setImage(null);
+    }
+    setImageError(null);
     send.reset();
     setOpen(false);
   };
@@ -40,7 +49,23 @@ export function FeedbackButton() {
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    send.mutate({ kind, message: message.trim() });
+    send.mutate({ kind, message: message.trim(), image });
+  };
+
+  const onPickImage = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setImageError(null);
+    setPreparing(true);
+    try {
+      setImage(await prepareFeedbackImage(file));
+    } catch (err) {
+      setImage(null);
+      setImageError(err instanceof Error ? err.message : "Não foi possível usar essa imagem.");
+    } finally {
+      setPreparing(false);
+    }
   };
 
   return (
@@ -85,6 +110,21 @@ export function FeedbackButton() {
                     onChange={(e) => setMessage(e.target.value)}
                   />
                 </div>
+                <div className="feedback-attach">
+                  {image ? (
+                    <div className="feedback-thumb">
+                      <img src={image} alt="Foto anexada ao feedback" />
+                      <button type="button" className="btn btn-ghost" onClick={() => setImage(null)}>Remover foto</button>
+                    </div>
+                  ) : (
+                    <label className={preparing ? "btn btn-ghost is-busy" : "btn btn-ghost"}>
+                      {preparing ? "Preparando a foto…" : "Anexar foto (opcional)"}
+                      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={onPickImage} disabled={preparing} className="visually-hidden" />
+                    </label>
+                  )}
+                  <small className="hint">Só você e o administrador do Lombada veem a foto. Não envie dados pessoais, como documentos.</small>
+                </div>
+                {imageError && <p className="error" role="alert">{imageError}</p>}
                 {send.error && <p className="error" role="alert">{(send.error as Error).message}</p>}
                 <div className="head-actions">
                   <button className="btn btn-primary" type="submit" disabled={send.isPending || message.trim().length < 3}>
