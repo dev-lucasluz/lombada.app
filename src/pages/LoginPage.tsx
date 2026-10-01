@@ -130,6 +130,9 @@ export function LoginPage() {
 
 type Mode = "signin" | "signup" | "forgot";
 
+/** Os e-mails de conta costumam cair no spam nos primeiros envios (remetente novo). */
+const SPAM_HINT = "Não chegou em alguns minutos? Veja a caixa de spam ou de lixo eletrônico e marque como “não é spam”.";
+
 const MODE_SUBMIT: Record<Mode, string> = {
   signin: "Entrar",
   signup: "Criar conta",
@@ -172,7 +175,7 @@ function AuthPanel() {
     setError(null);
     try {
       await resendConfirmation(form.email.trim());
-      setNotice(`Enviamos um novo link de confirmação para ${form.email.trim()}. Use o link mais recente.`);
+      setNotice(`Enviamos um novo link de confirmação para ${form.email.trim()}. Use o link mais recente. ${SPAM_HINT}`);
       setCanResend(false);
     } catch (err) {
       setError(authErrorMessage(err));
@@ -192,12 +195,12 @@ function AuthPanel() {
       } else if (mode === "signup") {
         const needsConfirmation = await signUp(form.name.trim(), form.email.trim(), form.password);
         if (needsConfirmation) {
-          setNotice(`Enviamos um link de confirmação para ${form.email.trim()}. Abra o e-mail para ativar a conta.`);
+          setNotice(`Enviamos um link de confirmação para ${form.email.trim()}. Abra o e-mail para ativar a conta. ${SPAM_HINT}`);
           setCanResend(true);
         }
       } else {
         await sendPasswordReset(form.email.trim());
-        setNotice(`Se existir uma conta com ${form.email.trim()}, você vai receber um link para criar uma nova senha.`);
+        setNotice(`Se existir uma conta com ${form.email.trim()}, você vai receber um link para criar uma nova senha. ${SPAM_HINT}`);
       }
     } catch (err) {
       setError(authErrorMessage(err));
