@@ -108,12 +108,24 @@ type OpenLibraryDoc = {
  * esgotado, então fica só como reserva.
  */
 export async function searchBooks(term: string): Promise<CatalogResult[]> {
-  try {
-    return await searchOpenLibrary(term);
-  } catch {
-    return searchGoogleBooks(term);
+  // Com chave própria (VITE_GOOGLE_BOOKS_API_KEY) o Google Books vem primeiro: tem
+  // lançamentos recentes e edições brasileiras. Sem chave, a cota é compartilhada
+  // com o mundo todo e quase sempre esgotada, então o Open Library lidera.
+  const order = GOOGLE_BOOKS_KEY ? [searchGoogleBooks, searchOpenLibrary] : [searchOpenLibrary, searchGoogleBooks];
+  let firstError: unknown = null;
+  for (const search of order) {
+    try {
+      const results = await search(term);
+      if (results.length > 0) return results;
+    } catch (err) {
+      firstError ??= err;
+    }
   }
+  if (firstError) throw firstError;
+  return [];
 }
+
+const GOOGLE_BOOKS_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY as string | undefined;
 
 async function searchOpenLibrary(term: string): Promise<CatalogResult[]> {
   const params = new URLSearchParams({
@@ -148,6 +160,7 @@ async function searchOpenLibrary(term: string): Promise<CatalogResult[]> {
 
 async function searchGoogleBooks(term: string): Promise<CatalogResult[]> {
   const params = new URLSearchParams({ q: term, maxResults: "12", printType: "books", langRestrict: "pt" });
+  if (GOOGLE_BOOKS_KEY) params.set("key", GOOGLE_BOOKS_KEY);
   const res = await fetch(`https://www.googleapis.com/books/v1/volumes?${params}`);
   if (!res.ok) throw new Error("A busca de livros está fora do ar agora. Tente de novo em alguns minutos.");
   const json = (await res.json()) as { items?: GoogleBooksItem[] };

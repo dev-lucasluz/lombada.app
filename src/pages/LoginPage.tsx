@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type FormEvent } from "react";
 import { authErrorMessage, useAuth } from "../lib/auth";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { PasswordInput } from "../components/PasswordInput";
 import { Icon, type IconName } from "../components/Icon";
 import "./LoginPage.css";
 
@@ -27,7 +28,7 @@ const FEATURES: { icon: IconName; title: string; text: string; soon?: boolean }[
   { icon: "search", title: "Busca no catálogo", text: "Capa, autor e total de volumes de mangás e livros vêm prontos." },
   { icon: "list", title: "Lista de compras", text: "Tudo o que falta, série por série, para levar à loja." },
   { icon: "book", title: "Onde parei", text: "Anote o capítulo em que parou nos mangás que lê em outros sites." },
-  { icon: "bell", title: "Lembretes", text: "Escolha um dia para ser avisado, como a volta de um hiato." },
+  { icon: "bell", title: "Lembretes", text: "Marque um dia, como a volta de um hiato, e ele aparece no seu Início." },
   { icon: "camera", title: "Foto da estante", text: "Fotografe a prateleira e o app lê as lombadas para você revisar." },
   { icon: "mic", title: "Cadastro por voz", text: "Diga “tenho Naruto do 1 ao 10” e revise antes de salvar." },
   { icon: "user", title: "Perfil e backup", text: "Veja o resumo da coleção e baixe tudo em uma planilha." },
@@ -222,10 +223,8 @@ function AuthPanel() {
         {mode !== "forgot" && (
           <div className="field">
             <label htmlFor="auth-password">Senha</label>
-            <input
+            <PasswordInput
               id="auth-password"
-              className="input"
-              type="password"
               autoComplete={mode === "signup" ? "new-password" : "current-password"}
               minLength={mode === "signup" ? 8 : undefined}
               required
@@ -294,7 +293,7 @@ export function ResetPasswordPage() {
         <form className="auth auth-form" onSubmit={handleSubmit}>
           <div className="field">
             <label htmlFor="new-password">Nova senha</label>
-            <input id="new-password" className="input" type="password" autoComplete="new-password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <PasswordInput id="new-password" autoComplete="new-password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} />
             <span className="auth-hint">Pelo menos 8 caracteres.</span>
           </div>
           <button type="submit" className="btn btn-primary" disabled={busy}>

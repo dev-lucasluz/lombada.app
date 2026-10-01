@@ -6,6 +6,7 @@ import { missingVolumes } from "../lib/ranges";
 import { isStandalone } from "../components/BookShelf";
 import { isDemo } from "../lib/demo";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { PasswordInput } from "../components/PasswordInput";
 import "./pages.css";
 import "./ProfilePage.css";
 
@@ -184,11 +185,11 @@ function PasswordForm({ onSave, disabled }: { onSave: (password: string) => Prom
       <div className="form-grid">
         <div className="field">
           <label htmlFor="p-pass">Nova senha</label>
-          <input id="p-pass" className="input" type="password" minLength={8} required autoComplete="new-password" value={password} onChange={(e) => { setPassword(e.target.value); setState("idle"); }} disabled={disabled} />
+          <PasswordInput id="p-pass" minLength={8} required autoComplete="new-password" value={password} onChange={(e) => { setPassword(e.target.value); setState("idle"); }} disabled={disabled} />
         </div>
         <div className="field">
           <label htmlFor="p-pass2">Repita a nova senha</label>
-          <input id="p-pass2" className="input" type="password" minLength={8} required autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} disabled={disabled} />
+          <PasswordInput id="p-pass2" minLength={8} required autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} disabled={disabled} />
         </div>
       </div>
       <p className="hint">Pelo menos 8 caracteres.</p>

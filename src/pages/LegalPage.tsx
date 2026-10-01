@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import "./pages.css";
 
-// E-mail público de contato exibido nas páginas legais. TODO: trocar pelo e-mail que o dono do app escolher.
-const CONTACT_EMAIL = "contato@lombada.app";
+// E-mail público de contato exibido nas páginas legais.
+const CONTACT_EMAIL = "suporte.synapsequiz@gmail.com";
 const UPDATED_AT = "30 de setembro de 2026";
 
 function LegalLayout({ title, children }: { title: string; children: React.ReactNode }) {
