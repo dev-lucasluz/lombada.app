@@ -45,7 +45,7 @@ src/
   components/   AppShell (navegação), VolumeGrid, SpineStrip, etc.
   pages/        Login, Colecao, Edicao, Adicionar, Leitura, Lembretes, Estante (foto)
   styles/       tokens e estilos globais
-functions/api/  scan-shelf.ts (Gemini)
+worker/api/     scan-shelf.ts e parse-voice.ts (Gemini)
 workers/reminders/  cron diário de lembretes
 supabase/migrations/  schema + RLS
 ```
