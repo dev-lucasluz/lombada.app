@@ -206,11 +206,16 @@ function Review({ items, setItems }: { items: ReviewItem[]; setItems: (fn: (prev
   useEffect(() => {
     if (!collection.data || !pendingKeys) return;
     let cancelled = false;
-    for (const it of items.filter((i) => i.targets === null)) {
-      suggestTargets(it.title, collection.data).then((targets) => {
+    // Uma busca por vez (com pausa curta): em paralelo o AniList recusa e as séries "somem".
+    const pending = items.filter((i) => i.targets === null);
+    (async () => {
+      for (const it of pending) {
+        if (cancelled) return;
+        const targets = await suggestTargets(it.title, collection.data);
         if (!cancelled) update(it.key, { targets, include: it.include && targets.length > 0 });
-      });
-    }
+        await new Promise((r) => setTimeout(r, 300));
+      }
+    })();
     return () => {
       cancelled = true;
     };

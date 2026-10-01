@@ -170,13 +170,28 @@ export function catalogTarget(r: CatalogResult): MatchTarget {
   };
 }
 
+/** O AniList limita requisições por minuto: numa foto com muitas séries, espera e tenta de novo. */
+async function searchWithRetry(term: string): Promise<CatalogResult[]> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await searchManga(term);
+    } catch (err) {
+      if (attempt >= 3 || !(err as { rateLimited?: boolean }).rateLimited) throw err;
+      await new Promise((r) => setTimeout(r, 2500 * (attempt + 1)));
+    }
+  }
+}
+
 /** Opções de destino: a série da coleção (se houver) e até 5 obras do catálogo. */
 export async function suggestTargets(title: string, collection: CollectionItem[]): Promise<MatchTarget[]> {
   const targets: MatchTarget[] = [];
   const own = findInCollection(title, collection);
   if (own) targets.push(collectionTarget(own));
   try {
-    const results = await searchManga(title);
+    let results = await searchWithRetry(title);
+    // Apóstrofos e pontuação atrapalham a busca ("Hell's Paradise"): tenta de novo sem eles.
+    const plain = title.replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
+    if (results.length === 0 && plain && plain !== title) results = await searchWithRetry(plain);
     targets.push(...results.slice(0, 5).map(catalogTarget));
   } catch {
     // Sem catálogo agora: fica só a opção da coleção (ou nenhuma).

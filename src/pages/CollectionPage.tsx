@@ -68,6 +68,7 @@ export function CollectionPage() {
           {data && data.length > 0 && (
             <Link to="/compras" className="btn btn-ghost">Lista de compras</Link>
           )}
+          <Link to="/foto-e-voz" className="btn btn-ghost">Adicionar por foto ou voz</Link>
           <Link to="/adicionar" className="btn btn-primary">Adicionar série</Link>
         </div>
       </header>

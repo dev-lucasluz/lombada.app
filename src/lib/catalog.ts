@@ -64,6 +64,11 @@ export async function searchManga(term: string, includeAdult = false): Promise<C
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({ query: ANILIST_QUERY, variables: includeAdult ? { search: term } : { search: term, adult: false } }),
   });
+  if (res.status === 429) {
+    const err = new Error("O AniList pediu para esperar um pouco. Tente de novo em alguns segundos.");
+    (err as Error & { rateLimited?: boolean }).rateLimited = true;
+    throw err;
+  }
   if (!res.ok) throw new Error("Não foi possível buscar no AniList agora. Tente de novo em alguns segundos.");
   const json = (await res.json()) as { data: { Page: { media: AniListMedia[] } } };
 
