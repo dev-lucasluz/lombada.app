@@ -46,8 +46,10 @@ export function PrivacyPage() {
         <h2>Onde os dados ficam</h2>
         <p>
           Os dados ficam no Supabase (banco de dados e login) e o site é servido pela Cloudflare. Cada pessoa só
-          acessa os próprios dados. As edições de mangás e livros (nome, editora, total de volumes) são um
-          catálogo compartilhado entre todos os usuários, sem ligação com quem as cadastrou.
+          acessa os próprios dados. A edição que você cadastra (nome, editora, total de volumes) só aparece para
+          você. Você também pode gerar, no Perfil, um link para mostrar a sua estante (obras, volumes que tem e
+          o nome que você escolheu, sem e-mail nem anotações e sem séries +18) a quem você enviar o link. Dá para
+          desligar o link a qualquer momento, e ele deixa de funcionar na hora.
         </p>
       </section>
       <section>

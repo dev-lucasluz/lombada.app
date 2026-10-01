@@ -72,6 +72,13 @@ export async function scanShelfPhoto(imageBase64: string): Promise<DetectedSerie
   return groupSpines(spines);
 }
 
+export type CoverRead = { found: boolean; title: string; author: string | null; kind: "manga" | "book" };
+
+/** Lê título e autor da capa de um livro ou mangá (a foto não é guardada). */
+export async function scanCoverPhoto(imageBase64: string): Promise<CoverRead> {
+  return postAi<CoverRead>("/api/scan-cover", { image: imageBase64, mimeType: "image/jpeg" });
+}
+
 /**
  * Só no modo demonstração (sem login não há IA): entende frases simples como
  * "tenho Naruto do 1 ao 10, falta o 11, tenho do 12 ao 20; One Piece do 1 ao 5".

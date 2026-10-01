@@ -10,7 +10,14 @@ export function VolumeCount({ owned, total }: { owned: number; total: number | n
   return (
     <span className={complete ? "volume-count is-complete" : "volume-count"} title={label} aria-label={label}>
       <span className="num">{owned}</span>
-      {total ? <span className="volume-count-total">/ {total}</span> : <span className="volume-count-total">vol.</span>}
+      {total ? (
+        <>
+          <span className="volume-count-sep" aria-hidden="true">/</span>
+          <span className="num volume-count-total">{total}</span>
+        </>
+      ) : (
+        <span className="volume-count-unit">vol.</span>
+      )}
     </span>
   );
 }

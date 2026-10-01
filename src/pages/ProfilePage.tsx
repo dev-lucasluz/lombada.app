@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { authErrorMessage, useAuth } from "../lib/auth";
-import { isAdmin, listCollection, listReading } from "../lib/db";
+import { disableShare, enableShare, getShareToken, isAdmin, listCollection, listReading, renewShare } from "../lib/db";
 import { missingVolumes } from "../lib/ranges";
 import { isStandalone } from "../components/BookShelf";
 import { isDemo } from "../lib/demo";
@@ -94,6 +94,8 @@ export function ProfilePage() {
           <p className="hint">Tema claro ou escuro, salvo neste aparelho.</p>
           <ThemeToggle className="btn btn-ghost" withLabel />
         </section>
+
+        {!isDemo && <SharePanel />}
 
         <PasswordForm onSave={updatePassword} disabled={isDemo} />
 
@@ -215,3 +217,65 @@ function PasswordForm({ onSave, disabled }: { onSave: (password: string) => Prom
   );
 }
 
+
+function SharePanel() {
+  const qc = useQueryClient();
+  const share = useQuery({ queryKey: ["share-token"], queryFn: getShareToken });
+  const [copied, setCopied] = useState(false);
+  const set = (token: string | null) => {
+    qc.setQueryData(["share-token"], token);
+    setCopied(false);
+  };
+  const enable = useMutation({ mutationFn: enableShare, onSuccess: set });
+  const renew = useMutation({ mutationFn: renewShare, onSuccess: set });
+  const disable = useMutation({ mutationFn: disableShare, onSuccess: () => set(null) });
+
+  const token = share.data ?? null;
+  const url = token ? `${window.location.origin}/estante/${token}` : "";
+  const error = (share.error ?? enable.error ?? renew.error ?? disable.error) as Error | null;
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <section className="panel">
+      <h2>Compartilhar minha estante</h2>
+      <p className="hint">
+        Gere um link para os amigos verem a sua estante, só para ler. Eles não precisam de conta. Não aparecem o seu
+        e-mail, as anotações nem as séries +18.
+      </p>
+      {token ? (
+        <>
+          <div className="field">
+            <label htmlFor="share-url">Link da sua estante</label>
+            <input id="share-url" className="input" readOnly value={url} onFocus={(e) => e.currentTarget.select()} />
+          </div>
+          <div className="head-actions">
+            <button className="btn btn-primary" onClick={copy}>{copied ? "Link copiado" : "Copiar link"}</button>
+            <button
+              className="btn btn-ghost"
+              disabled={renew.isPending}
+              onClick={() => confirm("Gerar um link novo? O link atual deixa de funcionar.") && renew.mutate()}
+            >
+              Gerar novo link
+            </button>
+            <button className="btn btn-ghost" disabled={disable.isPending} onClick={() => disable.mutate()}>
+              Parar de compartilhar
+            </button>
+          </div>
+        </>
+      ) : (
+        <button className="btn btn-primary" style={{ justifySelf: "start" }} disabled={enable.isPending || share.isLoading} onClick={() => enable.mutate()}>
+          Criar link para compartilhar
+        </button>
+      )}
+      {error && <p className="error" role="alert">{share.error ? "O compartilhamento ainda não foi ativado neste servidor." : error.message}</p>}
+    </section>
+  );
+}

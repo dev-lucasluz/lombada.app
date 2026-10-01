@@ -1,8 +1,10 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { searchBooks, searchManga, type CatalogResult } from "../lib/catalog";
 import { addToCollection, createEdition, ensureWork, listEditions, setVolumesOwned, type Edition, type Work } from "../lib/db";
+import { prepareImage, scanCoverPhoto } from "../lib/quickAdd";
+import { isDemo } from "../lib/demo";
 import { Icon } from "../components/Icon";
 import { Cover } from "./CollectionPage";
 import "./pages.css";
@@ -45,6 +47,33 @@ export function AddPage() {
     mutationFn: async (result: CatalogResult) => ({ work: await ensureWork(result), result }),
     onSuccess: setWork,
   });
+
+  // Foto da capa: a IA lê título e autor e a busca abaixo é preenchida sozinha.
+  const [coverState, setCoverState] = useState<"idle" | "reading">("idle");
+  const [coverError, setCoverError] = useState<string | null>(null);
+  const onCover = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setCoverError(null);
+    setCoverState("reading");
+    try {
+      const read = await scanCoverPhoto(await prepareImage(file));
+      if (!read.found) {
+        setCoverError("Não conseguimos ler o título nessa capa. Tente de frente, com boa luz e a capa inteira na foto.");
+      } else {
+        setKind(read.kind);
+        // Para livros, o autor ajuda a achar a edição certa; no AniList só o título funciona bem.
+        const next = read.kind === "book" && read.author ? `${read.title} ${read.author}` : read.title;
+        setTerm(next);
+        setSubmitted(next.trim());
+      }
+    } catch (err) {
+      setCoverError(err instanceof Error ? err.message : "A leitura da capa falhou.");
+    } finally {
+      setCoverState("idle");
+    }
+  };
 
   const onSearch = (e: FormEvent) => {
     e.preventDefault();
@@ -90,6 +119,18 @@ export function AddPage() {
           <Icon name="search" size={20} />
         </button>
       </form>
+
+      {!isDemo && (
+        <div className="cover-scan">
+          <label className={coverState === "reading" ? "btn btn-ghost is-busy" : "btn btn-ghost"}>
+            <Icon name="camera" size={18} />
+            {coverState === "reading" ? "Lendo a capa…" : "Buscar pela foto da capa"}
+            <input type="file" accept="image/*" capture="environment" onChange={onCover} disabled={coverState === "reading"} className="visually-hidden" />
+          </label>
+          {coverState === "reading" && <span className="hint" role="status">Leva alguns segundos.</span>}
+        </div>
+      )}
+      {coverError && <p className="error" role="alert">{coverError}</p>}
 
       {search.isFetching && !search.data && <p className="muted">Buscando…</p>}
       {search.error && <p className="error" role="alert">{(search.error as Error).message}</p>}

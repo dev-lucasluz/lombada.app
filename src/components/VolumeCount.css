@@ -1,25 +1,41 @@
+/* Etiqueta "tenho / total": o que você tem em peso normal, o total em negrito. Fonte Poppins. */
 .volume-count {
   flex: none;
   display: inline-flex;
   align-items: baseline;
   gap: 0.25rem;
-  padding: 0.1rem 0.55rem;
+  padding: 0.2rem 0.7rem;
   border: 1.5px solid var(--line);
-  border-radius: var(--radius-m);
+  border-radius: 999px;
   background: var(--surface);
   color: var(--ink);
-  font-size: var(--step--1);
-  line-height: 1.4;
+  font-family: "Poppins", var(--font-body, system-ui), sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .volume-count .num {
-  font-size: 1.05rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
 }
 
-.volume-count-total {
+.volume-count-sep {
+  color: var(--ink-faint);
+  font-weight: 500;
+}
+
+.volume-count .volume-count-total {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.volume-count-unit {
   color: var(--ink-soft);
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 
 .volume-count.is-complete {
@@ -28,6 +44,10 @@
   color: var(--marker-ink);
 }
 
-.volume-count.is-complete .volume-count-total {
+.volume-count.is-complete .volume-count-sep,
+.volume-count.is-complete .volume-count-total,
+.volume-count.is-complete .volume-count-unit {
   color: var(--marker-ink);
 }
+
+.volume-count.is-complete .volume-count-sep { opacity: 0.55; }

@@ -16,6 +16,20 @@
 }
 
 @font-face {
+  font-family: "Poppins";
+  src: url("/fonts/poppins-500.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Poppins";
+  src: url("/fonts/poppins-700.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Zen Kaku Gothic New";
   src: url("/fonts/zen-kaku-700.woff2") format("woff2");
   font-weight: 700;
@@ -47,7 +61,7 @@
   --case: #2b2b30;          /* móvel da estante (moldura e tábuas) */
   --halftone: radial-gradient(circle at center, rgb(255 255 255 / 0.14) 1.2px, transparent 1.6px) 0 0 / 9px 9px;
 
-  --font-display: "Anybody", "Arial Narrow", system-ui, sans-serif; /* marca, título do login, números */
+  --font-display: "Anybody", "Arial Narrow", system-ui, sans-serif; /* marca e título do login (os números usam Poppins) */
   --font-heading: "Zen Kaku Gothic New", "Geist", system-ui, sans-serif; /* títulos dentro do app */
   --font-body: "Geist", system-ui, sans-serif;
 
@@ -188,10 +202,10 @@ textarea {
   white-space: nowrap;
 }
 
+/* Números do site: Poppins (legível e de fácil leitura), em negrito. */
 .num {
-  font-family: var(--font-display);
+  font-family: "Poppins", var(--font-body);
   font-variant-numeric: tabular-nums;
-  font-stretch: 70%;
   font-weight: 700;
 }
 

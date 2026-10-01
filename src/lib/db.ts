@@ -352,3 +352,55 @@ export async function deleteFeedback(id: string) {
   const { error } = await supabase.from("feedback").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
+
+// ---------------------------------------------------------------------------
+// Compartilhar a estante por link (migração 0009)
+// ---------------------------------------------------------------------------
+export type SharedItem = {
+  id: string;
+  title: string;
+  cover_url: string | null;
+  authors: string[];
+  kind: WorkKind;
+  edition_name: string;
+  publisher: string | null;
+  total_volumes: number | null;
+  owned: number[];
+};
+
+export type SharedShelf = { owner: string; items: SharedItem[] };
+
+/** Código do link da própria pessoa; nulo se o compartilhamento está desligado. */
+export async function getShareToken(): Promise<string | null> {
+  if (isDemo) return null;
+  const { data, error } = await supabase.from("shelf_shares").select("token").maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as { token: string } | null)?.token ?? null;
+}
+
+export async function enableShare(): Promise<string> {
+  const { data, error } = await supabase.from("shelf_shares").upsert({}, { onConflict: "user_id" }).select("token").single();
+  if (error) throw new Error(error.message);
+  return (data as { token: string }).token;
+}
+
+/** Gera um código novo: o link antigo para de funcionar. */
+export async function renewShare(): Promise<string> {
+  const token = crypto.randomUUID();
+  const { error } = await supabase.from("shelf_shares").update({ token }).not("user_id", "is", null);
+  if (error) throw new Error(error.message);
+  return token;
+}
+
+export async function disableShare() {
+  const { error } = await supabase.from("shelf_shares").delete().not("user_id", "is", null);
+  if (error) throw new Error(error.message);
+}
+
+/** Estante pública pelo código do link (funciona sem login). Nulo se o link não existe mais. */
+export async function fetchSharedShelf(token: string): Promise<SharedShelf | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(token)) return null;
+  const { data, error } = await supabase.rpc("get_shared_shelf", { share_token: token });
+  if (error) throw new Error("Não foi possível abrir esta estante agora. Tente de novo em instantes.");
+  return (data as SharedShelf | null) ?? null;
+}
