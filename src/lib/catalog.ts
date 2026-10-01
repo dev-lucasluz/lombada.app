@@ -62,7 +62,7 @@ export async function searchManga(term: string, includeAdult = false): Promise<C
   const res = await fetch("https://graphql.anilist.co", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ query: ANILIST_QUERY, variables: { search: term, adult: includeAdult ? null : false } }),
+    body: JSON.stringify({ query: ANILIST_QUERY, variables: includeAdult ? { search: term } : { search: term, adult: false } }),
   });
   if (!res.ok) throw new Error("Não foi possível buscar no AniList agora. Tente de novo em alguns segundos.");
   const json = (await res.json()) as { data: { Page: { media: AniListMedia[] } } };
