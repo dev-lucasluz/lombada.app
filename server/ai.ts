@@ -55,7 +55,13 @@ export async function authorizeAndConsume(request: Request, env: AiEnv): Promise
     headers: { Authorization: auth, apikey: env.SUPABASE_PUBLISHABLE_KEY, "Content-Type": "application/json" },
     body: JSON.stringify({ daily_limit: limit }),
   });
-  if (!quotaRes.ok) throw new HttpError(502, "Não foi possível verificar sua cota. Tente de novo.");
+  if (!quotaRes.ok) {
+    console.error("consume_scan_quota", quotaRes.status, await quotaRes.text());
+    throw new HttpError(
+      502,
+      `Não foi possível verificar sua cota (o banco respondeu ${quotaRes.status}). Se persistir, confira se os SQLs do Supabase foram executados.`,
+    );
+  }
   if (!(await quotaRes.json())) {
     throw new HttpError(429, `Você já usou as ${limit} leituras por IA de hoje. Amanhã a cota renova.`);
   }
@@ -81,7 +87,16 @@ export async function callGemini<T>(env: AiEnv, parts: GeminiPart[], responseSch
   }
   if (!res.ok) {
     console.error("Gemini", res.status, await res.text());
-    throw new HttpError(502, "A leitura por IA falhou. Tente de novo.");
+    // Diz o que o Gemini respondeu, para o problema ser achado rápido (sem expor chaves)
+    const hint =
+      res.status === 400 || res.status === 403
+        ? "A chave GEMINI_API_KEY foi recusada: confira se é a chave do Google AI Studio e se está sem espaços."
+        : res.status === 404
+          ? "O modelo não existe: confira GEMINI_MODEL."
+          : res.status === 503
+            ? "O Gemini está sobrecarregado agora."
+            : "Tente de novo em alguns minutos.";
+    throw new HttpError(502, `A leitura por IA falhou (o Gemini respondeu ${res.status}). ${hint}`);
   }
 
   const body = (await res.json()) as {

@@ -53,7 +53,8 @@ async function postAi<T>(path: string, body: unknown): Promise<T> {
   }
   const json = await res.json().catch(() => null);
   if (!res.ok || json === null) {
-    if (res.status === 404 || res.status === 502 || json === null) {
+    // Só quando NÃO há servidor de verdade (rota inexistente ou resposta que não é JSON)
+    if (res.status === 404 || json === null) {
       throw new Error("A leitura por IA só funciona com o servidor da Cloudflare (npm run pages:dev ou o site publicado).");
     }
     throw new Error(json?.error ?? "A leitura por IA falhou. Tente de novo.");
