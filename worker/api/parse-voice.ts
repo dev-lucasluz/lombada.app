@@ -41,7 +41,7 @@ const clean = (list: unknown) =>
     .filter((n) => Number.isInteger(n) && n > 0 && n <= 999)
     .sort((a, b) => a - b);
 
-export const onRequestPost: PagesFunction<AiEnv> = async ({ request, env }) => {
+export async function handleParseVoice(request: Request, env: AiEnv): Promise<Response> {
   try {
     let body: { text?: string };
     try {
@@ -63,4 +63,4 @@ export const onRequestPost: PagesFunction<AiEnv> = async ({ request, env }) => {
   } catch (err) {
     return toResponse(err);
   }
-};
+}

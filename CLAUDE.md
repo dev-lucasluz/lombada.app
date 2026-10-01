@@ -13,7 +13,7 @@ App de coleção de mangás/livros físicos e histórico de leitura online. Leia
 - React 19 + Vite + TypeScript, React Router, TanStack Query. SPA estática.
 - Supabase acessado direto do navegador (`src/lib/supabase.ts`); a segurança é por RLS em `supabase/migrations/`. Toda tabela nova precisa de RLS e política.
 - Consultas ficam em `src/lib/db.ts` (tipos espelham o SQL). Páginas não chamam `supabase.from` diretamente.
-- Segredos só em `functions/` (Pages Functions) e `workers/reminders/` (Worker com cron). Nunca a secret key (`sb_secret_...`) no front.
+- Segredos só em `worker/` (Worker da Cloudflare: `worker/index.ts` roteia `/api/*`, handlers em `worker/api/`) e `workers/reminders/` (Worker com cron). Nunca a secret key (`sb_secret_...`) no front.
 - Catálogo externo sem chave: AniList (mangá) e Open Library (livro; Google Books só como reserva, porque sem chave a cota é compartilhada e vive esgotada), em `src/lib/catalog.ts`.
 - Modelo de dados: `works` (obra) → `editions` (edição BR, compartilhada e editável) → `collections` (usuário tem a edição) → `owned_volumes`.
 
@@ -31,7 +31,7 @@ App de coleção de mangás/livros físicos e histórico de leitura online. Leia
 ## Comandos
 - `npm run dev` — front em http://localhost:5173
 - `npm run build` — typecheck (`tsc -b`) + build. Rode antes de dar uma tarefa por concluída.
-- `npm run pages:dev` — build + Functions (foto e voz) em http://localhost:8788; com ele aberto, o `npm run dev` repassa `/api` para lá
+- `npm run pages:dev` — build + Worker (foto e voz, `wrangler dev`) em http://localhost:8788; com ele aberto, o `npm run dev` repassa `/api` para lá
 - `npm run dev:demo` — **modo demonstração** em http://localhost:5174: pula o login e usa dados de exemplo no navegador (`src/lib/demo.ts`), para testar as telas internas sem conta. Voz usa um interpretador local simples; foto não funciona nesse modo. Só existe em desenvolvimento (`import.meta.env.DEV`); confira com `grep -r lombada-demo dist/` após o build que nada vazou.
 
 ## Próximos passos (em ordem)

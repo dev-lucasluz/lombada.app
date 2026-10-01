@@ -12,7 +12,7 @@ npm run dev                  # http://localhost:5173
 
 Para testar **foto e voz** localmente (Pages Functions + Gemini):
 1. Copie `.dev.vars.example` para `.dev.vars` e preencha (a `GEMINI_API_KEY` vem do AI Studio).
-2. Em um terminal: `npm run pages:dev` (servidor da Cloudflare em http://localhost:8788).
+2. Em um terminal: `npm run pages:dev` (site + rotas `/api` pelo Worker, em http://localhost:8788).
 3. Em outro: `npm run dev` e abra http://localhost:5173. As chamadas `/api` são repassadas para o 8788.
 
 Para ver as telas internas sem fazer login, use o **modo demonstração** (dados de exemplo só no navegador, nada vai para o Supabase):
@@ -45,14 +45,14 @@ O e-mail padrão do Supabase só entrega para os membros do projeto e tem limite
    - *Site URL*: a URL de produção (ex.: `https://lombada.pages.dev`)
    - *Redirect URLs*: adicione `http://localhost:5173` e a URL de produção.
 
-### 3. Cloudflare Pages (hospedagem)
-1. Crie uma conta em cloudflare.com.
-2. `npx wrangler login` e depois `npm run pages:deploy` (a primeira vez cria o projeto `lombada`).
-3. Em **Pages → lombada → Settings → Variables and Secrets**, adicione:
-   - `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (usadas no build)
-   - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `SCAN_DAILY_LIMIT` (usadas pela função da foto)
-
-   Alternativa: conectar o repositório do GitHub em **Pages → Create → Connect to Git** (build: `npm run build`, saída: `dist`) para publicar a cada push.
+### 3. Cloudflare (Workers + site estático, ligado ao GitHub)
+1. Em dash.cloudflare.com → **Workers & Pages → Create → Import a repository** → escolha o repositório. Cada `git push` na `main` publica sozinho.
+2. Comandos: build `npm run build`, deploy `npx wrangler deploy` (o `wrangler.toml` já configura tudo).
+3. **Settings → Build → Variables and secrets** (usadas só na hora do build; ficam embutidas no site e são públicas):
+   `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_GOOGLE_BOOKS_API_KEY`
+4. **Settings → Variables and secrets** do Worker (usadas pelas rotas `/api`):
+   `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `GEMINI_API_KEY` (tipo *Secret*), `GEMINI_MODEL`, `SCAN_DAILY_LIMIT`
+5. Depois de publicar: no Supabase, troque a *Site URL* e adicione o endereço em *Redirect URLs*; na chave do Google Books, adicione `https://SEU-ENDERECO/*`.
 
 ### 4. Gemini (foto e voz)
 1. aistudio.google.com → **Get API key** → crie a chave (grátis, sem cartão).

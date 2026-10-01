@@ -29,8 +29,8 @@ App web gratuito para registrar coleções físicas de mangás e livros e o hist
 | Parte | Tecnologia |
 |---|---|
 | Front | React + Vite + TypeScript (SPA), React Router, TanStack Query |
-| Hospedagem | Cloudflare Pages |
-| Backend leve | Cloudflare Pages Functions (`functions/`) — chamada ao Gemini |
+| Hospedagem | Cloudflare Workers com arquivos estáticos (deploy pelo GitHub) |
+| Backend leve | Worker (`worker/`) — rotas `/api` que chamam o Gemini |
 | Tarefa diária | Cloudflare Worker com cron (`workers/reminders/`) — envia lembretes |
 | Banco + login | Supabase (Postgres + RLS + Auth por e-mail e senha) |
 | IA de visão | Gemini API, plano grátis do AI Studio |

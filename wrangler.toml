@@ -1,3 +1,15 @@
+# Worker + site estático da Cloudflare. O build (`npm run build`) gera dist/.
 name = "lombada"
-pages_build_output_dir = "dist"
+main = "worker/index.ts"
 compatibility_date = "2026-09-30"
+
+[assets]
+directory = "./dist"
+# Rotas desconhecidas devolvem o index.html (o app é uma SPA)
+not_found_handling = "single-page-application"
+# Só /api/* roda o Worker; o resto é servido direto, de graça e sem limite
+run_worker_first = ["/api/*"]
+
+# Variáveis do servidor (foto e voz) ficam em Settings > Variables and Secrets:
+#   SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, GEMINI_API_KEY (secret),
+#   GEMINI_MODEL, SCAN_DAILY_LIMIT

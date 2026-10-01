@@ -33,7 +33,7 @@ const SCHEMA = {
   },
 };
 
-export const onRequestPost: PagesFunction<AiEnv> = async ({ request, env }) => {
+export async function handleScanShelf(request: Request, env: AiEnv): Promise<Response> {
   try {
     let body: { image?: string; mimeType?: string };
     try {
@@ -59,4 +59,4 @@ export const onRequestPost: PagesFunction<AiEnv> = async ({ request, env }) => {
   } catch (err) {
     return toResponse(err);
   }
-};
+}
