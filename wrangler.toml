@@ -1,5 +1,5 @@
 # Worker + site estático da Cloudflare. O build (`npm run build`) gera dist/.
-name = "lombada"
+name = "lombada-app"
 main = "worker/index.ts"
 compatibility_date = "2026-09-30"
 
