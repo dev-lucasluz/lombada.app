@@ -54,7 +54,8 @@ supabase/migrations/  schema + RLS
 
 - [x] **Base**: projeto, schema completo, design system, navegação, login.
 - [x] **Fase 1**: coleção física completa (busca, edições, grade, lista de compras). Testada com Supabase real.
-- [~] **Fase 2**: "Onde parei" e lembretes por data prontos; falta o aviso por notificação (web push) e publicar o Worker diário.
+- [~] **Fase 2**: "Onde parei" e lembretes por data prontos; falta o aviso por notificação (web push) e publicar o Worker diário (`workers/reminders`).
+- [x] **Publicação**: no ar em https://lombada-app.meuslivros.workers.dev (Cloudflare Workers + GitHub, deploy a cada push na `main`). Foto testada em produção.
 - [x] **Fase 3**: foto da estante e cadastro por voz, com tela de revisão compartilhada. Falta testar com a chave do Gemini.
 - [ ] **Fase 4**: extras.
 
