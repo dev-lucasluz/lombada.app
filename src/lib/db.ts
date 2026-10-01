@@ -20,6 +20,8 @@ export type Work = {
   anilist_id: number | null;
   google_books_id: string | null;
   open_library_id?: string | null;
+  /** Conteúdo +18 (migração 0005). */
+  is_adult?: boolean;
 };
 
 export type Edition = {
@@ -105,13 +107,14 @@ export async function ensureWork(r: CatalogResult): Promise<Work> {
     cover_url: r.coverUrl,
     cover_color: r.coverColor,
     original_volumes: r.volumes,
+    is_adult: r.isAdult === true,
     [column]: externalId,
   };
   let result = await supabase.from("works").insert(row).select("*").single();
   if (isMissingColumn(result.error)) {
-    // Migração 0002 ainda não rodou: grava sem a cor.
-    const { cover_color: _, ...withoutColor } = row;
-    result = await supabase.from("works").insert(withoutColor).select("*").single();
+    // Migrações 0002/0005 ainda não rodaram: grava sem a cor e sem a marca +18.
+    const { cover_color: _, is_adult: __, ...basic } = row;
+    result = await supabase.from("works").insert(basic).select("*").single();
   }
   return check(result) as Work;
 }

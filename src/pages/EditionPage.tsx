@@ -109,6 +109,23 @@ export function EditionPage() {
           hue={seriesHues(collection.data ?? []).get(item.id) ?? seriesHue(edition.id)}
           onChange={(volumes, isOwned) => toggle.mutate({ volumes, owned: isOwned })}
         />
+        {edition.total_volumes !== null && edition.total_volumes > 0 && (
+          <div className="head-actions">
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={missing.length === 0 || toggle.isPending}
+              onClick={() => toggle.mutate({ volumes: missing, owned: true })}
+            >
+              <Icon name="check" size={18} /> Marcar todos os {edition.total_volumes} volumes
+            </button>
+            {item.owned.length > 0 && (
+              <button type="button" className="btn btn-ghost" onClick={() => toggle.mutate({ volumes: item.owned, owned: false })}>
+                Desmarcar todos
+              </button>
+            )}
+          </div>
+        )}
         <BulkMark onApply={(volumes, isOwned) => toggle.mutate({ volumes, owned: isOwned })} />
         {toggle.isError && <p className="error" role="alert">Não foi possível salvar. Verifique a conexão e tente de novo.</p>}
       </section>

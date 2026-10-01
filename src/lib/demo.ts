@@ -106,7 +106,7 @@ export const demoDb = {
     if (found) return tick(found);
     const w: Work = {
       id: uid(), kind: r.kind, title: r.title, original_title: r.originalTitle, authors: r.authors,
-      cover_url: r.coverUrl, cover_color: r.coverColor, original_volumes: r.volumes,
+      cover_url: r.coverUrl, cover_color: r.coverColor, original_volumes: r.volumes, is_adult: r.isAdult === true,
       anilist_id: r.source === "anilist" ? Number(r.externalId) : null,
       google_books_id: r.source === "google_books" ? r.externalId : null,
       open_library_id: r.source === "open_library" ? r.externalId : null,

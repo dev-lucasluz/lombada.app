@@ -18,6 +18,8 @@ export type CatalogResult = {
   volumes: number | null;
   status: string | null;
   year: number | null;
+  /** Obra marcada como +18 pelo catálogo (AniList). */
+  isAdult?: boolean;
 };
 
 const ANILIST_QUERY = `
@@ -25,6 +27,7 @@ query ($search: String) {
   Page(perPage: 12) {
     media(search: $search, type: MANGA, sort: SEARCH_MATCH) {
       id
+      isAdult
       title { romaji english native }
       volumes
       status
@@ -37,6 +40,7 @@ query ($search: String) {
 
 type AniListMedia = {
   id: number;
+  isAdult: boolean | null;
   title: { romaji: string | null; english: string | null; native: string | null };
   volumes: number | null;
   status: string | null;
@@ -77,6 +81,7 @@ export async function searchManga(term: string): Promise<CatalogResult[]> {
     volumes: m.volumes,
     status: m.status ? ANILIST_STATUS[m.status] ?? m.status : null,
     year: m.startDate?.year ?? null,
+    isAdult: m.isAdult === true,
   }));
 }
 

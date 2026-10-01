@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { listCollection, type CollectionItem } from "../lib/db";
@@ -20,7 +21,10 @@ export function CollectionPage() {
   const cols = useColumns([[1400, 3], [900, 2]]);
   const hues = seriesHues(data ?? []);
   const books = data?.filter(isStandalone) ?? [];
-  const series = data?.filter((i) => !isStandalone(i)) ?? [];
+  const [adultOnly, setAdultOnly] = useState(false);
+  const allSeries = data?.filter((i) => !isStandalone(i)) ?? [];
+  const hasAdult = allSeries.some((i) => i.edition.work.is_adult);
+  const series = adultOnly ? allSeries.filter((i) => i.edition.work.is_adult) : allSeries;
 
   return (
     <div className="page">
@@ -51,6 +55,13 @@ export function CollectionPage() {
           <h2>Sua estante está vazia</h2>
           <p>Busque um mangá ou livro, escolha a edição e marque os volumes que você tem.</p>
           <Link to="/adicionar" className="btn btn-primary">Adicionar a primeira série</Link>
+        </div>
+      )}
+
+      {hasAdult && (
+        <div className="segmented" role="group" aria-label="Filtrar mangás">
+          <button aria-pressed={!adultOnly} onClick={() => setAdultOnly(false)}>Todos</button>
+          <button aria-pressed={adultOnly} onClick={() => setAdultOnly(true)}>+18</button>
         </div>
       )}
 
@@ -98,7 +109,7 @@ function SeriesRow({ item, span, hue }: { item: CollectionItem; span: number; hu
         <div className="series-body">
           <div className="series-title">
             <div className="series-name">
-              <h2>{edition.work.title}</h2>
+              <h2>{edition.work.title}{edition.work.is_adult && <span className="badge-adult">+18</span>}</h2>
               {editionLabel(edition, edition.work.title) && (
                 <span className="series-edition">{editionLabel(edition, edition.work.title)}</span>
               )}

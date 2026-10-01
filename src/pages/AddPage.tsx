@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { searchBooks, searchManga, type CatalogResult } from "../lib/catalog";
-import { addToCollection, createEdition, ensureWork, listEditions, type Work } from "../lib/db";
+import { addToCollection, createEdition, ensureWork, listEditions, setVolumesOwned, type Edition, type Work } from "../lib/db";
 import { Icon } from "../components/Icon";
 import { Cover } from "./CollectionPage";
 import "./pages.css";
@@ -86,7 +86,7 @@ export function AddPage() {
               <button className="result" onClick={() => pick.mutate(r)} disabled={pick.isPending}>
                 <Cover url={r.coverUrl} title={r.title} />
                 <div>
-                  <h3>{r.title}</h3>
+                  <h3>{r.title}{r.isAdult && <span className="badge-adult">+18</span>}</h3>
                   <p className="result-meta">
                     {[r.authors.slice(0, 2).join(", "), r.year, r.kind === "manga" && r.volumes ? `${r.volumes} volumes no Japão` : null, r.status]
                       .filter(Boolean)
@@ -111,21 +111,25 @@ function ChooseEdition({ work, result, onBack }: { work: Work; result: CatalogRe
     publisher: "",
     total: result.volumes?.toString() ?? "",
   });
+  const [haveAll, setHaveAll] = useState(false);
 
   const add = useMutation({
-    mutationFn: async (editionId?: string) => {
-      const id =
-        editionId ??
-        (
-          await createEdition({
-            work_id: work.id,
-            name: form.name.trim() || work.title,
-            publisher: form.publisher.trim() || null,
-            total_volumes: form.total ? Number(form.total) : null,
-            is_finished: false,
-          })
-        ).id;
-      return addToCollection(id);
+    mutationFn: async (existing?: Edition) => {
+      const edition =
+        existing ??
+        (await createEdition({
+          work_id: work.id,
+          name: form.name.trim() || work.title,
+          publisher: form.publisher.trim() || null,
+          total_volumes: form.total ? Number(form.total) : null,
+          is_finished: false,
+        }));
+      const collectionId = await addToCollection(edition.id);
+      // "Já tenho todos": marca de 1 até o total da edição (se ela informar o total).
+      if (haveAll && edition.total_volumes) {
+        await setVolumesOwned(collectionId, Array.from({ length: edition.total_volumes }, (_, i) => i + 1), true);
+      }
+      return collectionId;
     },
     onSuccess: (collectionId) => {
       qc.invalidateQueries({ queryKey: ["collection"] });
@@ -147,13 +151,21 @@ function ChooseEdition({ work, result, onBack }: { work: Work; result: CatalogRe
         </div>
       </header>
 
+      <label className="check-row">
+        <input type="checkbox" checked={haveAll} onChange={(e) => setHaveAll(e.target.checked)} />
+        <span>
+          Já tenho todos os volumes
+          <small className="hint"> Marca todos de uma vez ao adicionar (precisa do total de volumes da edição).</small>
+        </span>
+      </label>
+
       {editions.data && editions.data.length > 0 && (
         <section className="panel">
           <h2>Edições cadastradas</h2>
           <ul className="results">
             {editions.data.map((ed) => (
               <li key={ed.id}>
-                <button className="result" onClick={() => add.mutate(ed.id)} disabled={add.isPending}>
+                <button className="result" onClick={() => add.mutate(ed)} disabled={add.isPending}>
                   <div>
                     <h3>{ed.name}</h3>
                     <p className="result-meta">
