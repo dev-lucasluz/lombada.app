@@ -1,0 +1,40 @@
+.job-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 4.5rem);
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(calc(100% - 2rem), 520px);
+  padding: 0.75rem 0.9rem;
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+.job-toast span { flex: 1; min-width: 0; }
+.job-toast.is-error { border-color: var(--accent); }
+.job-toast .btn { flex: none; }
+
+.job-toast-close {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.job-toast-close:hover { color: var(--accent); }
+
+@media (min-width: 900px) {
+  .job-toast { bottom: 1.5rem; }
+}

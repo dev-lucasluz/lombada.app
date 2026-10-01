@@ -4,6 +4,7 @@ import { Icon, type IconName } from "./Icon";
 import { useAuth } from "../lib/auth";
 import { ThemeToggle } from "./ThemeToggle";
 import { isDemo } from "../lib/demo";
+import { QuickAddJobProvider } from "../lib/quickAddJob";
 import { FeedbackButton } from "./FeedbackButton";
 import "./AppShell.css";
 
@@ -22,6 +23,7 @@ export function AppShell() {
   const avatar = session?.user.user_metadata?.avatar_url as string | undefined;
 
   return (
+    <QuickAddJobProvider>
     <div className="shell">
       <nav className="shell-nav" aria-label="Navegação principal">
         <Link to="/" className="shell-brand" title="Voltar para o início" aria-label="Lombada, voltar para o início">
@@ -61,5 +63,6 @@ export function AppShell() {
       </main>
       <FeedbackButton />
     </div>
+    </QuickAddJobProvider>
   );
 }

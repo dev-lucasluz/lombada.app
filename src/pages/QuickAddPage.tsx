@@ -1,17 +1,9 @@
-import { useCallback, useEffect, useState, type ChangeEvent } from "react";
+import { useCallback, useState, type ChangeEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { listCollection } from "../lib/db";
-import { formatRanges, parseRanges } from "../lib/ranges";
-import {
-  parseVoiceText,
-  prepareImage,
-  saveToCollection,
-  scanShelfPhoto,
-  suggestTargets,
-  type DetectedSeries,
-  type MatchTarget,
-} from "../lib/quickAdd";
+import { useQueryClient } from "@tanstack/react-query";
+import { parseRanges } from "../lib/ranges";
+import { saveToCollection } from "../lib/quickAdd";
+import { useQuickAddJob, type ReviewItem } from "../lib/quickAddJob";
 import { useSpeechToText } from "../lib/speech";
 import { Icon } from "../components/Icon";
 import "./pages.css";
@@ -19,23 +11,15 @@ import "./QuickAddPage.css";
 
 type Mode = "foto" | "voz";
 
-type ReviewItem = DetectedSeries & {
-  include: boolean;
-  ownedText: string;
-  missingText: string;
-  targets: MatchTarget[] | null; // null = ainda buscando
-  targetIndex: number;
-  saved?: boolean;
-  saveError?: string;
-};
-
 export function QuickAddPage() {
   const [params, setParams] = useSearchParams();
   const mode: Mode = params.get("modo") === "voz" ? "voz" : "foto";
-  const [items, setItems] = useState<ReviewItem[] | null>(null);
+  const job = useQuickAddJob();
 
   const setMode = (m: Mode) => {
-    setItems(null);
+    // Não troca de modo no meio de uma leitura (o resultado seria descartado).
+    if (job.reading) return;
+    job.clear();
     setParams(m === "voz" ? { modo: "voz" } : {}, { replace: true });
   };
 
@@ -49,17 +33,17 @@ export function QuickAddPage() {
       </header>
 
       <div className="segmented" role="group" aria-label="Como cadastrar">
-        <button aria-pressed={mode === "foto"} onClick={() => setMode("foto")}>
+        <button aria-pressed={mode === "foto"} onClick={() => setMode("foto")} disabled={job.reading !== null}>
           <Icon name="camera" size={18} /> Foto da estante
         </button>
-        <button aria-pressed={mode === "voz"} onClick={() => setMode("voz")}>
+        <button aria-pressed={mode === "voz"} onClick={() => setMode("voz")} disabled={job.reading !== null}>
           <Icon name="mic" size={18} /> Por voz
         </button>
       </div>
 
-      {mode === "foto" ? <PhotoInput onDetected={setItems} /> : <VoiceInput onDetected={setItems} />}
+      {mode === "foto" ? <PhotoInput /> : <VoiceInput />}
 
-      {items && <Review items={items} setItems={setItems} />}
+      {job.items && <Review items={job.items} setItems={job.setItems} />}
     </div>
   );
 }
@@ -67,32 +51,15 @@ export function QuickAddPage() {
 // ---------------------------------------------------------------------------
 // Entrada: foto
 // ---------------------------------------------------------------------------
-function PhotoInput({ onDetected }: { onDetected: (items: ReviewItem[]) => void }) {
-  const [preview, setPreview] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+function PhotoInput() {
+  const { reading, error, preview, items, startPhoto } = useQuickAddJob();
+  const busy = reading === "foto";
+  const searching = !busy && items?.some((i) => i.targets === null);
 
-  useEffect(() => () => void (preview && URL.revokeObjectURL(preview)), [preview]);
-
-  const onFile = async (e: ChangeEvent<HTMLInputElement>) => {
+  const onFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file) return;
-    setPreview(URL.createObjectURL(file));
-    setError(null);
-    setBusy(true);
-    try {
-      const series = await scanShelfPhoto(await prepareImage(file));
-      if (series.length === 0) {
-        setError("Não encontramos lombadas nessa foto. Tente de frente, mais perto e com boa luz.");
-      } else {
-        onDetected(series.map(toReviewItem));
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "A leitura da foto falhou.");
-    } finally {
-      setBusy(false);
-    }
+    if (file) startPhoto(file);
   };
 
   return (
@@ -106,6 +73,14 @@ function PhotoInput({ onDetected }: { onDetected: (items: ReviewItem[]) => void 
         </label>
         {preview && <img src={preview} alt="Foto enviada da estante" className="quick-preview" />}
       </div>
+      {(busy || searching) && (
+        <p className="auth-notice" role="status">
+          {busy
+            ? "Lendo a foto. Leva alguns segundos (às vezes até meio minuto). "
+            : "Leitura feita. Procurando cada série no catálogo, mais alguns segundos. "}
+          Você pode sair desta tela e usar o app: avisamos quando estiver pronto.
+        </p>
+      )}
       {error && <p className="error" role="alert">{error}</p>}
     </section>
   );
@@ -114,28 +89,15 @@ function PhotoInput({ onDetected }: { onDetected: (items: ReviewItem[]) => void 
 // ---------------------------------------------------------------------------
 // Entrada: voz (ou texto digitado)
 // ---------------------------------------------------------------------------
-function VoiceInput({ onDetected }: { onDetected: (items: ReviewItem[]) => void }) {
+function VoiceInput() {
+  const { reading, error, startVoice } = useQuickAddJob();
   const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const busy = reading === "voz";
   const speech = useSpeechToText(useCallback((t: string) => setText(t), []));
 
-  const interpret = async () => {
+  const interpret = () => {
     speech.stop();
-    setError(null);
-    setBusy(true);
-    try {
-      const series = await parseVoiceText(text);
-      if (series.length === 0) {
-        setError("Não entendemos nenhuma série com volumes. Tente algo como “tenho Naruto do 1 ao 10”.");
-      } else {
-        onDetected(series.map(toReviewItem));
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível interpretar.");
-    } finally {
-      setBusy(false);
-    }
+    startVoice(text);
   };
 
   return (
@@ -173,20 +135,14 @@ function VoiceInput({ onDetected }: { onDetected: (items: ReviewItem[]) => void 
       <button className="btn btn-primary" style={{ justifySelf: "start" }} onClick={interpret} disabled={busy || text.trim().length < 3}>
         {busy ? "Interpretando…" : "Interpretar"}
       </button>
+      {busy && (
+        <p className="auth-notice" role="status">
+          Interpretando. Leva alguns segundos. Você pode sair desta tela: avisamos quando estiver pronto.
+        </p>
+      )}
       {error && <p className="error" role="alert">{error}</p>}
     </section>
   );
-}
-
-function toReviewItem(s: DetectedSeries): ReviewItem {
-  return {
-    ...s,
-    include: true,
-    ownedText: formatRanges(s.owned),
-    missingText: formatRanges(s.missing),
-    targets: null,
-    targetIndex: 0,
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -194,33 +150,11 @@ function toReviewItem(s: DetectedSeries): ReviewItem {
 // ---------------------------------------------------------------------------
 function Review({ items, setItems }: { items: ReviewItem[]; setItems: (fn: (prev: ReviewItem[] | null) => ReviewItem[] | null) => void }) {
   const qc = useQueryClient();
-  const collection = useQuery({ queryKey: ["collection"], queryFn: listCollection });
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState<number | null>(null);
 
   const update = (key: string, patch: Partial<ReviewItem>) =>
     setItems((prev) => prev?.map((it) => (it.key === key ? { ...it, ...patch } : it)) ?? prev);
-
-  // Sugere a série de cada item assim que a coleção estiver carregada.
-  const pendingKeys = items.filter((i) => i.targets === null).map((i) => i.key).join(",");
-  useEffect(() => {
-    if (!collection.data || !pendingKeys) return;
-    let cancelled = false;
-    // Uma busca por vez (com pausa curta): em paralelo o AniList recusa e as séries "somem".
-    const pending = items.filter((i) => i.targets === null);
-    (async () => {
-      for (const it of pending) {
-        if (cancelled) return;
-        const targets = await suggestTargets(it.title, collection.data);
-        if (!cancelled) update(it.key, { targets, include: it.include && targets.length > 0 });
-        await new Promise((r) => setTimeout(r, 300));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [collection.data, pendingKeys]);
 
   const ready = items.filter((i) => i.include && !i.saved && i.targets && i.targets.length > 0);
   const stillLoading = items.some((i) => i.targets === null);
