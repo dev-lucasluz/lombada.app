@@ -1,0 +1,19 @@
+.feedback-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
+
+.feedback-item {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  background: var(--surface);
+}
+
+.feedback-item.is-resolvido { opacity: 0.65; }
+
+.feedback-meta { display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; font-size: var(--step--1); color: var(--ink-soft); }
+
+.feedback-kind { font-weight: 700; color: var(--ink); }
+.feedback-kind.kind-erro { color: var(--accent); }
+
+.feedback-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }

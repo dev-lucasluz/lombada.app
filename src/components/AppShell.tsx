@@ -4,6 +4,7 @@ import { Icon, type IconName } from "./Icon";
 import { useAuth } from "../lib/auth";
 import { ThemeToggle } from "./ThemeToggle";
 import { isDemo } from "../lib/demo";
+import { FeedbackButton } from "./FeedbackButton";
 import "./AppShell.css";
 
 /** `only`: mostra o item só no PC (`desktop`) ou só no celular (`mobile`). */
@@ -58,6 +59,7 @@ export function AppShell() {
           <Outlet />
         </Suspense>
       </main>
+      <FeedbackButton />
     </div>
   );
 }

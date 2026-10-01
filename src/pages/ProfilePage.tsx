@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { authErrorMessage, useAuth } from "../lib/auth";
-import { listCollection, listReading } from "../lib/db";
+import { isAdmin, listCollection, listReading } from "../lib/db";
 import { missingVolumes } from "../lib/ranges";
 import { isStandalone } from "../components/BookShelf";
 import { isDemo } from "../lib/demo";
@@ -20,6 +21,8 @@ export function ProfilePage() {
   const user = session?.user;
   const collection = useQuery({ queryKey: ["collection"], queryFn: listCollection });
   const reading = useQuery({ queryKey: ["reading"], queryFn: listReading });
+
+  const admin = useQuery({ queryKey: ["is-admin"], queryFn: isAdmin, staleTime: 5 * 60_000 });
 
   const items = collection.data ?? [];
   const volumes = items.reduce((sum, c) => sum + c.owned.length, 0);
@@ -104,6 +107,14 @@ export function ProfilePage() {
             Baixar coleção (CSV)
           </button>
         </section>
+
+        {admin.data && (
+          <section className="panel">
+            <h2>Administração</h2>
+            <p className="hint">Mensagens enviadas pelos usuários pelo botão de feedback.</p>
+            <Link to="/admin" className="btn btn-ghost" style={{ justifySelf: "start" }}>Ver feedbacks</Link>
+          </section>
+        )}
 
         <section className="panel profile-signout">
           <h2>Sair da conta</h2>

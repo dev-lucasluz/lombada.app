@@ -30,7 +30,7 @@ App de coleção de mangás/livros físicos e histórico de leitura online. Leia
 
 ## Segurança (auditada em 2026-10-01)
 - Nada secreto no navegador: só a chave publishable do Supabase e a chave do Google Books (restrita por referrer e API). `GEMINI_API_KEY` só existe como Secret do Worker. `.env.production` guarda apenas valores públicos; nunca colocar `sb_secret_`/Gemini ali.
-- Banco: RLS em todas as tabelas; sem login nada é lido nem gravado (testado). Migrações `0001` a `0004` já executadas no Supabase (a `0004` restringe quem edita edições compartilhadas; confirmada pelo usuário em 2026-10-01).
+- Banco: RLS em todas as tabelas; sem login nada é lido nem gravado (testado). Migrações `0001` a `0004` já executadas (a `0005` +18 e a `0006` feedback/admin criadas depois; admin = tabela `admins`, página `/admin`) no Supabase (a `0004` restringe quem edita edições compartilhadas; confirmada pelo usuário em 2026-10-01).
 - Site: `public/_headers` define nosniff, X-Frame-Options, Referrer-Policy `strict-origin-when-cross-origin` (NÃO usar `no-referrer`: a restrição da chave do Google Books depende do referrer), Permissions-Policy e uma CSP mínima. Uma CSP completa não foi aplicada de propósito (script inline do tema no index.html, risco de quebrar capas/APIs).
 - Reaudite com: varrer todos os chunks de `dist/assets` por `sb_secret_`, `service_role`, JWT e `GEMINI`; sondar tabelas com a chave publishable (todas devem devolver `[]`).
 

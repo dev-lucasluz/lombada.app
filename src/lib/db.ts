@@ -296,3 +296,59 @@ export async function markWorksAdult(anilistIds: number[]) {
   if (isDemo || anilistIds.length === 0) return;
   await supabase.from("works").update({ is_adult: true }).in("anilist_id", anilistIds);
 }
+
+// ---------------------------------------------------------------------------
+// Feedback e administração (migração 0006)
+// ---------------------------------------------------------------------------
+export type FeedbackKind = "erro" | "ideia" | "elogio";
+export type FeedbackStatus = "novo" | "lido" | "resolvido";
+
+export type Feedback = {
+  id: string;
+  user_email: string | null;
+  kind: FeedbackKind;
+  message: string;
+  page: string | null;
+  user_agent: string | null;
+  status: FeedbackStatus;
+  created_at: string;
+};
+
+export async function sendFeedback(input: { kind: FeedbackKind; message: string }) {
+  if (isDemo) return;
+  const { error } = await supabase.from("feedback").insert({
+    kind: input.kind,
+    message: input.message,
+    page: window.location.pathname.slice(0, 200),
+    user_agent: navigator.userAgent.slice(0, 300),
+  });
+  if (error) {
+    throw new Error(
+      error.code === "42P01" || error.code === "PGRST205"
+        ? "O envio de feedback ainda não foi ativado neste servidor."
+        : error.message,
+    );
+  }
+}
+
+export async function isAdmin(): Promise<boolean> {
+  if (isDemo) return false;
+  const { data, error } = await supabase.rpc("is_admin");
+  return !error && data === true;
+}
+
+export async function listFeedback(): Promise<Feedback[]> {
+  const { data, error } = await supabase.from("feedback").select("*").order("created_at", { ascending: false }).limit(300);
+  if (error) throw new Error(error.message);
+  return data as Feedback[];
+}
+
+export async function setFeedbackStatus(id: string, status: FeedbackStatus) {
+  const { error } = await supabase.from("feedback").update({ status }).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteFeedback(id: string) {
+  const { error } = await supabase.from("feedback").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}

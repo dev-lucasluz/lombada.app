@@ -17,6 +17,7 @@ const AddPage = lazy(() => import("./pages/AddPage").then((m) => ({ default: m.A
 const ReadingPage = lazy(() => import("./pages/ReadingPage").then((m) => ({ default: m.ReadingPage })));
 const RemindersPage = lazy(() => import("./pages/RemindersPage").then((m) => ({ default: m.RemindersPage })));
 const ProfilePage = lazy(() => import("./pages/ProfilePage").then((m) => ({ default: m.ProfilePage })));
+const AdminPage = lazy(() => import("./pages/AdminPage").then((m) => ({ default: m.AdminPage })));
 const QuickAddPage = lazy(() => import("./pages/QuickAddPage").then((m) => ({ default: m.QuickAddPage })));
 
 export function App() {
@@ -44,6 +45,7 @@ export function App() {
         <Route path="onde-parei" element={<ReadingPage />} />
         <Route path="lembretes" element={<RemindersPage />} />
         <Route path="foto-e-voz" element={<QuickAddPage />} />
+        <Route path="admin" element={<AdminPage />} />
         <Route path="perfil" element={<ProfilePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
