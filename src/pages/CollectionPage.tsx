@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { listCollection, markWorksAdult, type CollectionItem } from "../lib/db";
+import { listCollection, markWorksAdult, removeFromCollection, type CollectionItem } from "../lib/db";
 import { fetchAdultAnilistIds } from "../lib/catalog";
 import { formatRanges, missingVolumes } from "../lib/ranges";
 import { seriesHue, seriesHues } from "../lib/spineColor";
@@ -127,9 +127,15 @@ function SeriesRow({ item, span, hue }: { item: CollectionItem; span: number; hu
   const total = seriesTotal(item);
   const missing = missingVolumes(item.owned, edition.total_volumes);
   const complete = edition.total_volumes !== null && missing.length === 0;
+  const qc = useQueryClient();
+  const remove = useMutation({
+    mutationFn: () => removeFromCollection(item.id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["collection"] }),
+  });
+  const label = editionLabel(edition, edition.work.title);
 
   return (
-    <li className={nicheClass(total)} style={{ gridColumn: `span ${span}` }}>
+    <li className={`${nicheClass(total)} has-remove`} style={{ gridColumn: `span ${span}` }}>
       <Link to={`/colecao/${item.id}`} className="series-row">
         <Cover url={edition.work.cover_url} title={edition.work.title} />
         <div className="series-body">
@@ -154,6 +160,18 @@ function SeriesRow({ item, span, hue }: { item: CollectionItem; span: number; hu
           </p>
         </div>
       </Link>
+      <button
+        type="button"
+        className="series-remove"
+        aria-label={`Remover ${edition.work.title} da coleção`}
+        title="Remover da coleção"
+        disabled={remove.isPending}
+        onClick={() => {
+          if (confirm(`Remover ${edition.work.title}${label ? ` (${label})` : ""} da sua coleção? Os volumes marcados serão apagados.`)) remove.mutate();
+        }}
+      >
+        <Icon name="trash" size={18} />
+      </button>
     </li>
   );
 }

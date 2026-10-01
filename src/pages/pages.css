@@ -674,3 +674,27 @@ form.panel {
   height: 1.1rem;
   accent-color: var(--accent);
 }
+
+/* Botão de remover direto no card da coleção */
+.series-list > li.has-remove { position: relative; }
+
+.series-list > li.has-remove .series-title { padding-right: 2.6rem; }
+
+.series-remove {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.series-remove:hover { border-color: var(--accent); color: var(--accent); }
+.series-remove:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.series-remove:disabled { opacity: 0.5; cursor: progress; }
