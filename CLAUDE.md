@@ -15,7 +15,7 @@ App de coleção de mangás/livros físicos e histórico de leitura online. Leia
 - Consultas ficam em `src/lib/db.ts` (tipos espelham o SQL). Páginas não chamam `supabase.from` diretamente.
 - Segredos só em `worker/` (Worker da Cloudflare: `worker/index.ts` roteia `/api/*`, handlers em `worker/api/`) e `workers/reminders/` (Worker com cron). Nunca a secret key (`sb_secret_...`) no front.
 - Catálogo externo sem chave: AniList (mangá) e Open Library (livro; Google Books só como reserva, porque sem chave a cota é compartilhada e vive esgotada), em `src/lib/catalog.ts`.
-- Modelo de dados: `works` (obra) → `editions` (edição BR, compartilhada e editável) → `collections` (usuário tem a edição) → `owned_volumes`.
+- Modelo de dados: `works` (obra) → `editions` (edição BR, privada de quem cadastrou desde a migração 0008; só o criador a vê e edita) → `collections` (usuário tem a edição) → `owned_volumes`.
 
 ## Design
 - Tokens em `src/styles/global.css` (cores, escala tipográfica, raios). Use as variáveis; não crie cores soltas. Tema claro e escuro: todo token novo precisa dos dois valores (bloco `prefers-color-scheme` e `[data-theme="dark"]`). O botão `ThemeToggle` salva a escolha em `localStorage`.
