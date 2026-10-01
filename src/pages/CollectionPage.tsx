@@ -49,7 +49,6 @@ export function CollectionPage() {
     });
   };
   const allSeries = data?.filter((i) => !isStandalone(i)) ?? [];
-  const hasAdult = allSeries.some((i) => i.edition.work.is_adult);
   const series = showAdult ? allSeries : allSeries.filter((i) => !i.edition.work.is_adult);
 
   return (
