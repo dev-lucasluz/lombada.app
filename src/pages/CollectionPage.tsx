@@ -21,10 +21,19 @@ export function CollectionPage() {
   const cols = useColumns([[1400, 3], [900, 2]]);
   const hues = seriesHues(data ?? []);
   const books = data?.filter(isStandalone) ?? [];
-  const [adultOnly, setAdultOnly] = useState(false);
+  // +18 fica escondido até o usuário clicar no botão; a escolha é lembrada neste aparelho.
+  const [showAdult, setShowAdult] = useState(() => {
+    try { return localStorage.getItem("lombada-show-adult") === "1"; } catch { return false; }
+  });
+  const toggleAdult = () => {
+    setShowAdult((v) => {
+      try { localStorage.setItem("lombada-show-adult", v ? "0" : "1"); } catch { /* sem armazenamento */ }
+      return !v;
+    });
+  };
   const allSeries = data?.filter((i) => !isStandalone(i)) ?? [];
   const hasAdult = allSeries.some((i) => i.edition.work.is_adult);
-  const series = adultOnly ? allSeries.filter((i) => i.edition.work.is_adult) : allSeries;
+  const series = showAdult ? allSeries : allSeries.filter((i) => !i.edition.work.is_adult);
 
   return (
     <div className="page">
@@ -59,9 +68,10 @@ export function CollectionPage() {
       )}
 
       {hasAdult && (
-        <div className="segmented" role="group" aria-label="Filtrar mangás">
-          <button aria-pressed={!adultOnly} onClick={() => setAdultOnly(false)}>Todos</button>
-          <button aria-pressed={adultOnly} onClick={() => setAdultOnly(true)}>+18</button>
+        <div className="segmented" role="group" aria-label="Conteúdo +18">
+          <button aria-pressed={showAdult} onClick={toggleAdult}>
+            {showAdult ? "Esconder +18" : "Mostrar +18"}
+          </button>
         </div>
       )}
 
