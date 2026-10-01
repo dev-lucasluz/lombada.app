@@ -28,6 +28,12 @@ App de coleção de mangás/livros físicos e histórico de leitura online. Leia
 - Navegação: no celular o dock tem Início, Coleção, Onde parei, Lembretes e **Perfil** (Foto e voz sai do dock e fica nos botões do Início); **não há botão Sair solto nas páginas** — Sair fica só no Perfil. No PC a barra lateral tem Foto e voz, e Perfil/Tema/Sair embaixo. Perfil: `src/pages/ProfilePage.tsx` (nome, resumo da coleção, trocar senha, exportar CSV).
 - Textos: verbos claros nos botões ("Salvar leitura", não "Enviar"); erros dizem o que houve e o que fazer.
 
+## Segurança (auditada em 2026-10-01)
+- Nada secreto no navegador: só a chave publishable do Supabase e a chave do Google Books (restrita por referrer e API). `GEMINI_API_KEY` só existe como Secret do Worker. `.env.production` guarda apenas valores públicos; nunca colocar `sb_secret_`/Gemini ali.
+- Banco: RLS em todas as tabelas; sem login nada é lido nem gravado (testado). Migração `0004` restringe quem pode editar edições compartilhadas — **conferir que foi executada**.
+- Site: `public/_headers` define nosniff, X-Frame-Options, Referrer-Policy `strict-origin-when-cross-origin` (NÃO usar `no-referrer`: a restrição da chave do Google Books depende do referrer), Permissions-Policy e uma CSP mínima. Uma CSP completa não foi aplicada de propósito (script inline do tema no index.html, risco de quebrar capas/APIs).
+- Reaudite com: varrer todos os chunks de `dist/assets` por `sb_secret_`, `service_role`, JWT e `GEMINI`; sondar tabelas com a chave publishable (todas devem devolver `[]`).
+
 ## Comandos
 - `npm run dev` — front em http://localhost:5173
 - `npm run build` — typecheck (`tsc -b`) + build. Rode antes de dar uma tarefa por concluída.
