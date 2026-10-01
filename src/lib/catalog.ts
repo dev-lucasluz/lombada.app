@@ -204,3 +204,17 @@ export async function fetchAniListColors(ids: number[]): Promise<Map<number, str
   }
   return colors;
 }
+
+/** Dos ids do AniList informados, devolve os que são conteúdo +18. */
+export async function fetchAdultAnilistIds(ids: number[]): Promise<number[]> {
+  if (ids.length === 0) return [];
+  const query = `query ($ids: [Int]) { Page(perPage: 50) { media(id_in: $ids, type: MANGA) { id isAdult } } }`;
+  const res = await fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ query, variables: { ids: ids.slice(0, 50) } }),
+  });
+  if (!res.ok) return [];
+  const json = (await res.json()) as { data?: { Page: { media: { id: number; isAdult: boolean }[] } } };
+  return (json.data?.Page.media ?? []).filter((m) => m.isAdult).map((m) => m.id);
+}

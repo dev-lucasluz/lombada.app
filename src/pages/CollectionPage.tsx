@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { listCollection, type CollectionItem } from "../lib/db";
+import { listCollection, markWorksAdult, type CollectionItem } from "../lib/db";
+import { fetchAdultAnilistIds } from "../lib/catalog";
 import { formatRanges, missingVolumes } from "../lib/ranges";
 import { seriesHue, seriesHues } from "../lib/spineColor";
 import { PageCorner } from "../components/PageCorner";
@@ -16,6 +17,22 @@ import "./pages.css";
 
 export function CollectionPage() {
   const { data, isLoading, error } = useQuery({ queryKey: ["collection"], queryFn: listCollection });
+
+  const qc = useQueryClient();
+
+  // Uma vez por aparelho: marca como +18 as séries adicionadas antes desse recurso existir.
+  useEffect(() => {
+    if (!data) return;
+    try { if (localStorage.getItem("lombada-adult-sync") === "1") return; } catch { /* segue */ }
+    const ids = [...new Set(data.map((i) => i.edition.work.anilist_id).filter((v): v is number => v !== null))];
+    fetchAdultAnilistIds(ids)
+      .then(async (adult) => {
+        await markWorksAdult(adult);
+        try { localStorage.setItem("lombada-adult-sync", "1"); } catch { /* ok */ }
+        if (adult.length > 0) qc.invalidateQueries({ queryKey: ["collection"] });
+      })
+      .catch(() => {});
+  }, [data, qc]);
 
   const totalOwned = data?.reduce((sum, c) => sum + c.owned.length, 0) ?? 0;
   const cols = useColumns([[1400, 3], [900, 2]]);
@@ -67,7 +84,7 @@ export function CollectionPage() {
         </div>
       )}
 
-      {hasAdult && (
+      {allSeries.length > 0 && (
         <div className="segmented" role="group" aria-label="Conteúdo +18">
           <button aria-pressed={showAdult} onClick={toggleAdult}>
             {showAdult ? "Esconder +18" : "Mostrar +18"}

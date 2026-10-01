@@ -290,3 +290,9 @@ export async function deleteReminder(id: string) {
   if (isDemo) return demoDb.deleteReminder(id);
   check(await supabase.from("reminders").delete().eq("id", id));
 }
+
+/** Marca obras como +18 (para séries adicionadas antes da migração 0005). */
+export async function markWorksAdult(anilistIds: number[]) {
+  if (isDemo || anilistIds.length === 0) return;
+  await supabase.from("works").update({ is_adult: true }).in("anilist_id", anilistIds);
+}
