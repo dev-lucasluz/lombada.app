@@ -13,6 +13,16 @@ export function AddPage() {
   const [kind, setKind] = useState<Kind>("manga");
   const [term, setTerm] = useState("");
   const [submitted, setSubmitted] = useState("");
+  // +18 fica escondido até clicar no botão; a escolha é lembrada neste aparelho (mesma da Coleção).
+  const [showAdult, setShowAdult] = useState(() => {
+    try { return localStorage.getItem("lombada-show-adult") === "1"; } catch { return false; }
+  });
+  const toggleAdult = () => {
+    setShowAdult((v) => {
+      try { localStorage.setItem("lombada-show-adult", v ? "0" : "1"); } catch { /* sem armazenamento */ }
+      return !v;
+    });
+  };
   const [work, setWork] = useState<{ work: Work; result: CatalogResult } | null>(null);
 
   // Busca enquanto digita: espera uma pausa de 400 ms para não consultar a cada letra.
@@ -23,8 +33,8 @@ export function AddPage() {
   }, [term]);
 
   const search = useQuery({
-    queryKey: ["catalog", kind, submitted],
-    queryFn: () => (kind === "manga" ? searchManga(submitted) : searchBooks(submitted)),
+    queryKey: ["catalog", kind, submitted, showAdult],
+    queryFn: () => (kind === "manga" ? searchManga(submitted, showAdult) : searchBooks(submitted)),
     enabled: submitted.length >= 2,
     staleTime: 5 * 60_000,
     // Mantém os resultados anteriores na tela enquanto a nova busca chega.
@@ -52,9 +62,18 @@ export function AddPage() {
         </div>
       </header>
 
-      <div className="segmented" role="group" aria-label="Tipo">
-        <button aria-pressed={kind === "manga"} onClick={() => setKind("manga")}>Mangá</button>
-        <button aria-pressed={kind === "book"} onClick={() => setKind("book")}>Livro</button>
+      <div className="head-actions">
+        <div className="segmented" role="group" aria-label="Tipo">
+          <button aria-pressed={kind === "manga"} onClick={() => setKind("manga")}>Mangá</button>
+          <button aria-pressed={kind === "book"} onClick={() => setKind("book")}>Livro</button>
+        </div>
+        {kind === "manga" && (
+          <div className="segmented" role="group" aria-label="Conteúdo +18">
+            <button aria-pressed={showAdult} onClick={toggleAdult}>
+              {showAdult ? "Esconder +18" : "Mostrar +18"}
+            </button>
+          </div>
+        )}
       </div>
 
       <form className="search-bar" onSubmit={onSearch} role="search">

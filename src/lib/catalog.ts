@@ -23,9 +23,9 @@ export type CatalogResult = {
 };
 
 const ANILIST_QUERY = `
-query ($search: String) {
+query ($search: String, $adult: Boolean) {
   Page(perPage: 12) {
-    media(search: $search, type: MANGA, sort: SEARCH_MATCH) {
+    media(search: $search, type: MANGA, isAdult: $adult, sort: SEARCH_MATCH) {
       id
       isAdult
       title { romaji english native }
@@ -57,11 +57,12 @@ const ANILIST_STATUS: Record<string, string> = {
   CANCELLED: "Cancelado",
 };
 
-export async function searchManga(term: string): Promise<CatalogResult[]> {
+/** `includeAdult` falso esconde as obras +18; verdadeiro mostra todas. */
+export async function searchManga(term: string, includeAdult = false): Promise<CatalogResult[]> {
   const res = await fetch("https://graphql.anilist.co", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ query: ANILIST_QUERY, variables: { search: term } }),
+    body: JSON.stringify({ query: ANILIST_QUERY, variables: { search: term, adult: includeAdult ? null : false } }),
   });
   if (!res.ok) throw new Error("Não foi possível buscar no AniList agora. Tente de novo em alguns segundos.");
   const json = (await res.json()) as { data: { Page: { media: AniListMedia[] } } };
