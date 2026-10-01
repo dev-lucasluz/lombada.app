@@ -6,7 +6,7 @@ import { disableShare, enableShare, getShareToken, isAdmin, listCollection, list
 import { missingVolumes } from "../lib/ranges";
 import { isStandalone } from "../components/BookShelf";
 import { isDemo } from "../lib/demo";
-import { ThemeToggle } from "../components/ThemeToggle";
+import { seriesHues, volumeColor } from "../lib/spineColor";
 import { PasswordInput } from "../components/PasswordInput";
 import "./pages.css";
 import "./ProfilePage.css";
@@ -17,7 +17,7 @@ const dateFmt = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long"
 const csv = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
 
 export function ProfilePage() {
-  const { session, updateName, updatePassword, signOut } = useAuth();
+  const { session, updateName, updatePassword, verifyPassword, signOut } = useAuth();
   const user = session?.user;
   const collection = useQuery({ queryKey: ["collection"], queryFn: listCollection });
   const reading = useQuery({ queryKey: ["reading"], queryFn: listReading });
@@ -51,81 +51,111 @@ export function ProfilePage() {
     URL.revokeObjectURL(url);
   };
 
+  const hasPassword = ((user?.app_metadata?.providers as string[] | undefined) ?? ["email"]).includes("email");
+
   return (
     <div className="page profile">
-      <header className="page-head">
-        <div>
-          <h1>Perfil</h1>
-        </div>
-      </header>
+      <section className="profile-hero" aria-labelledby="profile-name">
+        <div className="profile-hero-top">
+          <div className="profile-who">
+            <span className="profile-avatar" aria-hidden="true">{displayName.slice(0, 1).toLocaleUpperCase("pt-BR")}</span>
+            <div className="profile-id">
+              <h1 id="profile-name">{displayName}</h1>
+              <span>{user?.email ?? ""}</span>
+              {memberSince && <small>No Lombada desde {memberSince}</small>}
+            </div>
+          </div>
 
-      <section className="profile-card">
-        <span className="profile-avatar" aria-hidden="true">{displayName.slice(0, 1).toLocaleUpperCase("pt-BR")}</span>
-        <div className="profile-id">
-          <strong>{displayName}</strong>
-          <span>{user?.email ?? ""}</span>
-          {memberSince && <small>No Lombada desde {memberSince}</small>}
+          <ul className="profile-figures" aria-label="Resumo da coleção">
+            <li className="is-main"><span className="num">{collection.data ? volumes : "–"}</span><small>volumes e livros</small></li>
+            <li><span className="num">{collection.data ? series.length : "–"}</span><small>séries de mangá</small></li>
+            <li><span className="num">{collection.data ? books.length : "–"}</span><small>livros avulsos</small></li>
+            <li><span className="num">{collection.data ? complete.length : "–"}</span><small>completas</small></li>
+            <li><span className="num">{collection.data ? missing : "–"}</span><small>faltando</small></li>
+            <li><span className="num">{reading.data?.length ?? "–"}</span><small>em Onde parei</small></li>
+          </ul>
         </div>
-      </section>
 
-      <section className="panel profile-summary" aria-labelledby="summary-title">
-        <h2 id="summary-title">Resumo da coleção</h2>
-        <ul className="profile-stats">
-          <li className="is-main"><span className="num">{collection.data ? volumes : "–"}</span><small>volumes e livros no total</small></li>
-          <li><span className="num">{collection.data ? series.length : "–"}</span><small>séries de mangá</small></li>
-          <li><span className="num">{collection.data ? books.length : "–"}</span><small>livros avulsos</small></li>
-          <li><span className="num">{collection.data ? complete.length : "–"}</span><small>coleções completas</small></li>
-          <li><span className="num">{collection.data ? missing : "–"}</span><small>volumes faltando</small></li>
-          <li><span className="num">{reading.data?.length ?? "–"}</span><small>mangás em "Onde parei"</small></li>
-        </ul>
         {items.length > 0 && (
-          <p className="hint">
+          <p className="profile-note">
             Maior coleção: <strong>{biggest.edition.work.title}</strong> ({biggest.owned.length} volumes). Última adição:{" "}
             <strong>{latest.edition.work.title}</strong>.
           </p>
         )}
+
+        <ShelfBand items={items} />
       </section>
 
-      <div className="profile-grid">
-        <NameForm initial={(user?.user_metadata?.full_name as string | undefined) ?? ""} onSave={updateName} />
+      <div className="profile-groups">
+        <div className="profile-group">
+          <h2>Conta</h2>
+          <NameForm initial={(user?.user_metadata?.full_name as string | undefined) ?? ""} onSave={updateName} />
 
-        <section className="panel">
-          <h2>Aparência</h2>
-          <p className="hint">Tema claro ou escuro, salvo neste aparelho.</p>
-          <ThemeToggle className="btn btn-ghost" withLabel />
-        </section>
+          <details className="profile-fold">
+            <summary>{hasPassword ? "Trocar senha" : "Criar uma senha"}</summary>
+            <PasswordForm
+              onSave={updatePassword}
+              verify={verifyPassword}
+              // Quem entrou só pelo Google ainda não tem senha: nesse caso não há senha atual para pedir.
+              hasPassword={hasPassword}
+              disabled={isDemo}
+            />
+          </details>
 
-        {!isDemo && <SharePanel />}
+          <div className="profile-row">
+            <div>
+              <strong>Sair da conta</strong>
+              <span className="hint">Encerra a sessão neste aparelho. Seus dados continuam salvos.</span>
+            </div>
+            <button className="btn btn-ghost" onClick={signOut}>Sair</button>
+          </div>
+        </div>
 
-        <PasswordForm onSave={updatePassword} disabled={isDemo} />
+        <div className="profile-group">
+          <h2>Estante e dados</h2>
+          {!isDemo && <SharePanel />}
 
-        <section className="panel">
-          <h2>Seus dados</h2>
-          <p className="hint">
-            Baixe a sua coleção em uma planilha (CSV) que abre no Excel e no Google Planilhas. Para apagar a conta e
-            todos os dados, peça pelo e-mail da <a href="/privacidade">política de privacidade</a>.
-          </p>
-          <button className="btn btn-ghost" style={{ justifySelf: "start" }} onClick={exportCsv} disabled={!collection.data?.length}>
-            Baixar coleção (CSV)
-          </button>
-        </section>
+          <div className="profile-row">
+            <div>
+              <strong>Baixar a coleção</strong>
+              <span className="hint">
+                Planilha (CSV) que abre no Excel e no Google Planilhas. Para apagar a conta e todos os dados, peça pelo
+                e-mail da <a href="/privacidade">política de privacidade</a>.
+              </span>
+            </div>
+            <button className="btn btn-ghost" onClick={exportCsv} disabled={!collection.data?.length}>Baixar CSV</button>
+          </div>
 
-        {admin.data && (
-          <section className="panel">
-            <h2>Administração</h2>
-            <p className="hint">Mensagens enviadas pelos usuários pelo botão de feedback.</p>
-            <Link to="/admin" className="btn btn-ghost" style={{ justifySelf: "start" }}>Ver feedbacks</Link>
-          </section>
-        )}
-
-        <section className="panel profile-signout">
-          <h2>Sair da conta</h2>
-          <p className="hint">Encerra a sessão neste aparelho. Seus dados continuam salvos.</p>
-          <button className="btn btn-ghost" style={{ justifySelf: "start" }} onClick={signOut}>
-            Sair
-          </button>
-        </section>
+          {admin.data && (
+            <div className="profile-row">
+              <div>
+                <strong>Administração</strong>
+                <span className="hint">Mensagens enviadas pelos usuários pelo botão de feedback.</span>
+              </div>
+              <Link to="/admin" className="btn btn-ghost">Ver feedbacks</Link>
+            </div>
+          )}
+        </div>
       </div>
+    </div>
+  );
+}
+
+/** A coleção inteira como uma faixa de lombadas: uma por volume, nas cores da Coleção. */
+function ShelfBand({ items }: { items: { id: string; created_at: string; owned: number[] }[] }) {
+  if (items.length === 0) return null;
+  const hues = seriesHues(items as Parameters<typeof seriesHues>[0]);
+  const ordered = [...items].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const spines = ordered.flatMap((i) => i.owned.map((n) => ({ key: `${i.id}-${n}`, n, hue: hues.get(i.id) ?? 0 })));
+  // Muitos volumes: mostra uma amostra espaçada para a faixa caber sem ficar um borrão.
+  const cap = 120;
+  const step = Math.max(1, Math.ceil(spines.length / cap));
+  const shown = spines.filter((_, idx) => idx % step === 0);
+  return (
+    <div className="shelf-band" aria-hidden="true">
+      {shown.map((sp) => (
+        <i key={sp.key} style={{ background: volumeColor(sp.hue, sp.n), height: `${62 + (sp.n % 4) * 12}%` }} />
+      ))}
     </div>
   );
 }
@@ -166,7 +196,8 @@ function NameForm({ initial, onSave }: { initial: string; onSave: (name: string)
   );
 }
 
-function PasswordForm({ onSave, disabled }: { onSave: (password: string) => Promise<void>; disabled: boolean }) {
+function PasswordForm({ onSave, verify, hasPassword, disabled }: { onSave: (password: string) => Promise<void>; verify: (password: string) => Promise<void>; hasPassword: boolean; disabled: boolean }) {
+  const [current, setCurrent] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [state, setState] = useState<"idle" | "saving" | "saved">("idle");
@@ -181,7 +212,17 @@ function PasswordForm({ onSave, disabled }: { onSave: (password: string) => Prom
     setState("saving");
     setError(null);
     try {
+      if (hasPassword) {
+        try {
+          await verify(current);
+        } catch {
+          setError("A senha atual está incorreta.");
+          setState("idle");
+          return;
+        }
+      }
       await onSave(password);
+      setCurrent("");
       setPassword("");
       setConfirm("");
       setState("saved");
@@ -193,8 +234,15 @@ function PasswordForm({ onSave, disabled }: { onSave: (password: string) => Prom
 
   return (
     <form className="panel" onSubmit={submit}>
-      <h2>Trocar senha</h2>
+      <h2>{hasPassword ? "Trocar senha" : "Criar uma senha"}</h2>
       {disabled && <p className="hint">Indisponível no modo demonstração.</p>}
+      {!hasPassword && <p className="hint">Você entrou com o Google. Se quiser, crie uma senha para também poder entrar com e-mail.</p>}
+      {hasPassword && (
+        <div className="field">
+          <label htmlFor="p-current">Senha atual</label>
+          <PasswordInput id="p-current" required autoComplete="current-password" value={current} onChange={(e) => { setCurrent(e.target.value); setState("idle"); }} disabled={disabled} />
+        </div>
+      )}
       <div className="form-grid">
         <div className="field">
           <label htmlFor="p-pass">Nova senha</label>

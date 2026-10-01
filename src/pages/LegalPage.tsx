@@ -27,7 +27,7 @@ export function PrivacyPage() {
       <section>
         <h2>Quais dados coletamos</h2>
         <ul>
-          <li>Da sua conta: nome e e-mail. Usamos só para identificar você no app e enviar a confirmação de conta, a redefinição de senha e os lembretes. A senha é guardada criptografada pelo Supabase e ninguém tem acesso a ela.</li>
+          <li>Da sua conta: nome e e-mail. Se você entrar com o Google, recebemos do Google só o nome, o e-mail e a foto do perfil (nunca a senha da sua conta Google). Usamos só para identificar você no app e enviar a confirmação de conta, a redefinição de senha e os lembretes. A senha é guardada criptografada pelo Supabase e ninguém tem acesso a ela.</li>
           <li>O que você cadastra: coleção de volumes, capítulos em que parou, links e lembretes.</li>
           <li>Não coletamos senhas, dados de pagamento, localização ou dados de navegação para publicidade.</li>
         </ul>

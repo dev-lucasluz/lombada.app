@@ -7,9 +7,9 @@ App de coleção de mangás/livros físicos e histórico de leitura online. Leia
 - **Sem verificação automática de capítulos novos** (MangaDex ou scraping). Lembretes são só por data, definidos pelo usuário.
 - Interface em **português do Brasil**, responsiva: celular, tablet e PC têm o mesmo peso.
 - Fotos da estante **não são armazenadas**.
-- **Login só por e-mail e senha** (Google foi removido a pedido). E-mails de conta saem pelo SMTP do Gmail configurado no Supabase; não há domínio próprio, então Brevo/Resend não servem.
+- **Login por e-mail e senha e, a partir da 1.2, também pelo Google** (usuário pediu de volta em 2026-10-01; OAuth configurado no Google Cloud e no Supabase, só e-mail/perfil/openid). E-mails de conta saem pelo SMTP do Gmail configurado no Supabase; não há domínio próprio, então Brevo/Resend não servem.
 
-- **Versão 1.1 publicada (2026-10-01; 1.0 foi a primeira).** Atualizações seguem 1.1, 1.2, 1.3… **Nunca fazer `git push` sem o usuário autorizar** (o push publica no site na hora). Pergunte antes e diga a versão.
+- **Versão 1.2 publicada (2026-10-01; 1.0 e 1.1 vieram antes).** Atualizações seguem 1.1, 1.2, 1.3… **Nunca fazer `git push` sem o usuário autorizar** (o push publica no site na hora). Pergunte antes e diga a versão.
 
 ## Stack e arquitetura
 - React 19 + Vite + TypeScript, React Router, TanStack Query. SPA estática.
@@ -32,7 +32,7 @@ App de coleção de mangás/livros físicos e histórico de leitura online. Leia
 
 ## Segurança (auditada em 2026-10-01)
 - Nada secreto no navegador: só a chave publishable do Supabase e a chave do Google Books (restrita por referrer e API). `GEMINI_API_KEY` só existe como Secret do Worker. `.env.production` guarda apenas valores públicos; nunca colocar `sb_secret_`/Gemini ali.
-- Banco: RLS em todas as tabelas; sem login nada é lido nem gravado (testado). Migrações `0001` a `0004` já executadas (`0005` +18, `0006`–`0007` feedback/admin, `0008` edições privadas, `0009` link da estante, todas executadas; admin = tabela `admins`, página `/admin`) no Supabase (a `0004` restringe quem edita edições compartilhadas; confirmada pelo usuário em 2026-10-01).
+- Banco: RLS em todas as tabelas; sem login nada é lido nem gravado (testado). Migrações `0001` a `0004` já executadas (`0005` +18, `0006`–`0007` feedback/admin, `0008` edições privadas, `0009` link da estante, `0010` aviso de feedback, todas executadas; admin = tabela `admins`, página `/admin`) no Supabase (a `0004` restringe quem edita edições compartilhadas; confirmada pelo usuário em 2026-10-01).
 - Site: `public/_headers` define nosniff, X-Frame-Options, Referrer-Policy `strict-origin-when-cross-origin` (NÃO usar `no-referrer`: a restrição da chave do Google Books depende do referrer), Permissions-Policy e uma CSP mínima. Uma CSP completa não foi aplicada de propósito (script inline do tema no index.html, risco de quebrar capas/APIs).
 - Reaudite com: varrer todos os chunks de `dist/assets` por `sb_secret_`, `service_role`, JWT e `GEMINI`; sondar tabelas com a chave publishable (todas devem devolver `[]`).
 

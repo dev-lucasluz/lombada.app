@@ -1,82 +1,31 @@
-.profile-grid {
+/* ---------- Cartão de identidade ---------- */
+.profile-hero {
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(0, 1fr);
-  align-items: start;
-}
-
-@media (min-width: 900px) {
-  .profile-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.profile .panel {
-  max-width: none;
-}
-
-.profile-facts {
-  margin: 0;
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  gap: 0.6rem 1.25rem;
-  align-items: center;
-}
-
-.profile-facts dt {
-  font-size: var(--step--1);
-  font-weight: 600;
-  color: var(--ink-soft);
-}
-
-.profile-facts dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.profile-stats {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.5rem;
-}
-
-.profile-stats li {
-  display: grid;
-  gap: 0.15rem;
-  padding: 0.6rem 0.7rem;
-  border: 1.5px solid var(--line);
-  border-radius: var(--radius-m);
-}
-
-.profile-stats .num {
-  font-size: var(--step-3);
-  line-height: 1;
-}
-
-.profile-stats small {
-  font-size: 0.72rem;
-  color: var(--ink-soft);
-}
-
-
-/* Cartão de identidade no topo */
-.profile-card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.2rem;
+  padding: 1.4rem 1.4rem 0;
   border: 1px solid var(--line);
   border-radius: var(--radius-l);
   background: var(--surface);
+  overflow: hidden;
+}
+
+.profile-hero-top {
+  display: grid;
+  gap: 1.4rem;
+  align-items: center;
+}
+
+.profile-who {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
 }
 
 .profile-avatar {
   flex: none;
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   display: grid;
   place-items: center;
   border-radius: 50%;
@@ -85,19 +34,21 @@
   font-family: var(--font-display);
   font-weight: 900;
   font-stretch: 70%;
-  font-size: 2rem;
+  font-size: 2.3rem;
 }
 
 .profile-id {
   display: grid;
-  gap: 0.1rem;
+  gap: 0.15rem;
   min-width: 0;
 }
 
-.profile-id strong {
+.profile-id h1 {
+  margin: 0;
   font-family: var(--font-heading);
-  font-size: var(--step-2);
-  line-height: 1.15;
+  font-size: var(--step-3);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
 }
 
 .profile-id span,
@@ -106,41 +57,180 @@
   overflow-wrap: anywhere;
 }
 
-/* Resumo da coleção */
-.profile-summary .profile-stats {
+.profile-id small { font-size: var(--step--1); }
+
+/* Números em linha, separados por filetes (sem caixinhas) */
+.profile-figures {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  row-gap: 1rem;
 }
 
-.profile-stats .is-main {
-  grid-column: 1 / -1;
-  flex-direction: row;
+.profile-figures li {
+  display: grid;
+  gap: 0.2rem;
+  align-content: start;
+  padding: 0 0.9rem;
+  border-left: 1px solid var(--line);
+}
+
+.profile-figures li:nth-child(3n + 1) { border-left: 0; padding-left: 0; }
+
+.profile-figures .num {
+  font-size: var(--step-3);
+  line-height: 1.1;
+}
+
+.profile-figures small {
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  line-height: 1.25;
+}
+
+/* O total ganha o marca-texto amarelo, como "o que falta" no resto do app */
+.profile-figures .is-main .num {
+  justify-self: start;
+  padding: 0 0.3em;
+  border-radius: 6px;
   background: var(--marker);
-  border-color: var(--marker);
   color: var(--marker-ink);
 }
 
-.profile-stats .is-main .num {
-  font-size: var(--step-5);
-}
-
-.profile-stats .is-main small {
-  color: var(--marker-ink);
+.profile-note {
+  margin: 0;
   font-size: var(--step--1);
-  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+/* A coleção como faixa de lombadas, apoiada numa tábua */
+.shelf-band {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 56px;
+  margin: 0.4rem -1.4rem 0;
+  padding: 0 1.4rem 5px;
+  background: var(--surface-sunk);
+  box-shadow: inset 0 -5px 0 var(--line);
+  border-top: 1px solid var(--line);
+}
+
+.shelf-band i {
+  flex: 1 1 0;
+  min-width: 3px;
+  max-width: 16px;
+  border-radius: 2px 2px 0 0;
 }
 
 @media (min-width: 900px) {
-  .profile-summary .profile-stats {
-    grid-template-columns: 1.4fr repeat(5, minmax(0, 1fr));
+  .profile-hero-top {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
   }
 
-  .profile-stats .is-main {
-    grid-column: auto;
+  .profile-figures {
+    grid-template-columns: repeat(6, auto);
+    justify-content: end;
   }
+
+  .profile-figures li:nth-child(3n + 1) { border-left: 1px solid var(--line); padding-left: 0.9rem; }
+  .profile-figures li:first-child { border-left: 0; padding-left: 0; }
 }
 
-@media (max-width: 520px) {
-  .profile-summary .profile-stats {
+/* ---------- Grupos de configurações ---------- */
+.profile-groups {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .profile-groups {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.profile-group {
+  padding: 0.3rem 1.3rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  background: var(--surface);
+}
+
+.profile-group > h2 {
+  margin: 1rem 0 0.6rem;
+  font-size: var(--step-1);
+}
+
+/* Os formulários antigos são "painéis": dentro do grupo viram linhas separadas por filete */
+.profile-group .panel {
+  max-width: none;
+  padding: 1rem 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+
+.profile-group .panel > h2 {
+  font-size: var(--step-0);
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.profile-row > div { display: grid; gap: 0.15rem; min-width: 0; }
+.profile-row .hint { overflow-wrap: anywhere; }
+.profile-row .btn { flex: none; }
+
+@media (max-width: 520px) {
+  .profile-row { flex-wrap: wrap; }
+}
+
+/* Trocar senha recolhida até a pessoa abrir */
+.profile-fold {
+  border-top: 1px solid var(--line);
+}
+
+.profile-fold > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.profile-fold > summary::-webkit-details-marker { display: none; }
+
+.profile-fold > summary::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--ink-soft);
+  border-bottom: 2px solid var(--ink-soft);
+  transform: rotate(45deg);
+  transition: transform 150ms;
+}
+
+.profile-fold[open] > summary::after { transform: rotate(-135deg); }
+.profile-fold > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.profile-fold .panel {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.profile-fold .panel > h2 { display: none; }

@@ -404,3 +404,27 @@ export async function fetchSharedShelf(token: string): Promise<SharedShelf | nul
   if (error) throw new Error("Não foi possível abrir esta estante agora. Tente de novo em instantes.");
   return (data as SharedShelf | null) ?? null;
 }
+
+/** Feedbacks meus cuja situação mudou desde a última vez que vi (lido ou resolvido). */
+export type FeedbackUpdate = { id: string; message: string; status: FeedbackStatus };
+
+export async function listFeedbackUpdates(): Promise<FeedbackUpdate[]> {
+  if (isDemo) return [];
+  const uid = (await supabase.auth.getUser()).data.user?.id;
+  if (!uid) return [];
+  const { data, error } = await supabase
+    .from("feedback")
+    .select("id, message, status, notified_status")
+    .eq("user_id", uid)
+    .order("created_at", { ascending: false })
+    .limit(30);
+  // Migração 0010 ainda não rodou (coluna ou política ausente): sem avisos, sem erro na tela.
+  if (error) return [];
+  return (data as (FeedbackUpdate & { notified_status: FeedbackStatus })[])
+    .filter((f) => f.status !== "novo" && f.status !== f.notified_status)
+    .map(({ id, message, status }) => ({ id, message, status }));
+}
+
+export async function ackFeedback(id: string) {
+  await supabase.rpc("ack_feedback", { feedback_id: id });
+}

@@ -14,8 +14,12 @@ type AuthState = {
   signInWithPassword: (email: string, password: string) => Promise<void>;
   /** Retorna true se a conta precisa ser confirmada pelo e-mail antes de entrar. */
   signUp: (name: string, email: string, password: string) => Promise<boolean>;
+  /** Abre a tela de login do Google; ao voltar, a sessão é aberta sozinha. */
+  signInWithGoogle: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   resendConfirmation: (email: string) => Promise<void>;
+  /** Confere a senha atual (usada antes de trocar a senha). */
+  verifyPassword: (password: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
   /** Atualiza o nome de exibição (perfil e metadados da conta). */
   updateName: (name: string) => Promise<void>;
@@ -37,6 +41,8 @@ export function authErrorMessage(error: unknown): string {
       return "Já existe uma conta com esse e-mail. Entre ou use “Esqueci a senha”.";
     case "weak_password":
       return "Senha fraca. Use pelo menos 8 caracteres, com letras e números.";
+    case "provider_disabled":
+      return "O login com Google ainda não está ativado neste servidor. Entre com e-mail e senha.";
     case "over_email_send_rate_limit":
     case "over_request_rate_limit":
       return "Muitas tentativas seguidas. Espere alguns minutos e tente de novo.";
@@ -90,6 +96,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return data.session === null;
     },
 
+    async signInWithGoogle() {
+      if (isDemo) return;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin },
+      });
+      if (error) throw error;
+    },
+
     async sendPasswordReset(email) {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin,
@@ -116,6 +131,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const id = data.user?.id;
       if (id) await supabase.from("profiles").update({ display_name: name }).eq("id", id);
       setSession((s) => (s && data.user ? { ...s, user: data.user } : s));
+    },
+
+    async verifyPassword(password) {
+      const email = session?.user.email;
+      if (!email) throw new Error("Sessão sem e-mail.");
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
     },
 
     async updatePassword(password) {

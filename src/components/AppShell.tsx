@@ -5,6 +5,7 @@ import { useAuth } from "../lib/auth";
 import { ThemeToggle } from "./ThemeToggle";
 import { isDemo } from "../lib/demo";
 import { QuickAddJobProvider } from "../lib/quickAddJob";
+import { FeedbackNotice } from "./FeedbackNotice";
 import { FeedbackButton } from "./FeedbackButton";
 import "./AppShell.css";
 
@@ -61,6 +62,7 @@ export function AppShell() {
           <Outlet />
         </Suspense>
       </main>
+      <FeedbackNotice />
       <FeedbackButton />
     </div>
     </QuickAddJobProvider>
