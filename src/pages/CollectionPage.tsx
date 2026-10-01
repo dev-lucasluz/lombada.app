@@ -2,20 +2,30 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { listCollection, type CollectionItem } from "../lib/db";
 import { formatRanges, missingVolumes } from "../lib/ranges";
-import { spineColor } from "../lib/spineColor";
-import { useAuth } from "../lib/auth";
-import { SpineStrip } from "../components/Shelf";
+import { seriesHue, seriesHues } from "../lib/spineColor";
+import { PageCorner } from "../components/PageCorner";
+import { nicheClass, seriesUnits, SpineStrip } from "../components/Shelf";
+import { packShelf } from "../lib/packShelf";
+import { useColumns } from "../lib/useColumns";
+import { Icon } from "../components/Icon";
+import { VolumeCount } from "../components/VolumeCount";
+import { BookShelf, isStandalone } from "../components/BookShelf";
+import { editionLabel } from "../lib/editionLabel";
 import "./pages.css";
 
 export function CollectionPage() {
-  const { signOut } = useAuth();
   const { data, isLoading, error } = useQuery({ queryKey: ["collection"], queryFn: listCollection });
 
   const totalOwned = data?.reduce((sum, c) => sum + c.owned.length, 0) ?? 0;
+  const cols = useColumns([[1400, 3], [900, 2]]);
+  const hues = seriesHues(data ?? []);
+  const books = data?.filter(isStandalone) ?? [];
+  const series = data?.filter((i) => !isStandalone(i)) ?? [];
 
   return (
     <div className="page">
       <header className="page-head">
+        <PageCorner />
         <div>
           <h1>Coleção</h1>
           {data && data.length > 0 && (
@@ -30,7 +40,6 @@ export function CollectionPage() {
             <Link to="/compras" className="btn btn-ghost">Lista de compras</Link>
           )}
           <Link to="/adicionar" className="btn btn-primary">Adicionar série</Link>
-          <button className="btn btn-ghost mobile-only" onClick={signOut}>Sair</button>
         </div>
       </header>
 
@@ -47,41 +56,59 @@ export function CollectionPage() {
 
       {data && data.length > 0 && (
         <ul className="series-list">
-          {data.map((item) => (
-            <SeriesRow key={item.id} item={item} />
+          {packShelf(series, (i) => seriesUnits(seriesTotal(i)), cols * 2).placed.map(({ item, span }) => (
+            <SeriesRow key={item.id} item={item} span={span} hue={hues.get(item.id) ?? seriesHue(item.edition.id)} />
           ))}
+          <li className="series-add is-full">
+            <Link to="/adicionar">
+              <Icon name="plus" size={20} /> Adicionar série
+            </Link>
+          </li>
         </ul>
+      )}
+
+      {books.length > 0 && (
+        <section className="books-section" aria-labelledby="books-title">
+          <h2 id="books-title">
+            Livros avulsos <span className="hint">{books.length}</span>
+          </h2>
+          <div className="books-case">
+            <BookShelf items={books} />
+          </div>
+        </section>
       )}
     </div>
   );
 }
 
-function SeriesRow({ item }: { item: CollectionItem }) {
+function seriesTotal(item: CollectionItem) {
+  return item.edition.total_volumes ?? Math.max(0, ...item.owned);
+}
+
+function SeriesRow({ item, span, hue }: { item: CollectionItem; span: number; hue: number }) {
   const { edition } = item;
-  const total = edition.total_volumes ?? Math.max(0, ...item.owned);
+  const total = seriesTotal(item);
   const missing = missingVolumes(item.owned, edition.total_volumes);
   const complete = edition.total_volumes !== null && missing.length === 0;
 
   return (
-    <li>
+    <li className={nicheClass(total)} style={{ gridColumn: `span ${span}` }}>
       <Link to={`/colecao/${item.id}`} className="series-row">
         <Cover url={edition.work.cover_url} title={edition.work.title} />
         <div className="series-body">
           <div className="series-title">
-            <h2>{edition.work.title}</h2>
-            <span className="series-edition">
-              {edition.name}
-              {edition.publisher ? `, ${edition.publisher}` : ""}
-            </span>
+            <div className="series-name">
+              <h2>{edition.work.title}</h2>
+              {editionLabel(edition, edition.work.title) && (
+                <span className="series-edition">{editionLabel(edition, edition.work.title)}</span>
+              )}
+            </div>
+            <VolumeCount owned={item.owned.length} total={edition.total_volumes} />
           </div>
-          <SpineStrip total={total} owned={new Set(item.owned)} color={spineColor(edition.id)} />
+          <SpineStrip total={total} owned={new Set(item.owned)} hue={hue} />
           <p className="series-status">
-            <span className="num">
-              {item.owned.length}
-              {edition.total_volumes ? ` de ${edition.total_volumes}` : ""}
-            </span>
             {complete ? (
-              <span className="tag-complete">Completa</span>
+              <span className="series-missing">Coleção completa</span>
             ) : missing.length > 0 ? (
               <span className="series-missing">Faltam {formatRanges(missing)}</span>
             ) : (

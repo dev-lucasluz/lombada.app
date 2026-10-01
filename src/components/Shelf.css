@@ -1,8 +1,19 @@
 /* ---------- Faixa compacta (lista da coleção) ---------- */
+.strip-stack {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+/* Cada prateleira tem o mesmo número de colunas, para as lombadas alinharem.
+   A largura acompanha as lombadas: a linha da prateleira termina junto com elas. */
 .strip {
+  width: fit-content;
+  max-width: 100%;
   min-width: 0;
   overflow: hidden;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 30px));
   align-items: end;
   gap: 2px;
   height: 40px;
@@ -10,11 +21,12 @@
   border-bottom: 3px solid var(--line);
 }
 
+.strip-stack.is-multi .strip {
+  height: 32px;
+}
+
 .strip-spine {
-  flex: 1 1 0;
-  /* sem mínimo: séries longas (72 volumes) encolhem em vez de estourar o bloco */
   min-width: 0;
-  max-width: 14px;
   height: 70%;
   border-radius: 2px 2px 0 0;
   border: 1px dashed var(--gap);
@@ -27,12 +39,12 @@
   border: none;
 }
 
-/* Séries longas: vãos sem tracejado e espaço mínimo, para caber no celular */
-.strip.is-dense {
+/* Muitas lombadas por prateleira: vãos sem tracejado e espaço mínimo */
+.strip-stack.is-multi .strip {
   gap: 1px;
 }
 
-.strip.is-dense .strip-spine:not(.is-owned) {
+.strip-stack.is-multi .strip-spine:not(.is-owned) {
   border: none;
   background: var(--line);
 }

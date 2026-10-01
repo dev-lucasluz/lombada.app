@@ -1,20 +1,83 @@
-import { useRef, type CSSProperties } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { between } from "../lib/ranges";
+import { volumeColor } from "../lib/spineColor";
 import "./Shelf.css";
 
 type ShelfProps = {
   total: number;
   owned: Set<number>;
-  color: string;
+  /** Tom de partida da série (cada volume gira a partir dele; ver spineColor.ts). */
+  hue: number;
 };
 
-/** Versão compacta da prateleira, para listas: lombadas finas, sem interação. */
-export function SpineStrip({ total, owned, color }: ShelfProps) {
+/** Séries acima deste número de volumes ocupam duas colunas da estante. */
+export const LONG_SERIES = 40;
+
+export function isLongSeries(total: number) {
+  return total > LONG_SERIES;
+}
+
+/** Séries curtas (2 a 4 volumes, ex.: Ping Pong) ocupam meio nicho. */
+export function isSmallSeries(total: number) {
+  return total >= 2 && total <= 4;
+}
+
+/** Quantas meias-colunas a série ocupa na estante: curta 1, normal 2, longa 4. */
+export function seriesUnits(total: number) {
+  return isSmallSeries(total) ? 1 : isLongSeries(total) ? 4 : 2;
+}
+
+/** Classe do nicho conforme o tamanho da série. */
+export function nicheClass(total: number) {
+  return isSmallSeries(total) ? "is-small" : isLongSeries(total) ? "is-wide" : undefined;
+}
+
+/** Largura mínima de cada lombada na faixa (px, já contando o espaço entre elas). */
+const MIN_SPINE = 13;
+
+/**
+ * Versão compacta da prateleira, para listas. Mede a própria largura e escolhe
+ * quantas prateleiras usar para que as lombadas preencham o espaço sem ficarem
+ * finas demais: 110 volumes num bloco estreito viram 3 prateleiras; num bloco
+ * largo, 1 ou 2.
+ */
+export function SpineStrip({ total, owned, hue }: ShelfProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // Medida inicial síncrona; o observer cuida das mudanças de tamanho depois.
+    setWidth(el.getBoundingClientRect().width);
+    const observer = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const count = Math.max(total, 1);
+  const perShelf = width > 0 ? Math.max(8, Math.floor(width / MIN_SPINE)) : count;
+  const shelves = Math.ceil(count / perShelf);
+  const cols = Math.ceil(count / shelves);
+
   return (
-    <div className={count > 40 ? "strip is-dense" : "strip"} style={{ "--spine": color } as CSSProperties} aria-hidden="true">
-      {Array.from({ length: count }, (_, i) => (
-        <span key={i} className={owned.has(i + 1) ? "strip-spine is-owned" : "strip-spine"} />
+    <div
+      ref={ref}
+      className={shelves > 1 ? "strip-stack is-multi" : "strip-stack"}
+      style={{ "--cols": cols } as CSSProperties}
+      aria-hidden="true"
+    >
+      {Array.from({ length: shelves }, (_, sh) => (
+        <div key={sh} className="strip">
+          {Array.from({ length: Math.min(cols, count - sh * cols) }, (_, i) => {
+            const n = sh * cols + i + 1;
+            return owned.has(n) ? (
+              <span key={n} className="strip-spine is-owned" style={{ "--spine": volumeColor(hue, n) } as CSSProperties} />
+            ) : (
+              <span key={n} className="strip-spine" />
+            );
+          })}
+        </div>
       ))}
     </div>
   );
@@ -30,7 +93,7 @@ type VolumeGridProps = ShelfProps & {
  * Prateleira completa. Clique alterna um volume; Shift+clique aplica
  * o mesmo estado a todo o intervalo desde o último volume clicado.
  */
-export function VolumeGrid({ total, owned, color, onChange, disabled }: VolumeGridProps) {
+export function VolumeGrid({ total, owned, hue, onChange, disabled }: VolumeGridProps) {
   const lastClicked = useRef<number | null>(null);
 
   const handleClick = (n: number, shift: boolean) => {
@@ -44,7 +107,7 @@ export function VolumeGrid({ total, owned, color, onChange, disabled }: VolumeGr
   };
 
   return (
-    <div className="shelf" style={{ "--spine": color } as CSSProperties} role="group" aria-label="Volumes">
+    <div className="shelf" role="group" aria-label="Volumes">
       {Array.from({ length: total }, (_, i) => {
         const n = i + 1;
         const has = owned.has(n);
@@ -53,6 +116,7 @@ export function VolumeGrid({ total, owned, color, onChange, disabled }: VolumeGr
             key={n}
             type="button"
             className={has ? "spine is-owned" : "spine"}
+            style={has ? ({ "--spine": volumeColor(hue, n) } as CSSProperties) : undefined}
             aria-pressed={has}
             aria-label={`Volume ${n}${has ? ", tenho" : ", falta"}`}
             disabled={disabled}

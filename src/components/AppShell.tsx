@@ -6,12 +6,14 @@ import { ThemeToggle } from "./ThemeToggle";
 import { isDemo } from "../lib/demo";
 import "./AppShell.css";
 
-const NAV: { to: string; label: string; icon: IconName }[] = [
+/** `only`: mostra o item só no PC (`desktop`) ou só no celular (`mobile`). */
+const NAV: { to: string; label: string; icon: IconName; only?: "desktop" | "mobile" }[] = [
   { to: "/", label: "Início", icon: "home" },
   { to: "/colecao", label: "Coleção", icon: "shelf" },
   { to: "/onde-parei", label: "Onde parei", icon: "book" },
   { to: "/lembretes", label: "Lembretes", icon: "bell" },
-  { to: "/foto-e-voz", label: "Foto e voz", icon: "camera" },
+  { to: "/foto-e-voz", label: "Foto e voz", icon: "camera", only: "desktop" },
+  { to: "/perfil", label: "Perfil", icon: "user", only: "mobile" },
 ];
 
 export function AppShell() {
@@ -26,7 +28,7 @@ export function AppShell() {
         </Link>
         <ul>
           {NAV.map((item) => (
-            <li key={item.to}>
+            <li key={item.to} className={item.only ? `nav-${item.only}-only` : undefined}>
               <NavLink to={item.to} end={item.to === "/"} className="shell-link">
                 <Icon name={item.icon} />
                 <span>{item.label}</span>
@@ -35,9 +37,13 @@ export function AppShell() {
           ))}
         </ul>
         <div className="shell-tools">
+          <NavLink to="/perfil" className="shell-tool shell-profile" title="Meu perfil">
+            {avatar ? <img src={avatar} alt="" width={28} height={28} /> : <Icon name="user" />}
+            <span>Perfil</span>
+          </NavLink>
           <ThemeToggle className="shell-tool" withLabel />
           <button className="shell-tool" onClick={signOut} title="Sair da conta">
-            {avatar ? <img src={avatar} alt="" width={28} height={28} /> : <Icon name="out" />}
+            <Icon name="out" />
             <span>Sair</span>
           </button>
         </div>

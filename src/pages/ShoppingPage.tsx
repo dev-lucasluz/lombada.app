@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { listCollection } from "../lib/db";
 import { formatRanges, missingVolumes } from "../lib/ranges";
 import { Icon } from "../components/Icon";
+import { editionLabel } from "../lib/editionLabel";
 import "./pages.css";
 
 /** Tudo o que falta, série por série — pensado para abrir na loja. */
@@ -43,7 +44,9 @@ export function ShoppingPage() {
             <Link to={`/colecao/${item.id}`} className="reminder-row" style={{ color: "inherit", textDecoration: "none" }}>
               <div className="reminder-body">
                 <h2 style={{ fontSize: "var(--step-1)" }}>{item.edition.work.title}</h2>
-                <span className="hint">{item.edition.name}{item.edition.publisher ? `, ${item.edition.publisher}` : ""}</span>
+                {editionLabel(item.edition, item.edition.work.title) && (
+                  <span className="hint">{editionLabel(item.edition, item.edition.work.title)}</span>
+                )}
                 <span style={{ fontWeight: 600 }}>{formatRanges(missing)}</span>
               </div>
               <span className="num" style={{ fontSize: "var(--step-3)" }}>{missing.length}</span>

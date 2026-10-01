@@ -1,0 +1,146 @@
+.profile-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .profile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.profile .panel {
+  max-width: none;
+}
+
+.profile-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.6rem 1.25rem;
+  align-items: center;
+}
+
+.profile-facts dt {
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.profile-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.profile-stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.profile-stats li {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.6rem 0.7rem;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-m);
+}
+
+.profile-stats .num {
+  font-size: var(--step-3);
+  line-height: 1;
+}
+
+.profile-stats small {
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+
+
+/* Cartão de identidade no topo */
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  background: var(--surface);
+}
+
+.profile-avatar {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--action);
+  color: var(--action-ink);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-stretch: 70%;
+  font-size: 2rem;
+}
+
+.profile-id {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.profile-id strong {
+  font-family: var(--font-heading);
+  font-size: var(--step-2);
+  line-height: 1.15;
+}
+
+.profile-id span,
+.profile-id small {
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+/* Resumo da coleção */
+.profile-summary .profile-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.profile-stats .is-main {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  background: var(--marker);
+  border-color: var(--marker);
+  color: var(--marker-ink);
+}
+
+.profile-stats .is-main .num {
+  font-size: var(--step-5);
+}
+
+.profile-stats .is-main small {
+  color: var(--marker-ink);
+  font-size: var(--step--1);
+  font-weight: 600;
+}
+
+@media (min-width: 900px) {
+  .profile-summary .profile-stats {
+    grid-template-columns: 1.4fr repeat(5, minmax(0, 1fr));
+  }
+
+  .profile-stats .is-main {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .profile-summary .profile-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

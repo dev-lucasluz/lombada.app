@@ -14,9 +14,12 @@ export type Work = {
   original_title: string | null;
   authors: string[];
   cover_url: string | null;
+  /** Cor predominante da capa (#rrggbb); nula para obras sem essa informação. */
+  cover_color?: string | null;
   original_volumes: number | null;
   anilist_id: number | null;
   google_books_id: string | null;
+  open_library_id?: string | null;
 };
 
 export type Edition = {
@@ -31,6 +34,8 @@ export type Edition = {
 export type CollectionItem = {
   id: string;
   created_at: string;
+  /** Última vez que um volume foi marcado ou desmarcado (migração 0002). */
+  updated_at?: string;
   notes: string | null;
   edition: Edition & { work: Work };
   owned: number[];
@@ -79,27 +84,36 @@ function check<T>(result: { data: T; error: { message: string } | null }): T {
 /** Encontra a obra pelo id externo ou cadastra no catálogo compartilhado. */
 export async function ensureWork(r: CatalogResult): Promise<Work> {
   if (isDemo) return demoDb.ensureWork(r);
-  const column = r.source === "anilist" ? "anilist_id" : "google_books_id";
-  const externalId = r.source === "anilist" ? Number(r.externalId) : r.externalId;
+  let column = r.source === "anilist" ? "anilist_id" : r.source === "open_library" ? "open_library_id" : "google_books_id";
+  let externalId: string | number = r.source === "anilist" ? Number(r.externalId) : r.externalId;
 
-  const existing = check(await supabase.from("works").select("*").eq(column, externalId).maybeSingle());
+  let lookup = await supabase.from("works").select("*").eq(column, externalId).maybeSingle();
+  if (column === "open_library_id" && isMissingColumn(lookup.error)) {
+    // Migração 0003 ainda não rodou: guarda o id do Open Library em google_books_id com prefixo.
+    column = "google_books_id";
+    externalId = `ol:${r.externalId}`;
+    lookup = await supabase.from("works").select("*").eq(column, externalId).maybeSingle();
+  }
+  const existing = check(lookup);
   if (existing) return existing as Work;
 
-  return check(
-    await supabase
-      .from("works")
-      .insert({
-        kind: r.kind,
-        title: r.title,
-        original_title: r.originalTitle,
-        authors: r.authors,
-        cover_url: r.coverUrl,
-        original_volumes: r.volumes,
-        [column]: externalId,
-      })
-      .select("*")
-      .single(),
-  ) as Work;
+  const row = {
+    kind: r.kind,
+    title: r.title,
+    original_title: r.originalTitle,
+    authors: r.authors,
+    cover_url: r.coverUrl,
+    cover_color: r.coverColor,
+    original_volumes: r.volumes,
+    [column]: externalId,
+  };
+  let result = await supabase.from("works").insert(row).select("*").single();
+  if (isMissingColumn(result.error)) {
+    // Migração 0002 ainda não rodou: grava sem a cor.
+    const { cover_color: _, ...withoutColor } = row;
+    result = await supabase.from("works").insert(withoutColor).select("*").single();
+  }
+  return check(result) as Work;
 }
 
 export async function listEditions(workId: string): Promise<Edition[]> {
@@ -124,21 +138,57 @@ export async function updateEdition(id: string, patch: Partial<Omit<Edition, "id
 // ---------------------------------------------------------------------------
 const COLLECTION_SELECT =
   "id, created_at, notes, edition:editions(*, work:works(*)), owned_volumes(volume_number)";
+const COLLECTION_SELECT_V2 = COLLECTION_SELECT.replace("created_at,", "created_at, updated_at,");
+
+/** Coluna ainda não existe (migração 0002 não rodou): Postgres 42703 ou PostgREST PGRST204. */
+function isMissingColumn(error: { code?: string } | null) {
+  return error?.code === "42703" || error?.code === "PGRST204";
+}
+
+let hasActivityColumn: boolean | null = null;
 
 type CollectionRow = Omit<CollectionItem, "owned"> & { owned_volumes: { volume_number: number }[] };
 
-function toItem(row: CollectionRow): CollectionItem {
-  const { owned_volumes, ...rest } = row;
-  return { ...rest, owned: owned_volumes.map((v) => v.volume_number).sort((a, b) => a - b) };
+/**
+ * Volumes marcados acima do total da edição não contam: a edição é compartilhada
+ * e alguém pode ter corrigido o total para menos (ex.: 300 → 110).
+ */
+export function ownedWithinTotal(owned: number[], total: number | null) {
+  return owned.filter((n) => total === null || n <= total).sort((a, b) => a - b);
 }
 
+function toItem(row: CollectionRow): CollectionItem {
+  const { owned_volumes, ...rest } = row;
+  return { ...rest, owned: ownedWithinTotal(owned_volumes.map((v) => v.volume_number), rest.edition.total_volumes) };
+}
+
+/** Volumes gravados acima do total (inclui os que `toItem` esconde). */
+export async function volumesAbove(collectionId: string, total: number): Promise<number[]> {
+  if (isDemo) return demoDb.volumesAbove(collectionId, total);
+  const rows = check(
+    await supabase.from("owned_volumes").select("volume_number").eq("collection_id", collectionId).gt("volume_number", total),
+  ) as { volume_number: number }[];
+  return rows.map((r) => r.volume_number).sort((a, b) => a - b);
+}
+
+/** Ordena pela última atividade (últimas adições primeiro). */
 export async function listCollection(): Promise<CollectionItem[]> {
   if (isDemo) return demoDb.listCollection();
-  const rows = check(
-    await supabase.from("collections").select(COLLECTION_SELECT).order("created_at", { ascending: false }),
-  ) as unknown as CollectionRow[];
-  return rows.map(toItem);
+  type Result = { data: unknown; error: { message: string; code?: string } | null };
+  let result: Result | null = null;
+  if (hasActivityColumn !== false) {
+    result = await supabase.from("collections").select(COLLECTION_SELECT_V2).order("updated_at", { ascending: false });
+  }
+  if (!result || isMissingColumn(result.error)) {
+    hasActivityColumn = false;
+    result = await supabase.from("collections").select(COLLECTION_SELECT).order("created_at", { ascending: false });
+  } else {
+    hasActivityColumn = true;
+  }
+  const items = (check(result) as CollectionRow[]).map(toItem);
+  return items;
 }
+
 
 export async function getCollectionItem(id: string): Promise<CollectionItem> {
   if (isDemo) return demoDb.getCollectionItem(id);

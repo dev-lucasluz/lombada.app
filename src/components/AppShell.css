@@ -20,6 +20,8 @@
   height: var(--nav-h);
   display: grid;
   grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+  padding: 6px 6px 0;
 }
 
 .shell-brand,
@@ -27,20 +29,26 @@
   display: none;
 }
 
+/* Cada item é um "azulejo" com borda; o ativo ganha borda de destaque */
 .shell-link {
-  height: 100%;
+  height: calc(100% - 6px);
   display: grid;
   place-items: center;
   align-content: center;
   gap: 2px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-m);
   color: var(--ink-faint);
   text-decoration: none;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .shell-link.active {
   color: var(--ink);
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 10%, var(--surface));
 }
 
 .shell-link.active svg {
@@ -74,6 +82,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    padding: 0;
   }
 
   .shell-brand {
@@ -94,11 +103,11 @@
   .shell-link {
     width: 68px;
     height: 64px;
-    border-radius: var(--radius-m);
+    font-size: 0.72rem;
   }
 
-  .shell-link:hover {
-    background: var(--surface-sunk);
+  .shell-link:not(.active):hover {
+    border-color: var(--ink-faint);
     color: var(--ink);
   }
 
@@ -116,7 +125,7 @@
     align-content: center;
     gap: 3px;
     background: none;
-    border: none;
+    border: 1.5px solid var(--line);
     border-radius: var(--radius-m);
     color: var(--ink-faint);
     font-size: 0.72rem;
@@ -125,7 +134,7 @@
   }
 
   .shell-tool:hover {
-    background: var(--surface-sunk);
+    border-color: var(--ink-faint);
     color: var(--ink);
   }
 
@@ -148,4 +157,80 @@
   text-align: center;
   background: var(--marker);
   color: var(--marker-ink);
+}
+
+/* PC: sem azulejos; itens separados por traços horizontais na largura do trilho */
+@media (min-width: 900px) {
+  .shell-nav ul,
+  .shell-tools {
+    width: 100%;
+    gap: 0;
+  }
+
+  .shell-nav li + li,
+  .shell-tools > * + * {
+    border-top: 1px solid var(--line);
+  }
+
+  .shell-nav ul {
+    border-block: 1px solid var(--line);
+  }
+
+  .shell-tools {
+    border-top: 1px solid var(--line);
+  }
+
+  .shell-link,
+  .shell-tool {
+    width: 100%;
+    border: none;
+    border-radius: 0;
+  }
+
+  .shell-link.active {
+    background: color-mix(in oklab, var(--accent) 10%, transparent);
+    color: var(--accent);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+
+  .shell-link:not(.active):hover,
+  .shell-tool:hover {
+    background: var(--surface-sunk);
+    border: none;
+  }
+}
+
+/* Celular: mesmo estilo do PC — sem azulejos, itens separados por traços
+   verticais; o ativo ganha fundo laranja leve e uma faixa laranja no topo. */
+@media (max-width: 899px) {
+  .shell-nav ul {
+    gap: 0;
+    padding: 0;
+  }
+
+  .shell-nav li + li {
+    border-left: 1px solid var(--line);
+  }
+
+  .shell-link {
+    height: 100%;
+    border: none;
+    border-radius: 0;
+    font-size: 0.66rem;
+  }
+
+  .shell-link.active {
+    color: var(--accent);
+    background: color-mix(in oklab, var(--accent) 10%, transparent);
+    box-shadow: inset 0 3px 0 var(--accent);
+  }
+}
+
+/* Itens que existem só no PC ou só no celular (o dock do celular tem 5 lugares) */
+@media (max-width: 899px) {
+  .nav-desktop-only { display: none; }
+}
+
+@media (min-width: 900px) {
+  .nav-mobile-only { display: none; }
 }

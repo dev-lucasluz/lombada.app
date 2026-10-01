@@ -30,6 +30,7 @@ const FEATURES: { icon: IconName; title: string; text: string; soon?: boolean }[
   { icon: "bell", title: "Lembretes", text: "Escolha um dia para ser avisado, como a volta de um hiato." },
   { icon: "camera", title: "Foto da estante", text: "Fotografe a prateleira e o app lê as lombadas para você revisar." },
   { icon: "mic", title: "Cadastro por voz", text: "Diga “tenho Naruto do 1 ao 10” e revise antes de salvar." },
+  { icon: "user", title: "Perfil e backup", text: "Veja o resumo da coleção e baixe tudo em uma planilha." },
 ];
 
 /**

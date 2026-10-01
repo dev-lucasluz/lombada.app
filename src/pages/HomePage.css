@@ -2,10 +2,6 @@
   Início em blocos. A coleção é o bloco dominante; a foto da estante é o único
   bloco invertido (tinta com retícula de mangá), para puxar o olho para a função nova.
 */
-.home {
-  max-width: 1280px;
-}
-
 .home-grid {
   display: grid;
   gap: 16px;
@@ -34,6 +30,14 @@
   font-size: var(--step-1);
 }
 
+.block-subtitle {
+  margin-left: 0.6rem;
+  font-family: var(--font-body);
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
 .block-link {
   font-size: var(--step--1);
   font-weight: 600;
@@ -47,27 +51,35 @@
   color: var(--ink-soft);
 }
 
-/* ---------- Coleção ---------- */
+/* ---------- Coleção: mini estante (moldura, tábuas e nichos) ---------- */
 .home-series {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.5rem;
+  gap: 6px;
+  background: var(--case);
+  border: 7px solid var(--case);
+  border-radius: 8px;
+}
+
+.home-series > li {
+  display: grid;
+  background: var(--surface);
+  box-shadow: inset 0 8px 10px -10px rgb(0 0 0 / 0.55);
 }
 
 .home-series-item {
   display: flex;
   gap: 0.85rem;
-  padding: 0.6rem;
-  margin: -0.1rem -0.6rem;
-  border-radius: var(--radius-m);
+  padding: 0.8rem 0.75rem 0.7rem;
   color: inherit;
   text-decoration: none;
+  outline-offset: -3px;
 }
 
 .home-series-item:hover {
-  background: var(--surface-sunk);
+  background: color-mix(in oklab, var(--ink) 4%, transparent);
 }
 
 .home-series-body {
@@ -78,7 +90,38 @@
   align-content: start;
 }
 
-.home-series-body strong {
+.home-series > li.home-series-add {
+  background: var(--surface-sunk);
+}
+
+
+.home-series-add a {
+  margin: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 2px dashed var(--gap);
+  border-radius: var(--radius-m);
+  color: var(--ink-soft);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.home-series-add a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.home-series-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.home-series-head strong {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -86,11 +129,6 @@
 
 .home-series-body .strip {
   height: 26px;
-}
-
-.home-series-count {
-  font-size: var(--step--1);
-  color: var(--ink-soft);
 }
 
 /* ---------- Leitura ---------- */
@@ -221,98 +259,6 @@
   font-size: var(--step-0);
 }
 
-/* ---------- Foto da estante (bloco invertido) ---------- */
-.block-photo {
-  background: var(--halftone), #1c1c1f;
-  border-color: transparent;
-  color: #f2f1ec;
-}
-
-:root[data-theme="dark"] .block-photo {
-  border-color: var(--line);
-}
-
-.block-photo p {
-  opacity: 0.85;
-}
-
-.photo-art {
-  position: relative;
-  height: 74px;
-  display: flex;
-  align-items: end;
-  gap: 4px;
-  padding: 0 10px 4px;
-  border-bottom: 4px solid currentColor;
-}
-
-.photo-spine {
-  flex: 1;
-  max-width: 18px;
-  border-radius: 2px 2px 0 0;
-  background: currentColor;
-  opacity: 0.55;
-}
-
-.photo-spine:nth-child(2n) {
-  opacity: 0.8;
-}
-
-/* As duas primeiras lombadas repetem o ícone: amarelo e verde. */
-.photo-spine:nth-child(1) {
-  background: #ffd23f;
-  opacity: 1;
-}
-
-.photo-spine:nth-child(2) {
-  background: #4cc38a;
-  opacity: 1;
-}
-
-.photo-spine:nth-child(4).is-gap {
-  border-color: #ff8a3d;
-  opacity: 1;
-}
-
-.photo-spine.is-gap {
-  background: none;
-  border: 1.5px dashed currentColor;
-  border-bottom: none;
-}
-
-.photo-frame {
-  position: absolute;
-  inset: -6px auto 8px 0;
-  width: 150px;
-  border: 2px solid var(--marker);
-  border-radius: 6px;
-}
-
-.photo-btn {
-  justify-self: start;
-  background: var(--action);
-  color: var(--action-ink);
-}
-
-.photo-btn:hover {
-  filter: brightness(0.96);
-}
-
-.photo-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.photo-btn-ghost {
-  border-color: rgb(255 255 255 / 0.35);
-  color: #f2f1ec;
-}
-
-.photo-btn-ghost:hover {
-  border-color: rgb(255 255 255 / 0.7);
-}
-
 /* ---------- Grade responsiva ---------- */
 @media (min-width: 700px) {
   .home-grid {
@@ -325,8 +271,9 @@
 
   .home-series {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 1.5rem;
+    grid-auto-flow: dense;
   }
+
 }
 
 @media (min-width: 1180px) {
@@ -334,19 +281,194 @@
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
 
+  /* Coleção: bloco principal, ocupa a linha inteira e mostra três séries por linha */
   .block-collection {
-    grid-column: span 8;
-    grid-row: span 2;
+    grid-column: 1 / -1;
   }
 
-  .block-reading {
-    grid-column: span 4;
-    grid-row: span 2;
+  .home-series {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .block-reading,
   .block-reminders,
-  .block-shopping,
-  .block-photo {
+  .block-shopping {
     grid-column: span 4;
+  }
+
+}
+
+
+
+/* Telas muito largas: quatro séries por linha na mini estante */
+@media (min-width: 1600px) {
+  .home-series {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Livros avulsos: um nicho com a linha inteira e as capas lado a lado */
+.home-series > li.home-books {
+  display: grid;
+  align-content: start;
+  gap: 0.6rem;
+  padding: 0.8rem 0.75rem 0.9rem;
+}
+
+.home-books-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+/* ---------- Grade em meias-colunas ----------
+   Cada coluna da estante vale 2 meias-colunas: série normal ocupa 2, curta
+   (2–4 volumes) ocupa 1, longa ocupa 4. Espelha useColumns em HomePage.tsx. */
+.home-series {
+  --units: 2;
+  grid-template-columns: repeat(var(--units), minmax(0, 1fr));
+  grid-auto-flow: dense;
+}
+
+.home-series > li {
+  grid-column: span 2;
+}
+
+.home-series > li.is-small {
+  grid-column: span 1;
+}
+
+.home-series > li.is-wide,
+.home-series > li.home-books:not([style]) {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 700px) {
+  .home-series { --units: 4; }
+  .home-series > li.is-wide { grid-column: span 4; }
+}
+
+@media (min-width: 1180px) {
+  .home-series { --units: 6; }
+}
+
+@media (min-width: 1600px) {
+  .home-series { --units: 8; }
+}
+
+/* Meio nicho: capa pequena; ao lado, título, etiqueta e lombadas empilhados */
+.home-series > li.is-small .cover-s {
+  width: 38px;
+  height: 56px;
+}
+
+.home-series > li.is-small .home-series-item {
+  gap: 0.55rem;
+  padding-inline: 0.6rem;
+}
+
+.home-series > li.is-small .home-series-head {
+  flex-direction: column;
+  align-items: start;
+  gap: 0.35rem;
+}
+
+.home-series > li.is-small .home-series-head strong {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.2;
+}
+
+.home-series > li.is-small .home-series-head strong {
+  font-size: 0.88rem;
+}
+
+/* Nichos esticados pela linha (ex.: ao lado do One Piece): conteúdo centralizado
+   na altura; no meio nicho, capa e lombadas maiores para usar o espaço. */
+.home-series-item {
+  align-items: center;
+}
+
+.home-series > li.is-small .cover-s {
+  width: 56px;
+  height: 84px;
+}
+
+.home-series > li.is-small .strip {
+  height: 52px;
+}
+
+/* Meio nicho em duas faixas: nome na largura toda; embaixo, capa ao lado da
+   etiqueta e das lombadas. `display: contents` põe os filhos direto na grade. */
+.home-series > li.is-small .home-series-item {
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr);
+  grid-template-areas:
+    "title title"
+    "cover badge"
+    "cover strip";
+  gap: 0.45rem 0.6rem;
+  align-content: center;
+  align-items: end;
+}
+
+.home-series > li.is-small .home-series-body,
+.home-series > li.is-small .home-series-head {
+  display: contents;
+}
+
+.home-series > li.is-small .home-series-head strong {
+  grid-area: title;
+  -webkit-line-clamp: 2;
+}
+
+.home-series > li.is-small .cover-s {
+  grid-area: cover;
+  width: 50px;
+  height: 75px;
+}
+
+.home-series > li.is-small .volume-count {
+  grid-area: badge;
+  justify-self: start;
+}
+
+.home-series > li.is-small .strip-stack {
+  grid-area: strip;
+}
+
+.home-series > li.is-small .home-series-body > .hint {
+  display: none;
+}
+
+/* As tábuas são desenhadas em volta de cada nicho (anel de 3px + 3px do vizinho
+   = tábua de 6px). O fundo do móvel fica da cor dos nichos: um espaço que a grade
+   deixa vazio parece só um nicho sem série, não um buraco escuro. */
+.home-series {
+  background: var(--surface);
+}
+
+.home-series > li {
+  box-shadow:
+    0 0 0 3px var(--case),
+    inset 0 8px 10px -10px rgb(0 0 0 / 0.55);
+}
+
+/* Celular: atalhos do topo em grade (adicionar na largura toda; foto e voz lado a lado) */
+@media (max-width: 699px) {
+  .home .head-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .home .head-actions .btn-primary {
+    grid-column: 1 / -1;
+  }
+
+  .home .head-actions .btn-sub {
+    align-items: start;
   }
 }

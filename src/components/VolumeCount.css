@@ -1,0 +1,33 @@
+.volume-count {
+  flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  padding: 0.1rem 0.55rem;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--step--1);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.volume-count .num {
+  font-size: 1.05rem;
+}
+
+.volume-count-total {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.volume-count.is-complete {
+  border-color: var(--marker);
+  background: var(--marker);
+  color: var(--marker-ink);
+}
+
+.volume-count.is-complete .volume-count-total {
+  color: var(--marker-ink);
+}

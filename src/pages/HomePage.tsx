@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
@@ -10,11 +11,16 @@ import {
   type ReadingEntry,
 } from "../lib/db";
 import { formatRanges, missingVolumes } from "../lib/ranges";
-import { spineColor } from "../lib/spineColor";
-import { SpineStrip } from "../components/Shelf";
+import { seriesHue, seriesHues } from "../lib/spineColor";
+import { nicheClass, seriesUnits, SpineStrip } from "../components/Shelf";
+import { packShelf } from "../lib/packShelf";
 import { Icon } from "../components/Icon";
-import { ThemeToggle } from "../components/ThemeToggle";
+import { VolumeCount } from "../components/VolumeCount";
+import { BookShelf, isStandalone } from "../components/BookShelf";
+import { useColumns } from "../lib/useColumns";
+import { PageCorner } from "../components/PageCorner";
 import { Cover } from "./CollectionPage";
+import { editionLabel } from "../lib/editionLabel";
 import "./pages.css";
 import "./HomePage.css";
 
@@ -25,7 +31,7 @@ function formatChapter(n: number | null) {
 }
 
 export function HomePage() {
-  const { session, signOut } = useAuth();
+  const { session } = useAuth();
   const collection = useQuery({ queryKey: ["collection"], queryFn: listCollection });
   const reading = useQuery({ queryKey: ["reading"], queryFn: listReading });
   const reminders = useQuery({ queryKey: ["reminders"], queryFn: listReminders });
@@ -53,9 +59,23 @@ export function HomePage() {
           <Link to="/adicionar" className="btn btn-primary">
             <Icon name="plus" size={20} /> Adicionar série
           </Link>
-          <ThemeToggle className="btn btn-ghost mobile-only" />
-          <button className="btn btn-ghost mobile-only" onClick={signOut}>Sair</button>
+          {/* Cadastro rápido logo ao lado: foto da estante ou voz */}
+          <Link to="/foto-e-voz" className="btn btn-accent btn-sub">
+            <Icon name="camera" size={22} />
+            <span>
+              <strong>Enviar foto</strong>
+              <small>Fotografe a estante e preencha automaticamente</small>
+            </span>
+          </Link>
+          <Link to="/foto-e-voz?modo=voz" className="btn btn-accent btn-sub">
+            <Icon name="mic" size={22} />
+            <span>
+              <strong>Falar volumes</strong>
+              <small>Diga o que você tem e o app anota</small>
+            </span>
+          </Link>
         </div>
+        <PageCorner />
       </header>
 
       <div className="home-grid">
@@ -63,7 +83,6 @@ export function HomePage() {
         <ReadingBlock data={reading.data} />
         <RemindersBlock data={reminders.data} />
         <ShoppingBlock data={collection.data} />
-        <PhotoBlock />
       </div>
     </div>
   );
@@ -71,49 +90,83 @@ export function HomePage() {
 
 // ---------------------------------------------------------------------------
 
-function BlockHead({ title, to, linkLabel }: { title: string; to: string; linkLabel: string }) {
+function BlockHead({ title, subtitle, to, linkLabel }: { title: string; subtitle?: string; to: string; linkLabel: string }) {
   return (
     <div className="block-head">
-      <h2>{title}</h2>
+      <h2>
+        {title}
+        {subtitle && <span className="block-subtitle">{subtitle}</span>}
+      </h2>
       <Link to={to} className="block-link">{linkLabel}</Link>
     </div>
   );
 }
 
 function CollectionBlock({ data }: { data: Awaited<ReturnType<typeof listCollection>> | undefined }) {
-  const recent = data?.slice(0, 6) ?? [];
+  const cols = useColumns([[1600, 4], [1180, 3], [700, 2]]);
+  // Livros avulsos (1 volume) vão para uma prateleira de capas; séries ficam nos nichos
+  const hues = seriesHues(data ?? []);
+  const books = data?.filter(isStandalone) ?? [];
+  const series = data?.filter((i) => !isStandalone(i)) ?? [];
+  // Duas linhas cheias de séries curtas em qualquer largura
+  const recent = series.slice(0, cols * 2);
+
+  // Arruma as séries em linhas completas. Se alguma série foi esticada em 2+
+  // meias-colunas só para fechar a linha, o nicho de livros avulsos ocupa essa
+  // sobra no lugar dela (a maior sobra, de preferência a mais embaixo).
+  const { placed: shelf, fillerPlaced: booksPlaced } = packShelf(
+    recent,
+    (i) => seriesUnits(i.edition.total_volumes ?? Math.max(0, ...i.owned)),
+    cols * 2,
+    { reserveFiller: books.length > 0 },
+  );
+
+  const booksNiche = (span: number) => (
+    <li className="home-books" style={span ? { gridColumn: `span ${span}` } : undefined}>
+      <div className="home-books-head">
+        <strong>Livros avulsos</strong>
+        <span className="hint">{books.length}</span>
+      </div>
+      <BookShelf items={books.slice(0, 12)} compact />
+    </li>
+  );
 
   return (
     <section className="block block-collection">
-      <BlockHead title="Coleção" to="/colecao" linkLabel="Ver coleção" />
-      {data && recent.length === 0 && (
+      <BlockHead title="Coleção" subtitle="Últimas adições" to="/colecao" linkLabel="Ver coleção" />
+      {data && data.length === 0 && (
         <div className="block-empty">
           <p>Busque um mangá ou livro, escolha a edição e marque os volumes que você tem.</p>
           <Link to="/adicionar" className="btn btn-ghost">Adicionar a primeira série</Link>
         </div>
       )}
-      {recent.length > 0 && (
+      {data && data.length > 0 && (
         <ul className="home-series">
-          {recent.map((item) => {
+          {shelf.map(({ item, span, fillerAfter: booksAfter }) => {
             const { edition } = item;
             const total = edition.total_volumes ?? Math.max(0, ...item.owned);
             return (
-              <li key={item.id}>
+              <Fragment key={item.id}>
+              <li className={nicheClass(total)} style={{ gridColumn: `span ${span}` }}>
                 <Link to={`/colecao/${item.id}`} className="home-series-item">
                   <Cover url={edition.work.cover_url} title={edition.work.title} />
                   <div className="home-series-body">
-                    <strong>{edition.work.title}</strong>
-                    <span className="hint">{edition.name}</span>
-                    <SpineStrip total={total} owned={new Set(item.owned)} color={spineColor(edition.id)} />
-                    <span className="home-series-count">
-                      <span className="num">{item.owned.length}</span>
-                      {edition.total_volumes ? ` de ${edition.total_volumes}` : ""}
-                    </span>
+                    <div className="home-series-head">
+                      <strong>{edition.work.title}</strong>
+                      <VolumeCount owned={item.owned.length} total={edition.total_volumes} />
+                    </div>
+                    {editionLabel(edition, edition.work.title) && (
+                      <span className="hint">{editionLabel(edition, edition.work.title)}</span>
+                    )}
+                    <SpineStrip total={total} owned={new Set(item.owned)} hue={hues.get(item.id) ?? seriesHue(edition.id)} />
                   </div>
                 </Link>
               </li>
+              {booksAfter > 0 && booksNiche(booksAfter)}
+              </Fragment>
             );
           })}
+          {books.length > 0 && !booksPlaced && booksNiche(0)}
         </ul>
       )}
     </section>
@@ -232,29 +285,6 @@ function ShoppingBlock({ data }: { data: Awaited<ReturnType<typeof listCollectio
           </ul>
         </>
       )}
-    </section>
-  );
-}
-
-function PhotoBlock() {
-  return (
-    <section className="block block-photo">
-      <div className="photo-art" aria-hidden="true">
-        {[88, 94, 80, 0, 90, 96, 84].map((h, i) => (
-          <span key={i} className={h ? "photo-spine" : "photo-spine is-gap"} style={{ height: `${h || 70}%` }} />
-        ))}
-        <span className="photo-frame" />
-      </div>
-      <h2>Foto e voz</h2>
-      <p>Fotografe uma prateleira ou diga quais volumes tem. Você revisa antes de salvar.</p>
-      <div className="photo-actions">
-        <Link to="/foto-e-voz" className="btn photo-btn">
-          <Icon name="camera" size={20} /> Tirar foto
-        </Link>
-        <Link to="/foto-e-voz?modo=voz" className="btn photo-btn-ghost">
-          <Icon name="mic" size={20} /> Falar
-        </Link>
-      </div>
     </section>
   );
 }

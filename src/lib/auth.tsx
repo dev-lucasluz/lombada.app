@@ -17,6 +17,8 @@ type AuthState = {
   sendPasswordReset: (email: string) => Promise<void>;
   resendConfirmation: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
+  /** Atualiza o nome de exibição (perfil e metadados da conta). */
+  updateName: (name: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -102,6 +104,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         options: { emailRedirectTo: window.location.origin },
       });
       if (error) throw error;
+    },
+
+    async updateName(name) {
+      if (isDemo) {
+        setSession((s) => (s ? ({ ...s, user: { ...s.user, user_metadata: { ...s.user.user_metadata, full_name: name } } } as Session) : s));
+        return;
+      }
+      const { data, error } = await supabase.auth.updateUser({ data: { full_name: name } });
+      if (error) throw error;
+      const id = data.user?.id;
+      if (id) await supabase.from("profiles").update({ display_name: name }).eq("id", id);
+      setSession((s) => (s && data.user ? { ...s, user: data.user } : s));
     },
 
     async updatePassword(password) {

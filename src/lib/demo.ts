@@ -5,14 +5,14 @@
  * build de produção, então este modo nunca chega ao site publicado.
  */
 import type { CatalogResult } from "./catalog";
-import type { CollectionItem, Edition, ReadingEntry, Reminder, Work } from "./db";
+import { ownedWithinTotal, type CollectionItem, type Edition, type ReadingEntry, type Reminder, type Work } from "./db";
 
 export const isDemo = import.meta.env.DEV && import.meta.env.VITE_DEMO === "true";
 
 type Store = {
   works: Work[];
   editions: Edition[];
-  collections: { id: string; edition_id: string; created_at: string; notes: string | null; owned: number[] }[];
+  collections: { id: string; edition_id: string; created_at: string; updated_at?: string; notes: string | null; owned: number[] }[];
   reading: ReadingEntry[];
   reminders: Reminder[];
 };
@@ -22,9 +22,9 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
 const daysFromNow = (d: number) => new Date(Date.now() + d * 86400000).toISOString().slice(0, 10);
 
-function work(id: string, title: string, volumes: number | null, anilist: number, cover: string | null): Work {
+function work(id: string, title: string, volumes: number | null, anilist: number, cover: string | null, color: string | null = null): Work {
   return {
-    id, kind: "manga", title, original_title: null, authors: [], cover_url: cover,
+    id, kind: "manga", title, original_title: null, authors: [], cover_url: cover, cover_color: color,
     original_volumes: volumes, anilist_id: anilist, google_books_id: null,
   };
 }
@@ -33,9 +33,9 @@ function seed(): Store {
   const now = Date.now();
   return {
     works: [
-      work("w1", "One Punch-Man", null, 74347, null),
-      work("w2", "Berserk", 42, 30002, null),
-      work("w3", "Naruto", 72, 30011, null),
+      work("w1", "One Punch-Man", null, 74347, null, "#f1a150"),
+      work("w2", "Berserk", 42, 30002, null, "#1a1a1a"),
+      work("w3", "Naruto", 72, 30011, null, "#e48a28"),
     ],
     editions: [
       { id: "e1", work_id: "w1", name: "One Punch-Man", publisher: "Panini", total_volumes: 31, is_finished: false },
@@ -86,7 +86,7 @@ const tick = <T>(value: T) => new Promise<T>((r) => setTimeout(() => r(structure
 function toItem(c: Store["collections"][number]): CollectionItem {
   const edition = db().editions.find((e) => e.id === c.edition_id)!;
   const w = db().works.find((x) => x.id === edition.work_id)!;
-  return { id: c.id, created_at: c.created_at, notes: c.notes, edition: { ...edition, work: w }, owned: [...c.owned].sort((a, b) => a - b) };
+  return { id: c.id, created_at: c.created_at, updated_at: c.updated_at ?? c.created_at, notes: c.notes, edition: { ...edition, work: w }, owned: ownedWithinTotal(c.owned, edition.total_volumes) };
 }
 
 export const demoDb = {
@@ -97,14 +97,19 @@ export const demoDb = {
 
   async ensureWork(r: CatalogResult): Promise<Work> {
     const found = db().works.find((w) =>
-      r.source === "anilist" ? w.anilist_id === Number(r.externalId) : w.google_books_id === r.externalId,
+      r.source === "anilist"
+        ? w.anilist_id === Number(r.externalId)
+        : r.source === "open_library"
+          ? w.open_library_id === r.externalId
+          : w.google_books_id === r.externalId,
     );
     if (found) return tick(found);
     const w: Work = {
       id: uid(), kind: r.kind, title: r.title, original_title: r.originalTitle, authors: r.authors,
-      cover_url: r.coverUrl, original_volumes: r.volumes,
+      cover_url: r.coverUrl, cover_color: r.coverColor, original_volumes: r.volumes,
       anilist_id: r.source === "anilist" ? Number(r.externalId) : null,
       google_books_id: r.source === "google_books" ? r.externalId : null,
+      open_library_id: r.source === "open_library" ? r.externalId : null,
     };
     db().works.push(w);
     save();
@@ -129,7 +134,8 @@ export const demoDb = {
   },
 
   async listCollection() {
-    return tick([...db().collections].sort((a, b) => b.created_at.localeCompare(a.created_at)).map(toItem));
+    const recent = (c: Store["collections"][number]) => c.updated_at ?? c.created_at;
+    return tick([...db().collections].sort((a, b) => recent(b).localeCompare(recent(a))).map(toItem));
   },
 
   async getCollectionItem(id: string) {
@@ -159,8 +165,14 @@ export const demoDb = {
     const set = new Set(c.owned);
     volumes.forEach((v) => (owned ? set.add(v) : set.delete(v)));
     c.owned = [...set];
+    c.updated_at = new Date().toISOString();
     save();
     await tick(null);
+  },
+
+  async volumesAbove(collectionId: string, total: number) {
+    const c = db().collections.find((x) => x.id === collectionId);
+    return tick((c?.owned ?? []).filter((n) => n > total).sort((a, b) => a - b));
   },
 
   async listReading() {

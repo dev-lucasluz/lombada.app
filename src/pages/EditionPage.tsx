@@ -3,16 +3,19 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getCollectionItem,
+  listCollection,
   removeFromCollection,
   setVolumesOwned,
   updateEdition,
+  volumesAbove,
   type CollectionItem,
 } from "../lib/db";
 import { formatRanges, missingVolumes, parseRanges } from "../lib/ranges";
-import { spineColor } from "../lib/spineColor";
+import { seriesHue, seriesHues } from "../lib/spineColor";
 import { VolumeGrid } from "../components/Shelf";
 import { Icon } from "../components/Icon";
 import { Cover } from "./CollectionPage";
+import { editionLabel } from "../lib/editionLabel";
 import "./pages.css";
 
 export function EditionPage() {
@@ -21,6 +24,8 @@ export function EditionPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { data: item, isLoading, error } = useQuery({ queryKey, queryFn: () => getCollectionItem(id) });
+  // Lista da coleção (normalmente já em cache) para a lombada ter a mesma cor das outras telas
+  const collection = useQuery({ queryKey: ["collection"], queryFn: listCollection });
 
   // Atualização otimista: a lombada muda na hora e volta se o banco recusar.
   const toggle = useMutation({
@@ -71,10 +76,7 @@ export function EditionPage() {
         <Cover url={edition.work.cover_url} title={edition.work.title} size="l" />
         <div className="edition-meta">
           <h1>{edition.work.title}</h1>
-          <span>
-            {edition.name}
-            {edition.publisher ? `, ${edition.publisher}` : ""}
-          </span>
+          {editionLabel(edition, edition.work.title) && <span>{editionLabel(edition, edition.work.title)}</span>}
           {edition.work.authors.length > 0 && <span className="hint">{edition.work.authors.join(", ")}</span>}
         </div>
       </header>
@@ -104,7 +106,7 @@ export function EditionPage() {
         <VolumeGrid
           total={total}
           owned={owned}
-          color={spineColor(edition.id)}
+          hue={seriesHues(collection.data ?? []).get(item.id) ?? seriesHue(edition.id)}
           onChange={(volumes, isOwned) => toggle.mutate({ volumes, owned: isOwned })}
         />
         <BulkMark onApply={(volumes, isOwned) => toggle.mutate({ volumes, owned: isOwned })} />
@@ -116,7 +118,7 @@ export function EditionPage() {
       <button
         className="danger-link"
         onClick={() => {
-          if (confirm(`Remover ${edition.work.title} (${edition.name}) da sua coleção? Os volumes marcados serão apagados.`)) {
+          if (confirm(`Remover ${edition.work.title}${editionLabel(edition, edition.work.title) ? ` (${editionLabel(edition, edition.work.title)})` : ""} da sua coleção? Os volumes marcados serão apagados.`)) {
             remove.mutate();
           }
         }}
@@ -173,13 +175,25 @@ function EditionSettings({ item }: { item: CollectionItem }) {
   });
 
   const save = useMutation({
-    mutationFn: () =>
-      updateEdition(edition.id, {
+    mutationFn: async () => {
+      const total = form.total ? Number(form.total) : null;
+      // Total menor que os volumes marcados: oferece limpar os que passaram do limite.
+      if (total !== null) {
+        const extras = await volumesAbove(item.id, total);
+        if (
+          extras.length > 0 &&
+          confirm(`Você tem ${extras.length} ${extras.length === 1 ? "volume marcado" : "volumes marcados"} acima de ${total} (${formatRanges(extras)}). Remover da sua coleção?`)
+        ) {
+          await setVolumesOwned(item.id, extras, false);
+        }
+      }
+      await updateEdition(edition.id, {
         name: form.name.trim() || edition.name,
         publisher: form.publisher.trim() || null,
-        total_volumes: form.total ? Number(form.total) : null,
+        total_volumes: total,
         is_finished: form.finished,
-      }),
+      });
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["collection"] });
       setOpen(false);

@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { searchBooks, searchManga, type CatalogResult } from "../lib/catalog";
 import { addToCollection, createEdition, ensureWork, listEditions, type Work } from "../lib/db";
 import { Icon } from "../components/Icon";
@@ -15,11 +15,20 @@ export function AddPage() {
   const [submitted, setSubmitted] = useState("");
   const [work, setWork] = useState<{ work: Work; result: CatalogResult } | null>(null);
 
+  // Busca enquanto digita: espera uma pausa de 400 ms para não consultar a cada letra.
+  useEffect(() => {
+    const next = term.trim();
+    const timer = setTimeout(() => setSubmitted(next), 400);
+    return () => clearTimeout(timer);
+  }, [term]);
+
   const search = useQuery({
     queryKey: ["catalog", kind, submitted],
     queryFn: () => (kind === "manga" ? searchManga(submitted) : searchBooks(submitted)),
     enabled: submitted.length >= 2,
     staleTime: 5 * 60_000,
+    // Mantém os resultados anteriores na tela enquanto a nova busca chega.
+    placeholderData: keepPreviousData,
   });
 
   const pick = useMutation({
@@ -63,15 +72,15 @@ export function AddPage() {
         </button>
       </form>
 
-      {search.isFetching && <p className="muted">Buscando…</p>}
+      {search.isFetching && !search.data && <p className="muted">Buscando…</p>}
       {search.error && <p className="error" role="alert">{(search.error as Error).message}</p>}
       {pick.error && <p className="error" role="alert">{(pick.error as Error).message}</p>}
-      {search.data && search.data.length === 0 && (
+      {submitted.length >= 2 && search.data && search.data.length === 0 && !search.isFetching && (
         <p className="muted">Nada encontrado para “{submitted}”. Tente o nome em inglês ou romaji.</p>
       )}
 
-      {search.data && search.data.length > 0 && (
-        <ul className="results">
+      {submitted.length >= 2 && search.data && search.data.length > 0 && (
+        <ul className={search.isPlaceholderData ? "results is-stale" : "results"}>
           {search.data.map((r) => (
             <li key={r.externalId}>
               <button className="result" onClick={() => pick.mutate(r)} disabled={pick.isPending}>

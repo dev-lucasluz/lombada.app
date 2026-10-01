@@ -1,0 +1,218 @@
+{
+  "meta": {
+    "name": "Lombada",
+    "description": "App de coleção física de mangás e livros: estante com lombadas multicoloridas, papel acinzentado, tinta quase preta, amarelo de ação e laranja claro de destaque.",
+    "source_references": [
+      "Captura do Início, tema claro, 1900px, modo demonstração (cores medidas com design-dna/measure-colors.mjs)",
+      "Código: src/styles/global.css, src/components/*.css, src/pages/*.css"
+    ],
+    "created_at": "2026-09-30"
+  },
+  "design_system": {
+    "color": {
+      "palette_type": "base neutra acinzentada com acentos análogos quentes (amarelo + laranja) e lombadas multicoloridas",
+      "primary": { "hex": "#1c1c1f", "role": "tinta: títulos, texto principal, moldura da estante" },
+      "secondary": { "hex": "#a34b26", "role": "laranja claro: links, item ativo, foco, atalhos de foto e voz" },
+      "accent": { "hex": "#f9d147", "role": "amarelo (medido): botão principal, realce do que falta e de coleção completa" },
+      "neutral": {
+        "scale": ["#efede9", "#e9e8e3", "#e2e1db", "#d5d4cc", "#66666d", "#55555c", "#32302d"],
+        "usage": "#efede9 é o fundo medido; #32302d (medido) é o texto sobre ele; #66666d é usado em dicas (contraste corrigido de 3,3:1 para 4,6:1)"
+      },
+      "semantic": {
+        "success": "#f9d147 (coleção completa)",
+        "warning": "#f9d147 (mangá em hiato)",
+        "error": "#c0271d",
+        "info": "#a34b26"
+      },
+      "surface": { "background": "#efede9", "card": "#f3f2ee", "elevated": "#2b2b30 (móvel da estante)" },
+      "contrast_strategy": "escuro sobre claro; nichos claros dentro de uma moldura escura",
+      "measurement": {
+        "k": 8,
+        "sampling": { "method": "deterministic_stratified", "max_pixels": 160000, "sampled_pixels": 160000 }
+      },
+      "measured_palette": [
+        { "hex": "#efede9", "coverage": 0.8197, "role": "background" },
+        { "hex": "#f9d147", "coverage": 0.0409, "role": "accent" },
+        { "hex": "#d1cac1", "coverage": 0.0371, "role": "unassigned" },
+        { "hex": "#ab642b", "coverage": 0.0277, "role": "unassigned" },
+        { "hex": "#9c859a", "coverage": 0.0243, "role": "unassigned" },
+        { "hex": "#5b6557", "coverage": 0.0199, "role": "unassigned" },
+        { "hex": "#32302d", "coverage": 0.018, "role": "text" },
+        { "hex": "#278caa", "coverage": 0.0123, "role": "unassigned" }
+      ]
+    },
+    "typography": {
+      "type_scale": {
+        "display": { "size": "clamp(2.4rem, 8vw, 4.2rem)", "weight": "900", "line_height": "1.02", "tracking": "-0.01em (Anybody a 70% de largura, só no login)" },
+        "heading_1": { "size": "2.441rem", "weight": "700", "line_height": "1.15", "tracking": "-0.01em" },
+        "heading_2": { "size": "1.563rem", "weight": "700", "line_height": "1.15", "tracking": "-0.01em" },
+        "heading_3": { "size": "1.25rem", "weight": "700", "line_height": "1.15", "tracking": "-0.01em" },
+        "body": { "size": "1rem", "weight": "400", "line_height": "1.5", "tracking": "0" },
+        "body_small": { "size": "0.8rem", "weight": "400-600", "line_height": "1.4", "tracking": "0" },
+        "caption": { "size": "0.72rem", "weight": "600", "line_height": "1.3", "tracking": "0" },
+        "overline": { "size": "0.8rem", "weight": "600", "line_height": "1.3", "tracking": "0 (sem caixa alta, por decisão de design)" }
+      },
+      "font_families": {
+        "heading": "Zen Kaku Gothic New 700",
+        "body": "Geist (variável)",
+        "mono": "nenhuma; números em Anybody condensada (.num)"
+      },
+      "font_style_notes": "gótica japonesa limpa nos títulos, grotesca neutra no texto, condensada pesada só na marca, no título do login e nos números"
+    },
+    "spacing": {
+      "base_unit": "4px",
+      "scale": ["4px", "6px", "8px", "12px", "16px", "20px", "28px", "40px", "48px"],
+      "content_density": "comfortable",
+      "section_rhythm": "blocos a 16px de distância; tábuas da estante de 6-8px"
+    },
+    "layout": {
+      "grid_system": "grade fluida de 12 colunas no Início; estante em meias-colunas (2/4/6/8)",
+      "max_content_width": "clamp(1100px, 82vw, 1700px)",
+      "columns": "1 / 2 / 3 / 4 conforme a largura",
+      "gutter": "clamp(16px, 2.6vw, 48px)",
+      "breakpoints": ["700px", "900px", "1180px", "1400px", "1600px"],
+      "alignment_tendency": "strict grid"
+    },
+    "shape": {
+      "border_radius": { "small": "4px", "medium": "8px", "large": "14px", "pill": "999px" },
+      "border_usage": "bordas de 1-1.5px em blocos, campos e etiquetas",
+      "divider_style": "tábuas escuras de 6-8px entre nichos; traços de 1px nas listas e na barra lateral"
+    },
+    "elevation": {
+      "shadow_style": "none (exceto a sombra interna das tábuas e a sombra de lombada nas capas)",
+      "levels": {
+        "low": "inset 0 8px 10px -10px rgb(0 0 0 / 0.55)",
+        "medium": "none",
+        "high": "none"
+      },
+      "depth_cues": "moldura escura, sombra interna nos nichos, degradê no ícone"
+    },
+    "iconography": {
+      "style": "linha com cantos arredondados",
+      "stroke_weight": "1.8",
+      "size_scale": ["17px", "18px", "20px", "22px"],
+      "preferred_set": "conjunto próprio (src/components/Icon.tsx)"
+    },
+    "motion": {
+      "easing": "ease-out; cubic-bezier(0.2, 0.9, 0.3, 1.2) na queda dos livros",
+      "duration_scale": { "micro": "120ms", "normal": "300ms", "macro": "480ms + 40ms por livro" },
+      "entrance_pattern": "livros caem na estante do login",
+      "exit_pattern": "nenhum",
+      "philosophy": "minimal functional"
+    },
+    "components": {
+      "button_style": "8px de raio, 44px de altura; amarelo principal, laranja para atalhos (com subtítulo), fantasma com borda",
+      "input_style": "borda de 1.5px, 44px de altura, foco com borda laranja",
+      "card_style": "blocos com borda de 1px e raio de 14px; nichos da estante sem raio",
+      "navigation_pattern": "trilho lateral com itens separados por traços no PC; barra inferior de azulejos no celular",
+      "modal_style": "confirm() nativo do navegador (sem modal próprio)",
+      "list_style": "linhas com borda; 2 colunas em telas largas",
+      "component_notes": "etiqueta 'tenho / total' com borda, amarela quando completa; lombadas com uma cor por volume"
+    }
+  },
+  "design_style": {
+    "aesthetic": {
+      "mood": ["acolhedor", "organizado", "colecionável", "leve"],
+      "visual_metaphor": "estante de livros: lombadas, nichos, tábuas e vãos do que falta",
+      "era_influence": "interface contemporânea com toque de mangá impresso",
+      "genre": "app pessoal de coleção (hobby)",
+      "personality_traits": ["cuidadoso", "prático", "entusiasta"],
+      "adjectives": ["colorido nas lombadas", "sóbrio no resto", "denso de informação"]
+    },
+    "visual_language": {
+      "complexity": "moderate",
+      "ornamentation": "subtle accents",
+      "whitespace_usage": "moderado; a estante preenche o bloco principal",
+      "visual_weight_distribution": "peso concentrado na estante do topo",
+      "focal_strategy": "single hero element (estante da coleção)",
+      "contrast_level": "alto nas molduras, médio no texto de apoio",
+      "texture_usage": "nenhuma"
+    },
+    "composition": {
+      "hierarchy_method": "spatial isolation + color weight (lombadas)",
+      "balance_type": "mosaic",
+      "flow_direction": "de cima para baixo: atalhos, estante, blocos de apoio",
+      "grouping_strategy": "nichos dentro de um móvel; blocos de apoio lado a lado",
+      "negative_space_role": "respiro entre blocos; vãos tracejados comunicam o que falta"
+    },
+    "imagery": {
+      "photo_treatment": "capas reais sem filtro",
+      "illustration_style": "ícone vetorial de lombadas",
+      "graphic_elements": ["lombadas", "vãos tracejados", "etiquetas", "tábuas"],
+      "pattern_usage": "nenhum",
+      "image_shape": "retângulo de capa 2:3"
+    },
+    "interaction_feel": {
+      "feedback_style": "atualização otimista instantânea (a lombada muda ao clicar)",
+      "hover_behavior": "lombadas e capas sobem 3px; borda escurece",
+      "transition_personality": "snappy",
+      "loading_style": "texto 'Carregando…'",
+      "microinteraction_density": "baixa"
+    },
+    "brand_voice_in_ui": {
+      "tone": "direto e amigável",
+      "formality": "informal",
+      "cta_style": "direct imperative",
+      "empty_state_approach": "convite com ação ('Adicionar a primeira série')",
+      "error_tone": "diz o que houve e o que fazer"
+    }
+  },
+  "visual_effects": {
+    "overview": {
+      "effect_intensity": "subtle-accent",
+      "performance_tier": "lightweight",
+      "fallback_strategy": "prefers-reduced-motion desliga as animações",
+      "primary_technology": "CSS only"
+    },
+    "background_effects": {
+      "type": "none",
+      "description": "fundo liso acinzentado",
+      "technology": "CSS",
+      "params": { "color_palette": ["#efede9"], "speed": "n/a", "density": "n/a", "opacity": "1", "blend_mode": "normal" }
+    },
+    "particle_systems": {
+      "enabled": false, "type": "none", "description": "não usado", "technology": "n/a",
+      "params": { "count": "0", "shape": "n/a", "size_range": "n/a", "movement_pattern": "n/a", "color_behavior": "n/a", "interaction": "none", "spawn_area": "n/a" }
+    },
+    "3d_elements": {
+      "enabled": false, "type": "none", "description": "não usado", "technology": "n/a",
+      "params": { "renderer": "n/a", "lighting": "n/a", "camera": "n/a", "materials": "n/a", "geometry": "n/a", "post_processing": [], "interaction_model": "n/a" }
+    },
+    "shader_effects": {
+      "enabled": false, "type": "none", "description": "não usado", "technology": "n/a",
+      "params": { "uniforms": "n/a", "vertex_manipulation": "n/a", "fragment_output": "n/a", "noise_type": "n/a", "distortion": "n/a" }
+    },
+    "scroll_effects": {
+      "parallax": { "enabled": false, "layers": "0", "depth_range": "n/a", "speed_curve": "n/a" },
+      "scroll_triggered_animations": { "enabled": false, "trigger_points": "n/a", "animation_type": "n/a", "scrub_behavior": "n/a" },
+      "scroll_morphing": { "enabled": false, "description": "não usado" }
+    },
+    "text_effects": {
+      "type": "none", "description": "não usado", "technology": "n/a",
+      "params": { "split_strategy": "n/a", "animation_per_unit": "n/a", "stagger": "n/a", "effect_style": "n/a" }
+    },
+    "cursor_effects": {
+      "enabled": false, "type": "none", "description": "não usado",
+      "params": { "shape": "n/a", "size": "n/a", "blend_mode": "n/a", "trail": "n/a", "interaction_zone": "n/a" }
+    },
+    "image_effects": {
+      "type": "parallax-tilt (leve)",
+      "description": "capas sobem 3px ao passar o mouse",
+      "technology": "CSS transform",
+      "params": { "filter_pipeline": "none", "hover_transform": "translateY(-3px)", "reveal_animation": "none", "distortion_type": "none" }
+    },
+    "glassmorphism_neumorphism": {
+      "enabled": false, "style": "none",
+      "params": { "blur_radius": "n/a", "transparency": "n/a", "border_treatment": "n/a", "shadow_type": "n/a", "light_source_angle": "n/a" }
+    },
+    "canvas_drawings": {
+      "enabled": false, "type": "none", "description": "não usado", "technology": "n/a",
+      "params": { "draw_method": "n/a", "animation_loop": "n/a", "color_scheme": "n/a", "responsiveness": "n/a", "interaction": "n/a" }
+    },
+    "svg_animations": {
+      "enabled": false, "type": "none", "description": "não usado",
+      "params": { "animation_method": "n/a", "path_morphing": "n/a", "stroke_animation": "n/a", "filter_effects": "n/a" }
+    },
+    "composite_notes": "A única animação decorativa é a queda dos livros na estante do login. Não há WebGL nem Three.js: o app é leve (Lighthouse 95 no celular e 100 no desktop). Qualquer efeito 3D deve ser carregado só onde for usado, para não afetar esses números."
+  }
+}

@@ -6,7 +6,7 @@ App web gratuito para registrar coleções físicas de mangás e livros e o hist
 
 1. **Login com e-mail e senha** (Supabase Auth, e-mails enviados pelo SMTP do Gmail): criar conta com confirmação por e-mail, esqueci a senha, redefinir senha.
 2. **Coleção física**
-   - Busca a obra no AniList (mangá) ou Google Books (livro).
+   - Busca a obra no AniList (mangá) ou Open Library (livro; Google Books só como reserva, porque sem chave a cota é compartilhada e vive esgotada).
    - Cada obra tem **edições** (ex.: Naruto → "Naruto Gold, Panini, 72 vol."). Edições são compartilhadas entre usuários e editáveis, porque o total de volumes no Brasil não bate com o japonês.
    - Grade de volumes: clique marca/desmarca, Shift+clique marca um intervalo. Mostra "Tem: 1–30 · Faltam: 31–50".
    - Lista de compras gerada a partir do que falta.
@@ -41,7 +41,7 @@ App web gratuito para registrar coleções físicas de mangás e livros e o hist
 
 ```
 src/
-  lib/          supabase, catálogo (AniList/Google Books), utilitários de faixas de volume
+  lib/          supabase, catálogo (AniList/Open Library), utilitários de faixas de volume
   components/   AppShell (navegação), VolumeGrid, SpineStrip, etc.
   pages/        Login, Colecao, Edicao, Adicionar, Leitura, Lembretes, Estante (foto)
   styles/       tokens e estilos globais

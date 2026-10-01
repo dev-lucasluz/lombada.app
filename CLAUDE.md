@@ -14,17 +14,18 @@ App de coleção de mangás/livros físicos e histórico de leitura online. Leia
 - Supabase acessado direto do navegador (`src/lib/supabase.ts`); a segurança é por RLS em `supabase/migrations/`. Toda tabela nova precisa de RLS e política.
 - Consultas ficam em `src/lib/db.ts` (tipos espelham o SQL). Páginas não chamam `supabase.from` diretamente.
 - Segredos só em `functions/` (Pages Functions) e `workers/reminders/` (Worker com cron). Nunca a secret key (`sb_secret_...`) no front.
-- Catálogo externo sem chave: AniList (mangá) e Google Books (livro), em `src/lib/catalog.ts`.
+- Catálogo externo sem chave: AniList (mangá) e Open Library (livro; Google Books só como reserva, porque sem chave a cota é compartilhada e vive esgotada), em `src/lib/catalog.ts`.
 - Modelo de dados: `works` (obra) → `editions` (edição BR, compartilhada e editável) → `collections` (usuário tem a edição) → `owned_volumes`.
 
 ## Design
 - Tokens em `src/styles/global.css` (cores, escala tipográfica, raios). Use as variáveis; não crie cores soltas. Tema claro e escuro: todo token novo precisa dos dois valores (bloco `prefers-color-scheme` e `[data-theme="dark"]`). O botão `ThemeToggle` salva a escolha em `localStorage`.
-- Paleta: off-white `--paper` e cinza quase preto `--ink`. Amarelo `--action` só para o botão principal; `--marker` (mesmo amarelo) para realce de "o que falta", hiato, completa. Violeta `--accent` para links, foco e item ativo (usuário rejeitou verde; escolha final entre azul/violeta/rosa ainda pendente). O usuário pediu referência no Claude (escuro + off-white), mas **não** quer bege/terracota nem cópia do Claude.
+- Paleta: off-white `--paper` e cinza quase preto `--ink`. Amarelo `--action` só para o botão principal; `--marker` (mesmo amarelo) para realce de "o que falta", hiato, completa. Laranja claro `--accent` (tom do Claude, pedido do usuário) para links, foco e item ativo. Tema claro é acinzentado de propósito (usuário acha branco puro cansativo): não usar #fff em fundos. O usuário pediu referência no Claude (escuro + off-white), mas **não** quer bege/terracota nem cópia do Claude.
 - Tipos (hospedadas em `public/fonts`, pré-carregadas no `index.html`): Zen Kaku Gothic New bold nos títulos do app (`--font-heading`); Anybody condensada só na marca, no título do login e nos números (`.num`); Geist no texto. O usuário pediu para tirar a Anybody dos títulos internos.
-- Elemento central: lombadas (`src/components/Shelf.tsx`). Volume que tem = lombada colorida (`spineColor(edition.id)`); falta = vão tracejado. O ícone (fundo cinza; livro amarelo com "BOOK", livro verde com 漫画, vão tracejado laranja) é aprovado pelo usuário: não trocar.
+- Elemento central: lombadas (`src/components/Shelf.tsx`). Séries com mais de 40 volumes (`isLongSeries`) quebram a faixa em várias prateleiras (40 por prateleira; 60 no bloco largo a partir de 700px) e o card ocupa a linha inteira da grade (`is-wide`, `grid-auto-flow: dense`). Volume que tem = lombada colorida (`spineColor(edition.id)`: tom vivo por série; o usuário rejeitou usar a cor da capa); falta = vão tracejado. O ícone (fundo cinza; livro amarelo com "BOOK", livro verde com 漫画, vão tracejado laranja) é aprovado pelo usuário: não trocar.
 - Início (`HomePage`) em blocos de tamanhos diferentes. Único ornamento: retícula de mangá (`--halftone`) no bloco "Foto da estante". Não espalhar a retícula.
 - Evitar: rótulos em CAIXA ALTA, cards idênticos com sombra, animações de entrada em cada seção. A única animação decorativa é a estante do login (móvel com duas prateleiras: série de mangá com volumes faltando em cima, livros avulsos embaixo).
 - **Tela de login lista o que o app faz** (`FEATURES` em `src/pages/LoginPage.tsx`). Toda funcionalidade nova ou planejada entra ali; ao concluir, tirar o `soon: true`.
+- Navegação: no celular o dock tem Início, Coleção, Onde parei, Lembretes e **Perfil** (Foto e voz sai do dock e fica nos botões do Início); **não há botão Sair solto nas páginas** — Sair fica só no Perfil. No PC a barra lateral tem Foto e voz, e Perfil/Tema/Sair embaixo. Perfil: `src/pages/ProfilePage.tsx` (nome, resumo da coleção, trocar senha, exportar CSV).
 - Textos: verbos claros nos botões ("Salvar leitura", não "Enviar"); erros dizem o que houve e o que fazer.
 
 ## Comandos

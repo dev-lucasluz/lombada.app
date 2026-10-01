@@ -6,6 +6,7 @@
 import { supabase } from "./supabase";
 import { isDemo } from "./demo";
 import { parseRanges } from "./ranges";
+import { editionLabel } from "./editionLabel";
 import { searchManga, type CatalogResult } from "./catalog";
 import {
   addToCollection,
@@ -156,7 +157,7 @@ export function collectionTarget(c: CollectionItem): MatchTarget {
   return {
     kind: "collection",
     collectionId: c.id,
-    label: `${c.edition.work.title} (${c.edition.name}, na sua coleção)`,
+    label: `${c.edition.work.title} (${[editionLabel(c.edition, c.edition.work.title), "na sua coleção"].filter(Boolean).join(", ")})`,
   };
 }
 
