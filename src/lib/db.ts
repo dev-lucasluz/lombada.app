@@ -119,6 +119,33 @@ export async function ensureWork(r: CatalogResult): Promise<Work> {
   return check(result) as Work;
 }
 
+/** Obra cadastrada à mão (não achada nos catálogos): sem ids externos nem capa. */
+export async function createManualWork(input: { kind: WorkKind; title: string; authors: string[]; coverUrl?: string | null }): Promise<Work> {
+  if (isDemo) {
+    return demoDb.ensureWork({
+      source: "google_books",
+      externalId: `manual-${crypto.randomUUID()}`,
+      kind: input.kind,
+      title: input.title,
+      originalTitle: null,
+      authors: input.authors,
+      coverUrl: input.coverUrl ?? null,
+      coverColor: null,
+      volumes: null,
+      status: null,
+      year: null,
+    });
+  }
+  const row = { kind: input.kind, title: input.title, authors: input.authors, cover_url: input.coverUrl ?? null };
+  const { data, error } = await supabase.from("works").insert(row).select("*").single();
+  if (error) {
+    throw new Error(
+      error.code === "23514" ? "A capa não foi aceita. Tente outra imagem (JPG ou PNG)." : error.message,
+    );
+  }
+  return data as Work;
+}
+
 export async function listEditions(workId: string): Promise<Edition[]> {
   if (isDemo) return demoDb.listEditions(workId);
   return check(
@@ -286,6 +313,12 @@ export async function createReminder(input: Omit<Reminder, "id" | "sent_at">) {
   check(await supabase.from("reminders").insert(input));
 }
 
+export async function updateReminder(id: string, patch: { remind_on: string; message: string; reading_entry_id: string | null }) {
+  if (isDemo) return demoDb.updateReminder(id, patch);
+  // Alterar o lembrete o rearma: volta a valer (sent_at limpo) na nova data.
+  check(await supabase.from("reminders").update({ ...patch, sent_at: null }).eq("id", id));
+}
+
 export async function deleteReminder(id: string) {
   if (isDemo) return demoDb.deleteReminder(id);
   check(await supabase.from("reminders").delete().eq("id", id));
@@ -395,15 +428,18 @@ export type SharedItem = {
 
 export type SharedShelf = { owner: string; items: SharedItem[] };
 
+let demoShareToken: string | null = null;
+
 /** Código do link da própria pessoa; nulo se o compartilhamento está desligado. */
 export async function getShareToken(): Promise<string | null> {
-  if (isDemo) return null;
+  if (isDemo) return demoShareToken;
   const { data, error } = await supabase.from("shelf_shares").select("token").maybeSingle();
   if (error) throw new Error(error.message);
   return (data as { token: string } | null)?.token ?? null;
 }
 
 export async function enableShare(): Promise<string> {
+  if (isDemo) return (demoShareToken = crypto.randomUUID());
   const { data, error } = await supabase.from("shelf_shares").upsert({}, { onConflict: "user_id" }).select("token").single();
   if (error) throw new Error(error.message);
   return (data as { token: string }).token;
@@ -411,6 +447,7 @@ export async function enableShare(): Promise<string> {
 
 /** Gera um código novo: o link antigo para de funcionar. */
 export async function renewShare(): Promise<string> {
+  if (isDemo) return (demoShareToken = crypto.randomUUID());
   const token = crypto.randomUUID();
   const { error } = await supabase.from("shelf_shares").update({ token }).not("user_id", "is", null);
   if (error) throw new Error(error.message);
@@ -418,6 +455,10 @@ export async function renewShare(): Promise<string> {
 }
 
 export async function disableShare() {
+  if (isDemo) {
+    demoShareToken = null;
+    return;
+  }
   const { error } = await supabase.from("shelf_shares").delete().not("user_id", "is", null);
   if (error) throw new Error(error.message);
 }

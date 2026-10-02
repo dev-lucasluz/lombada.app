@@ -1,0 +1,23 @@
+.skeleton { display: grid; gap: 0.75rem; }
+
+.skeleton-title,
+.skeleton-row {
+  display: block;
+  border-radius: var(--radius-m);
+  background: var(--surface-sunk);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-title { height: 2rem; width: min(60%, 260px); }
+.skeleton-row { height: 5.5rem; border: 1px solid var(--line); }
+.skeleton-row:nth-child(odd) { animation-delay: 0.15s; }
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-title,
+  .skeleton-row { animation: none; }
+}

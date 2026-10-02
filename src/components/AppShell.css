@@ -40,7 +40,7 @@
   border-radius: var(--radius-m);
   color: var(--ink-faint);
   text-decoration: none;
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -68,7 +68,8 @@
     top: 0;
     align-self: start;
     height: 100dvh;
-    padding: 1.25rem 0;
+    /* sem espaço embaixo: o botão Sair encosta no limite da tela */
+    padding: 1.25rem 0 0;
     border-top: none;
     border-right: 1px solid var(--line);
     display: flex;
@@ -103,7 +104,7 @@
   .shell-link {
     width: 68px;
     height: 64px;
-    font-size: 0.72rem;
+    font-size: 0.78rem;
   }
 
   .shell-link:not(.active):hover {
@@ -128,7 +129,7 @@
     border: 1.5px solid var(--line);
     border-radius: var(--radius-m);
     color: var(--ink-faint);
-    font-size: 0.72rem;
+    font-size: 0.78rem;
     font-weight: 600;
     cursor: pointer;
   }
@@ -178,6 +179,7 @@
 
   .shell-tools {
     border-top: 1px solid var(--line);
+    padding-top: 0.75rem;
   }
 
   .shell-link,
@@ -216,7 +218,7 @@
     height: 100%;
     border: none;
     border-radius: 0;
-    font-size: 0.66rem;
+    font-size: 0.75rem;
   }
 
   .shell-link.active {

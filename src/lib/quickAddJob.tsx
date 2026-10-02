@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listCollection } from "./db";
 import { formatRanges } from "./ranges";
 import { parseVoiceText, prepareImage, scanShelfPhoto, suggestTargets, type DetectedSeries, type MatchTarget } from "./quickAdd";
@@ -69,6 +69,7 @@ export function QuickAddJobProvider({ children }: { children: ReactNode }) {
   const announce = useRef<number | null>(null);
 
   const collection = useQuery({ queryKey: ["collection"], queryFn: listCollection });
+  const qc = useQueryClient();
 
   const away = () => pathRef.current !== "/foto-e-voz";
 
@@ -86,6 +87,7 @@ export function QuickAddJobProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const finish = (id: number, series: DetectedSeries[], emptyMessage: string) => {
+    qc.invalidateQueries({ queryKey: ["scan-quota"] });
     if (id !== runId.current) return;
     setReading(null);
     if (series.length === 0) {
@@ -98,6 +100,7 @@ export function QuickAddJobProvider({ children }: { children: ReactNode }) {
   };
 
   const fail = (id: number, err: unknown, fallback: string) => {
+    qc.invalidateQueries({ queryKey: ["scan-quota"] });
     if (id !== runId.current) return;
     const message = err instanceof Error ? err.message : fallback;
     setReading(null);

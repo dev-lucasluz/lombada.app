@@ -4,6 +4,7 @@ import { listCollection } from "../lib/db";
 import { formatRanges, missingVolumes } from "../lib/ranges";
 import { Icon } from "../components/Icon";
 import { editionLabel } from "../lib/editionLabel";
+import { Skeleton } from "../components/Skeleton";
 import "./pages.css";
 
 /** Tudo o que falta, série por série — pensado para abrir na loja. */
@@ -30,7 +31,7 @@ export function ShoppingPage() {
         </div>
       </header>
 
-      {isLoading && <p className="muted">Carregando…</p>}
+      {isLoading && <Skeleton rows={3} title={false} />}
       {data && rows.length === 0 && (
         <div className="empty">
           <h2>Nada para comprar</h2>

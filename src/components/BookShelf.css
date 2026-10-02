@@ -60,7 +60,7 @@
 }
 
 .book-author {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   color: var(--ink-soft);
   white-space: nowrap;
   overflow: hidden;

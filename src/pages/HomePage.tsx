@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
@@ -175,12 +175,47 @@ function CollectionBlock({ data }: { data: Awaited<ReturnType<typeof listCollect
 
 function ReadingBlock({ data }: { data: ReadingEntry[] | undefined }) {
   const qc = useQueryClient();
+  // Depois do +1, "Desfazer" aparece na própria linha do mangá por alguns segundos.
+  const [undo, setUndo] = useState<{ id: string; title: string; chapter: number | null; readAt: string } | null>(null);
+  const timer = useRef<number | undefined>(undefined);
+  const [frozen, setFrozen] = useState<string[] | null>(null);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
   const bump = useMutation({
-    mutationFn: (e: ReadingEntry) =>
-      saveReading({ id: e.id, title: e.title, last_chapter: (Number(e.last_chapter) || 0) + 1, last_read_at: new Date().toISOString() }),
+    onMutate: () => setFrozen((prev) => prev ?? (data ?? []).map((x) => x.id)),
+    onError: () => setFrozen(null),
+    mutationFn: async (e: ReadingEntry) => {
+      await saveReading({ id: e.id, title: e.title, last_chapter: (Number(e.last_chapter) || 0) + 1, last_read_at: new Date().toISOString() });
+      return { id: e.id, title: e.title, chapter: e.last_chapter, readAt: e.last_read_at };
+    },
+    onSuccess: (u) => {
+      setUndo(u);
+      window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(() => {
+        setUndo(null);
+        setFrozen(null);
+      }, 7000);
+    },
     onSettled: () => qc.invalidateQueries({ queryKey: ["reading"] }),
   });
-  const recent = data?.slice(0, 3) ?? [];
+
+  const revert = useMutation({
+    mutationFn: (u: NonNullable<typeof undo>) => saveReading({ id: u.id, title: u.title, last_chapter: u.chapter, last_read_at: u.readAt }),
+    onSuccess: () => {
+      window.clearTimeout(timer.current);
+      setUndo(null);
+      setFrozen(null);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["reading"] }),
+  });
+  const ordered = frozen
+    ? [...(data ?? [])].sort((a, b) => {
+        const ra = frozen.indexOf(a.id);
+        const rb = frozen.indexOf(b.id);
+        return (ra === -1 ? 1e9 : ra) - (rb === -1 ? 1e9 : rb);
+      })
+    : (data ?? []);
+  const recent = ordered.slice(0, 3);
 
   return (
     <section className="block block-reading">
@@ -198,6 +233,17 @@ function ReadingBlock({ data }: { data: ReadingEntry[] | undefined }) {
               <strong>{e.title}</strong>
               <span className="status-pill" data-status={e.status}>{READING_STATUS_LABEL[e.status]}</span>
             </div>
+            {undo?.id === e.id && (
+              <button
+                type="button"
+                className="btn-text home-reading-undo"
+                onClick={() => revert.mutate(undo)}
+                disabled={revert.isPending}
+                aria-label={`Desfazer o capítulo registrado de ${e.title}`}
+              >
+                Desfazer
+              </button>
+            )}
             <div className="home-reading-chapter">
               <span className="num">{formatChapter(e.last_chapter)}</span>
               <button

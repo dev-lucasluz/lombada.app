@@ -16,6 +16,7 @@ import { VolumeGrid } from "../components/Shelf";
 import { Icon } from "../components/Icon";
 import { Cover } from "./CollectionPage";
 import { editionLabel } from "../lib/editionLabel";
+import { Skeleton } from "../components/Skeleton";
 import "./pages.css";
 
 export function EditionPage() {
@@ -53,7 +54,7 @@ export function EditionPage() {
     },
   });
 
-  if (isLoading) return <div className="page"><p className="muted">Carregando…</p></div>;
+  if (isLoading) return <div className="page"><Skeleton rows={2} /></div>;
   if (error || !item) {
     return (
       <div className="page">

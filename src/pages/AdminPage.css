@@ -19,3 +19,7 @@
 .feedback-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 .feedback-photo img { max-width: min(100%, 520px); border-radius: var(--radius-m); border: 1px solid var(--line); }
+
+.feedback-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.feedback-actions-end { display: inline-flex; align-items: center; gap: 0.75rem; margin-left: auto; }
+

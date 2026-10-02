@@ -398,16 +398,20 @@
   color: var(--ink-soft);
 }
 
+/* Situação: etiqueta discreta; só o Em hiato leva o marca-texto amarelo, porque é o que pede atenção */
 .status-pill {
   font-weight: 700;
   color: var(--ink);
+  background: var(--surface-sunk);
+  border: 1px solid var(--line);
+  padding: 0 0.4em;
+  border-radius: 3px;
 }
 
 .status-pill[data-status="hiatus"] {
   background: var(--marker);
+  border-color: var(--marker);
   color: var(--marker-ink);
-  padding: 0 0.4em;
-  border-radius: 3px;
 }
 
 .chapter {
@@ -422,7 +426,8 @@
 
 .chapter small {
   font-size: var(--step--1);
-  color: var(--ink-faint);
+  font-weight: 600;
+  color: var(--ink-soft);
 }
 
 .row-actions {
@@ -656,7 +661,7 @@ form.panel {
   border-radius: var(--radius-s, 4px);
   color: var(--accent);
   font-family: var(--font-body, inherit);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   font-weight: 700;
   vertical-align: middle;
 }
@@ -709,3 +714,172 @@ form.panel {
 
 .cover-scan .btn { cursor: pointer; }
 .cover-scan .btn.is-busy { cursor: progress; opacity: 0.7; }
+
+/* Onde parei: blocos por situação, cada um em grade */
+.reading-groups { display: grid; gap: 1.6rem; }
+.reading-group > h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  font-size: var(--step-1);
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+
+.reading-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+}
+
+.reading-row h3 { margin: 0; font-size: var(--step-1); }
+
+/* "Desfazer" aparece dentro do cartão do mangá que acabou de ser atualizado */
+.row-undo {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.1rem -1rem -0.9rem;
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 var(--radius-l) var(--radius-l);
+  background: var(--surface-sunk);
+  font-size: var(--step--1);
+}
+
+.row-undo span { min-width: 0; }
+
+/* Lembretes: editar e apagar lado a lado */
+.reminder-actions { display: flex; gap: 0.5rem; }
+
+/* Coleção: busca e filtro +18 na mesma linha */
+.collection-tools { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+.collection-tools .input { flex: 1 1 240px; max-width: 420px; }
+
+/* Estante vazia: três jeitos de começar, cada um numa caixa com borda */
+.start-ways { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.6rem; max-width: 520px; }
+.start-ways a {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 0.9rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 120ms;
+}
+.start-ways a:hover { border-color: var(--accent); }
+.start-ways a:hover strong { color: var(--accent); }
+.start-ways a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.start-ways svg { grid-row: span 2; color: var(--accent); }
+.start-ways span { color: var(--ink-soft); font-size: var(--step--1); }
+
+/* Onde parei: o botão fica logo abaixo da descrição, perto do que ele faz */
+.reading-head { display: grid; justify-items: start; gap: 0.25rem; }
+.reading-head .btn { margin-top: 0.75rem; }
+
+/* Onde parei: cartões empilhados em cada situação */
+.reading-grid { grid-template-columns: minmax(0, 1fr); }
+
+/* Telas médias: as situações se distribuem sozinhas, sem barra de rolagem */
+@media (min-width: 700px) {
+  .reading-groups {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    align-items: start;
+    gap: 1.5rem;
+  }
+}
+
+/* PC largo: uma coluna vertical para cada situação, lado a lado, todas visíveis de uma vez */
+@media (min-width: 1180px) {
+  .reading-groups {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .reading-group { padding: 0 1.25rem; min-width: 0; }
+  .reading-group:first-child { padding-left: 0; }
+  .reading-group:last-child { padding-right: 0; }
+  .reading-group + .reading-group { border-left: 1px solid var(--line); }
+}
+
+/* Coluna do capítulo, de cima para baixo: "Parei no", o número e o botão +1, centralizados */
+.chapter { justify-items: center; gap: 0.35rem; }
+.chapter-line { display: grid; justify-items: center; gap: 0.5rem; }
+
+/* Cartão do Onde parei, compacto: à esquerda título e botões; à direita a coluna do capítulo.
+   Os botões ficam na coluna da esquerda, sem criar uma linha própria embaixo. */
+.reading-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "info chapter"
+    "actions chapter";
+  align-items: start;
+  gap: 0.6rem 1rem;
+}
+
+.reading-row .reading-info { grid-area: info; }
+.reading-row .chapter { grid-area: chapter; }
+.reading-row .row-actions { grid-area: actions; grid-column: auto; align-self: end; }
+.reading-row .row-undo { grid-area: auto; grid-column: 1 / -1; }
+
+/* Editar fica ao lado do nome; só sobram os botões que mudam de cartão para cartão */
+.reading-title { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+.reading-title h3 { min-width: 0; overflow-wrap: anywhere; }
+.reading-title .btn-text { flex: none; }
+.reading-row .row-actions { align-items: center; gap: 0.5rem 1rem; }
+
+/* Editar: colado ao topo do cartão, na altura da primeira linha do nome */
+.reading-title { align-items: flex-start; }
+.reading-title h3 { line-height: 1.25; }
+.reading-title .btn-text { padding: 0; line-height: 1.5; margin-top: -0.1rem; }
+
+/* Botão só com ícone (Editar no cartão do Onde parei) */
+.icon-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: -0.3rem -0.3rem 0 0;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-m);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+/* Ícone no laranja do site (--accent); no hover a borda também acompanha */
+.icon-btn { color: var(--accent); }
+.icon-btn:hover { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 10%, transparent); }
+.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* "Parei no" sobe até a borda de cima do botão de editar (as duas pontas ficam alinhadas) */
+.reading-row .chapter { margin-top: -4px; }
+
+/* Criar lembrete e Continuar lendo lado a lado, mesmo em colunas estreitas */
+.reading-row .row-actions { gap: 0.4rem 0.6rem; flex-wrap: wrap; }
+.reading-row .row-actions .btn-s { padding-inline: 0.55rem; }
+
+/* Botões do cartão numa linha própria, na largura toda: Criar lembrete e Continuar lendo cabem lado a lado
+   mesmo com quatro colunas. Sem botões, o cartão não ganha espaço extra embaixo. */
+.reading-row {
+  grid-template-areas:
+    "info chapter"
+    "actions actions";
+  row-gap: 0;
+}
+
+.reading-row .row-actions { grid-area: actions; align-self: auto; margin-top: 0.7rem; }
+.reading-row .row-undo { margin-top: 0.7rem; }

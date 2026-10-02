@@ -6,6 +6,7 @@ import { saveToCollection } from "../lib/quickAdd";
 import { useQuickAddJob, type ReviewItem } from "../lib/quickAddJob";
 import { useSpeechToText } from "../lib/speech";
 import { Icon } from "../components/Icon";
+import { quotaText, useScanQuota } from "../lib/useScanQuota";
 import "./pages.css";
 import "./QuickAddPage.css";
 
@@ -54,6 +55,8 @@ export function QuickAddPage() {
 function PhotoInput() {
   const { reading, error, preview, items, startPhoto } = useQuickAddJob();
   const busy = reading === "foto";
+  const quota = useScanQuota();
+  const noQuota = quota.left === 0;
   const searching = !busy && items?.some((i) => i.targets === null);
 
   const onFile = (e: ChangeEvent<HTMLInputElement>) => {
@@ -69,10 +72,11 @@ function PhotoInput() {
         <label className={busy ? "btn btn-primary is-busy" : "btn btn-primary"}>
           <Icon name="camera" size={20} />
           {busy ? "Lendo as lombadas…" : "Tirar ou escolher foto"}
-          <input type="file" accept="image/*" capture="environment" onChange={onFile} disabled={busy} className="visually-hidden" />
+          <input type="file" accept="image/*" capture="environment" onChange={onFile} disabled={busy || noQuota} className="visually-hidden" />
         </label>
         {preview && <img src={preview} alt="Foto enviada da estante" className="quick-preview" />}
       </div>
+      {quotaText(quota.left, quota.limit) && <p className="hint">{quotaText(quota.left, quota.limit)}</p>}
       {(busy || searching) && (
         <p className="auth-notice" role="status">
           {busy
@@ -93,6 +97,8 @@ function VoiceInput() {
   const { reading, error, startVoice } = useQuickAddJob();
   const [text, setText] = useState("");
   const busy = reading === "voz";
+  const quota = useScanQuota();
+  const noQuota = quota.left === 0;
   const speech = useSpeechToText(useCallback((t: string) => setText(t), []));
 
   const interpret = () => {
@@ -132,9 +138,10 @@ function VoiceInput() {
         />
       </div>
 
-      <button className="btn btn-primary" style={{ justifySelf: "start" }} onClick={interpret} disabled={busy || text.trim().length < 3}>
+      <button className="btn btn-primary" style={{ justifySelf: "start" }} onClick={interpret} disabled={busy || noQuota || text.trim().length < 3}>
         {busy ? "Interpretando…" : "Interpretar"}
       </button>
+      {quotaText(quota.left, quota.limit) && <p className="hint">{quotaText(quota.left, quota.limit)}</p>}
       {busy && (
         <p className="auth-notice" role="status">
           Interpretando. Leva alguns segundos. Você pode sair desta tela: avisamos quando estiver pronto.

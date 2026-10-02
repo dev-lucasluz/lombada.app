@@ -6,6 +6,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { isDemo } from "../lib/demo";
 import { QuickAddJobProvider } from "../lib/quickAddJob";
 import { useAvatar } from "../lib/useAvatar";
+import { Skeleton } from "./Skeleton";
 import { FeedbackNotice } from "./FeedbackNotice";
 import { FeedbackButton } from "./FeedbackButton";
 import "./AppShell.css";
@@ -59,7 +60,7 @@ export function AppShell() {
             Modo demonstração: dados de exemplo só neste navegador, nada vai para o Supabase. “Sair” restaura os dados.
           </p>
         )}
-        <Suspense fallback={<div className="page"><p className="muted">Carregando…</p></div>}>
+        <Suspense fallback={<div className="page"><Skeleton /></div>}>
           <Outlet />
         </Suspense>
       </main>

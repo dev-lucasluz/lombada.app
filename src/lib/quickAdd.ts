@@ -7,7 +7,7 @@ import { supabase } from "./supabase";
 import { isDemo } from "./demo";
 import { parseRanges } from "./ranges";
 import { editionLabel } from "./editionLabel";
-import { searchManga, type CatalogResult } from "./catalog";
+import { searchBooks, searchManga, type CatalogResult } from "./catalog";
 import {
   addToCollection,
   createEdition,
@@ -70,6 +70,20 @@ export async function scanShelfPhoto(imageBase64: string): Promise<DetectedSerie
     mimeType: "image/jpeg",
   });
   return groupSpines(spines);
+}
+
+/** Uso do dia da leitura por IA (foto, voz e capa). Nulo se o servidor não responder. */
+export async function getScanQuota(): Promise<{ used: number; limit: number } | null> {
+  if (isDemo) return null;
+  try {
+    const { data } = await supabase.auth.getSession();
+    const res = await fetch("/api/scan-quota", { headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}` } });
+    if (!res.ok) return null;
+    const json = (await res.json()) as { used?: number; limit?: number };
+    return typeof json.used === "number" && typeof json.limit === "number" ? { used: json.used, limit: json.limit } : null;
+  } catch {
+    return null;
+  }
 }
 
 export type CoverRead = { found: boolean; title: string; author: string | null; kind: "manga" | "book" };
@@ -173,7 +187,7 @@ export function catalogTarget(r: CatalogResult): MatchTarget {
   return {
     kind: "catalog",
     result: r,
-    label: `${r.title}${r.year ? ` (${r.year})` : ""}, adicionar nova série`,
+    label: `${r.title}${r.year ? ` (${r.year})` : ""}, ${r.kind === "book" ? "livro" : "mangá"}, adicionar nova série`,
   };
 }
 
@@ -199,7 +213,23 @@ export async function suggestTargets(title: string, collection: CollectionItem[]
     // Apóstrofos e pontuação atrapalham a busca ("Hell's Paradise"): tenta de novo sem eles.
     const plain = title.replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
     if (results.length === 0 && plain && plain !== title) results = await searchWithRetry(plain);
-    targets.push(...results.slice(0, 5).map(catalogTarget));
+    // Livros também aparecem na estante: busca nos dois catálogos e põe primeiro o que tem o nome mais parecido.
+    let books: CatalogResult[] = [];
+    try {
+      books = await searchBooks(title);
+    } catch {
+      // Sem catálogo de livros agora: segue só com os mangás.
+    }
+    const wanted = normalizeTitle(title);
+    const score = (r: CatalogResult) => {
+      const t = normalizeTitle(r.title);
+      return t === wanted ? 2 : t.includes(wanted) || wanted.includes(t) ? 1 : 0;
+    };
+    const candidates = [...results.slice(0, 4), ...books.slice(0, 3)]
+      .map((r, i) => ({ r, i }))
+      .sort((a, b) => score(b.r) - score(a.r) || a.i - b.i)
+      .map((x) => x.r);
+    targets.push(...candidates.map(catalogTarget));
   } catch {
     // Sem catálogo agora: fica só a opção da coleção (ou nenhuma).
   }
@@ -288,4 +318,34 @@ export async function prepareAvatar(file: File): Promise<string> {
   const url = canvas.toDataURL("image/jpeg", 0.85);
   if (url.length > 80_000) throw new Error("Não foi possível reduzir a imagem o bastante. Tente outra.");
   return url;
+}
+
+/**
+ * Prepara a capa enviada pela pessoa: redesenha numa imagem nova (apaga localização e dados escondidos),
+ * reduz para no máximo 480 px no maior lado e devolve um JPEG em data URL de até ~70 mil caracteres.
+ */
+export async function prepareCover(file: File): Promise<string> {
+  if (!/^image\/(jpeg|png|webp|heic|heif)$/i.test(file.type)) throw new Error("Use uma imagem JPG, PNG ou WebP.");
+  if (file.size > 8 * 1024 * 1024) throw new Error("A imagem é muito grande (mais de 8 MB).");
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    throw new Error("Não foi possível abrir essa imagem. Tente um JPG ou PNG.");
+  }
+  for (const maxSide of [480, 380, 300]) {
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    for (const quality of [0.82, 0.7, 0.58]) {
+      const url = canvas.toDataURL("image/jpeg", quality);
+      if (url.length <= 70_000) return url;
+    }
+  }
+  throw new Error("Não foi possível reduzir a imagem o bastante. Tente outra foto.");
 }

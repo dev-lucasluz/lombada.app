@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteFeedback, getFeedbackImage, isAdmin, listFeedback, setFeedbackStatus, type Feedback, type FeedbackStatus } from "../lib/db";
+import { Skeleton } from "../components/Skeleton";
 import "./pages.css";
 import "./AdminPage.css";
 
@@ -25,7 +26,7 @@ export function AdminPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["feedback"] }),
   });
 
-  if (admin.isLoading) return <div className="page"><p className="muted">Carregando…</p></div>;
+  if (admin.isLoading) return <div className="page"><Skeleton /></div>;
   if (!admin.data) return <Navigate to="/" replace />;
 
   const all = list.data ?? [];
@@ -60,7 +61,7 @@ export function AdminPage() {
             key={f.id}
             f={f}
             onStatus={(status) => update.mutate({ id: f.id, status })}
-            onDelete={() => confirm("Apagar esta mensagem de vez?") && remove.mutate(f.id)}
+            onDelete={() => remove.mutate(f.id)}
           />
         ))}
       </ul>
@@ -69,6 +70,7 @@ export function AdminPage() {
 }
 
 function FeedbackRow({ f, onStatus, onDelete }: { f: Feedback; onStatus: (s: FeedbackStatus) => void; onDelete: () => void }) {
+  const [confirming, setConfirming] = useState(false);
   return (
     <li className={`feedback-item is-${f.status}`}>
       <div className="feedback-meta">
@@ -80,11 +82,25 @@ function FeedbackRow({ f, onStatus, onDelete }: { f: Feedback; onStatus: (s: Fee
       <p className="feedback-text">{f.message}</p>
       {f.has_image && <FeedbackPhoto id={f.id} />}
       {f.user_agent && <small className="hint">{f.user_agent}</small>}
-      <div className="head-actions">
-        {f.status !== "lido" && <button className="btn btn-ghost" onClick={() => onStatus("lido")}>Marcar como lido</button>}
-        {f.status !== "resolvido" && <button className="btn btn-primary" onClick={() => onStatus("resolvido")}>Marcar como resolvido</button>}
-        {f.status !== "novo" && <button className="btn btn-ghost" onClick={() => onStatus("novo")}>Voltar para novo</button>}
-        <button className="btn btn-ghost" onClick={onDelete}>Apagar</button>
+      <div className="feedback-actions">
+        {/* Um único próximo passo por mensagem: novo → lido → resolvido */}
+        {f.status === "novo" && <button className="btn btn-ghost" onClick={() => onStatus("lido")}>Marcar como lido</button>}
+        {f.status === "lido" && <button className="btn btn-ghost" onClick={() => onStatus("resolvido")}>Marcar como resolvido</button>}
+        {f.status === "resolvido" && <button className="btn btn-ghost" onClick={() => onStatus("novo")}>Reabrir</button>}
+        {f.status === "novo" && <button className="btn-text" onClick={() => onStatus("resolvido")}>Já resolvido</button>}
+        {f.status === "lido" && <button className="btn-text" onClick={() => onStatus("novo")}>Voltar para novo</button>}
+
+        <span className="feedback-actions-end">
+          {confirming ? (
+            <>
+              <span className="hint">Apagar de vez?</span>
+              <button className="btn-text is-danger" onClick={onDelete}>Sim, apagar</button>
+              <button className="btn-text" onClick={() => setConfirming(false)}>Não</button>
+            </>
+          ) : (
+            <button className="btn-text is-danger" onClick={() => setConfirming(true)}>Apagar</button>
+          )}
+        </span>
       </div>
     </li>
   );

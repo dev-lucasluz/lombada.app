@@ -8,20 +8,22 @@ import { json } from "../server/ai";
 import { handleScanShelf } from "./api/scan-shelf";
 import { handleParseVoice } from "./api/parse-voice";
 import { handleScanCover } from "./api/scan-cover";
+import { handleScanQuota } from "./api/scan-quota";
 
 export default {
   async fetch(request: Request, env: AiEnv): Promise<Response> {
     const { pathname } = new URL(request.url);
 
-    const handlers: Record<string, (request: Request, env: AiEnv) => Promise<Response>> = {
-      "/api/scan-shelf": handleScanShelf,
-      "/api/parse-voice": handleParseVoice,
-      "/api/scan-cover": handleScanCover,
+    const handlers: Record<string, { method: "GET" | "POST"; run: (request: Request, env: AiEnv) => Promise<Response> }> = {
+      "/api/scan-shelf": { method: "POST", run: handleScanShelf },
+      "/api/parse-voice": { method: "POST", run: handleParseVoice },
+      "/api/scan-cover": { method: "POST", run: handleScanCover },
+      "/api/scan-quota": { method: "GET", run: handleScanQuota },
     };
     const handler = handlers[pathname];
     if (handler) {
-      if (request.method !== "POST") return json({ error: "Método não permitido." }, 405);
-      return handler(request, env);
+      if (request.method !== handler.method) return json({ error: "Método não permitido." }, 405);
+      return handler.run(request, env);
     }
 
     return json({ error: "Rota não encontrada." }, 404);

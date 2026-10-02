@@ -1,6 +1,7 @@
 /* ---------- Cartão de identidade ---------- */
 .profile-hero {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   padding: 1.4rem 1.4rem 0;
   border: 1px solid var(--line);
@@ -11,6 +12,7 @@
 
 .profile-hero-top {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.4rem;
   align-items: center;
 }
@@ -91,7 +93,7 @@
 }
 
 .profile-figures small {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--ink-soft);
   line-height: 1.25;
 }
@@ -107,6 +109,7 @@
 
 .profile-note {
   margin: 0;
+  overflow-wrap: anywhere;
   font-size: var(--step--1);
   color: var(--ink-soft);
 }
@@ -145,7 +148,7 @@
   .profile-figures li:first-child { border-left: 0; padding-left: 0; }
 }
 
-/* ---------- Grupos de configurações ---------- */
+/* ---------- Grupos de configurações: cada item numa caixa com borda, como prateleiras ---------- */
 .profile-groups {
   display: grid;
   gap: 1rem;
@@ -153,32 +156,33 @@
   align-items: start;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 700px) {
   .profile-groups {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 .profile-group {
-  padding: 0.3rem 1.3rem 0.5rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-l);
-  background: var(--surface);
+  display: grid;
+  gap: 0.6rem;
+  align-content: start;
 }
 
 .profile-group > h2 {
-  margin: 1rem 0 0.6rem;
+  margin: 0.2rem 0 0.1rem;
   font-size: var(--step-1);
 }
 
-/* Os formulários antigos são "painéis": dentro do grupo viram linhas separadas por filete */
-.profile-group .panel {
+/* Os formulários antigos são "painéis"; cada um, cada linha e cada bloco recolhível é uma caixa */
+.profile-group .panel,
+.profile-row,
+.profile-fold,
+.profile-leave {
   max-width: none;
-  padding: 1rem 0;
-  border: 0;
-  border-top: 1px solid var(--line);
-  border-radius: 0;
-  background: transparent;
+  padding: 1rem;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--surface);
 }
 
 .profile-group .panel > h2 {
@@ -192,8 +196,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1rem 0;
-  border-top: 1px solid var(--line);
 }
 
 .profile-row > div { display: grid; gap: 0.15rem; min-width: 0; }
@@ -205,15 +207,13 @@
 }
 
 /* Trocar senha recolhida até a pessoa abrir */
-.profile-fold {
-  border-top: 1px solid var(--line);
-}
+.profile-fold { padding: 0; }
 
 .profile-fold > summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 0;
+  padding: 1rem;
   font-weight: 700;
   cursor: pointer;
   list-style: none;
@@ -232,11 +232,13 @@
 }
 
 .profile-fold[open] > summary::after { transform: rotate(-135deg); }
-.profile-fold > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.profile-fold > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--radius-m); }
 
 .profile-fold .panel {
-  border-top: 0;
-  padding-top: 0;
+  padding: 0 1rem 1rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .profile-fold .panel > h2 { display: none; }
@@ -284,3 +286,24 @@
 }
 
 .profile-photo-remove:hover { color: var(--accent); }
+
+/* Compartilhar a estante: logo abaixo do cartão, em destaque (é o recurso social do app) */
+.profile-share {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.2rem 1.3rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  background: var(--surface);
+}
+
+.profile-share > h2 { margin: 0; font-size: var(--step-1); }
+
+/* Sair fica por último, numa caixa à parte */
+.profile-leave {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+}

@@ -2,10 +2,12 @@ import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { searchBooks, searchManga, type CatalogResult } from "../lib/catalog";
-import { addToCollection, createEdition, ensureWork, listEditions, setVolumesOwned, type Edition, type Work } from "../lib/db";
-import { prepareImage, scanCoverPhoto } from "../lib/quickAdd";
+import { addToCollection, createEdition, createManualWork, ensureWork, listEditions, setVolumesOwned, type Edition, type Work } from "../lib/db";
+import { prepareCover, prepareImage, scanCoverPhoto } from "../lib/quickAdd";
 import { isDemo } from "../lib/demo";
 import { Icon } from "../components/Icon";
+import { Dialog } from "../components/Dialog";
+import { quotaText, useScanQuota } from "../lib/useScanQuota";
 import { Cover } from "./CollectionPage";
 import "./pages.css";
 
@@ -26,6 +28,9 @@ export function AddPage() {
     });
   };
   const [work, setWork] = useState<{ work: Work; result: CatalogResult } | null>(null);
+  const [manualOpen, setManualOpen] = useState(false);
+  const qc = useQueryClient();
+  const quota = useScanQuota();
 
   // Busca enquanto digita: espera uma pausa de 400 ms para não consultar a cada letra.
   useEffect(() => {
@@ -72,6 +77,7 @@ export function AddPage() {
       setCoverError(err instanceof Error ? err.message : "A leitura da capa falhou.");
     } finally {
       setCoverState("idle");
+      qc.invalidateQueries({ queryKey: ["scan-quota"] });
     }
   };
 
@@ -81,6 +87,26 @@ export function AddPage() {
   };
 
   if (work) return <ChooseEdition work={work.work} result={work.result} onBack={() => setWork(null)} />;
+
+  const startManual = (created: Work) => {
+    setManualOpen(false);
+    setWork({
+      work: created,
+      result: {
+        source: created.kind === "manga" ? "anilist" : "open_library",
+        externalId: "",
+        kind: created.kind,
+        title: created.title,
+        originalTitle: null,
+        authors: created.authors,
+        coverUrl: created.cover_url,
+        coverColor: null,
+        volumes: null,
+        status: null,
+        year: null,
+      },
+    });
+  };
 
   return (
     <div className="page">
@@ -120,23 +146,30 @@ export function AddPage() {
         </button>
       </form>
 
-      {!isDemo && (
-        <div className="cover-scan">
+      <div className="cover-scan">
+        {!isDemo && (
           <label className={coverState === "reading" ? "btn btn-ghost is-busy" : "btn btn-ghost"}>
             <Icon name="camera" size={18} />
             {coverState === "reading" ? "Lendo a capa…" : "Buscar pela foto da capa"}
-            <input type="file" accept="image/*" capture="environment" onChange={onCover} disabled={coverState === "reading"} className="visually-hidden" />
+            <input type="file" accept="image/*" capture="environment" onChange={onCover} disabled={coverState === "reading" || quota.left === 0} className="visually-hidden" />
           </label>
-          {coverState === "reading" && <span className="hint" role="status">Leva alguns segundos.</span>}
-        </div>
-      )}
+        )}
+        <button type="button" className="btn btn-ghost" onClick={() => setManualOpen(true)}>
+          <Icon name="plus" size={18} /> Adicionar manualmente
+        </button>
+        {coverState === "reading" && <span className="hint" role="status">Leva alguns segundos.</span>}
+      </div>
+      {!isDemo && quotaText(quota.left, quota.limit) && <p className="hint">{quotaText(quota.left, quota.limit)}</p>}
       {coverError && <p className="error" role="alert">{coverError}</p>}
 
       {search.isFetching && !search.data && <p className="muted">Buscando…</p>}
       {search.error && <p className="error" role="alert">{(search.error as Error).message}</p>}
       {pick.error && <p className="error" role="alert">{(pick.error as Error).message}</p>}
       {submitted.length >= 2 && search.data && search.data.length === 0 && !search.isFetching && (
-        <p className="muted">Nada encontrado para “{submitted}”. Tente o nome em inglês ou romaji.</p>
+        <p className="muted">
+          Nada encontrado para “{submitted}”. Tente o nome em inglês ou romaji, ou{" "}
+          <button type="button" className="btn-text" onClick={() => setManualOpen(true)}>adicione manualmente</button>.
+        </p>
       )}
 
       {submitted.length >= 2 && search.data && search.data.length > 0 && (
@@ -158,7 +191,126 @@ export function AddPage() {
           ))}
         </ul>
       )}
+
+      {manualOpen && (
+        <ManualWorkDialog initialKind={kind} initialTitle={term.trim()} onClose={() => setManualOpen(false)} onCreated={startManual} />
+      )}
     </div>
+  );
+}
+
+/** Cadastro à mão: para quando a obra não aparece nos catálogos. O restante (edição e total) vem na tela seguinte. */
+function ManualWorkDialog({
+  initialKind,
+  initialTitle,
+  onClose,
+  onCreated,
+}: {
+  initialKind: Kind;
+  initialTitle: string;
+  onClose: () => void;
+  onCreated: (work: Work) => void;
+}) {
+  const [kind, setKind] = useState<Kind>(initialKind);
+  const [title, setTitle] = useState(initialTitle);
+  const [author, setAuthor] = useState("");
+  // Capa opcional, já reduzida e convertida para JPEG (data URL).
+  const [cover, setCover] = useState<string | null>(null);
+  const [coverError, setCoverError] = useState<string | null>(null);
+  const [preparing, setPreparing] = useState(false);
+  const onPickCover = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setCoverError(null);
+    setPreparing(true);
+    try {
+      setCover(await prepareCover(file));
+    } catch (err) {
+      setCover(null);
+      setCoverError(err instanceof Error ? err.message : "Não foi possível usar essa imagem.");
+    } finally {
+      setPreparing(false);
+    }
+  };
+  const create = useMutation({
+    mutationFn: () =>
+      createManualWork({
+        kind,
+        title: title.trim().slice(0, 200),
+        authors: author.split(",").map((a) => a.trim()).filter(Boolean).slice(0, 5),
+        coverUrl: cover,
+      }),
+    onSuccess: onCreated,
+  });
+
+  return (
+    <Dialog titleId="manual-title" onClose={onClose}>
+      <h2 id="manual-title">Adicionar manualmente</h2>
+      <form
+        className="dialog-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          create.mutate();
+        }}
+      >
+        <p className="hint">
+          Use quando não achar a obra pelo nome ou quando ela não estiver nos catálogos. Na próxima tela você informa a
+          edição e o total de volumes.
+        </p>
+        <div className="segmented" role="group" aria-label="Tipo">
+          <button type="button" aria-pressed={kind === "manga"} onClick={() => setKind("manga")}>Mangá</button>
+          <button type="button" aria-pressed={kind === "book"} onClick={() => setKind("book")}>Livro</button>
+        </div>
+        <div className="field">
+          <label htmlFor="manual-name">Título</label>
+          <input
+            id="manual-name"
+            data-autofocus
+            className="input"
+            required
+            maxLength={200}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={kind === "manga" ? "Ex.: Diário de uma Apotecária" : "Ex.: O Hobbit"}
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="manual-author">Autor (opcional)</label>
+          <input
+            id="manual-author"
+            className="input"
+            maxLength={200}
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
+            placeholder="Para mais de um, separe por vírgula"
+          />
+        </div>
+        <div className="feedback-attach">
+          {cover ? (
+            <div className="feedback-thumb">
+              <img src={cover} alt="Capa escolhida" style={{ maxHeight: 96 }} />
+              <button type="button" className="btn btn-ghost" onClick={() => setCover(null)}>Remover capa</button>
+            </div>
+          ) : (
+            <label className={preparing ? "btn btn-ghost is-busy" : "btn btn-ghost"}>
+              <Icon name="camera" size={18} />
+              {preparing ? "Preparando a capa…" : "Foto da capa (opcional)"}
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={onPickCover} disabled={preparing} className="visually-hidden" />
+            </label>
+          )}
+          <small className="hint">A capa aparece na sua estante e só fica visível para você e para quem receber o seu link.</small>
+        </div>
+        {coverError && <p className="error" role="alert">{coverError}</p>}
+        {create.error && <p className="error" role="alert">{(create.error as Error).message}</p>}
+        <div className="dialog-actions">
+          <button className="btn btn-primary" type="submit" disabled={create.isPending || preparing || title.trim().length < 1}>
+            {create.isPending ? "Criando…" : "Continuar"}
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+        </div>
+      </form>
+    </Dialog>
   );
 }
 

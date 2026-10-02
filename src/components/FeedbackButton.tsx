@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { sendFeedback, type FeedbackKind } from "../lib/db";
 import { prepareFeedbackImage } from "../lib/quickAdd";
+import { Dialog } from "./Dialog";
 import "./FeedbackButton.css";
 
 const KINDS: { value: FeedbackKind; label: string }[] = [
@@ -20,13 +21,27 @@ export function FeedbackButton() {
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<FeedbackKind>("ideia");
   const [message, setMessage] = useState("");
-  const textRef = useRef<HTMLTextAreaElement>(null);
   // Foto opcional, já reduzida e convertida para JPEG (data URL).
   const [image, setImage] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [preparing, setPreparing] = useState(false);
+  // Enquanto a pessoa digita em outro campo, o botão flutuante sai do caminho (celular).
+  const [typing, setTyping] = useState(false);
 
   const send = useMutation({ mutationFn: sendFeedback });
+
+  useEffect(() => {
+    const isField = (t: EventTarget | null) =>
+      t instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) && !t.closest(".dialog");
+    const onIn = (e: FocusEvent) => setTyping(isField(e.target));
+    const onOut = () => setTyping(false);
+    document.addEventListener("focusin", onIn);
+    document.addEventListener("focusout", onOut);
+    return () => {
+      document.removeEventListener("focusin", onIn);
+      document.removeEventListener("focusout", onOut);
+    };
+  }, []);
 
   const close = () => {
     if (send.isSuccess) {
@@ -37,15 +52,6 @@ export function FeedbackButton() {
     send.reset();
     setOpen(false);
   };
-
-  useEffect(() => {
-    if (!open) return;
-    textRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, send.isSuccess]);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -70,7 +76,12 @@ export function FeedbackButton() {
 
   return (
     <>
-      <button className="feedback-fab" onClick={() => setOpen(true)} aria-label="Enviar feedback" title="Enviar feedback">
+      <button
+        className={typing ? "feedback-fab is-away" : "feedback-fab"}
+        onClick={() => setOpen(true)}
+        aria-label="Enviar feedback"
+        title="Enviar feedback"
+      >
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M5 5h14v10H10l-5 4z" />
         </svg>
@@ -78,17 +89,19 @@ export function FeedbackButton() {
       </button>
 
       {open && (
-        <div className="feedback-backdrop" onMouseDown={(e) => e.target === e.currentTarget && close()}>
-          <form className="feedback-dialog" role="dialog" aria-modal="true" aria-labelledby="fb-title" onSubmit={submit}>
-            {send.isSuccess ? (
-              <>
-                <h2 id="fb-title">Recebido, obrigado!</h2>
-                <p className="hint">Sua mensagem chegou. Ela ajuda a melhorar o Lombada.</p>
+        <Dialog titleId="fb-title" onClose={close}>
+          {send.isSuccess ? (
+            <>
+              <h2 id="fb-title">Recebido, obrigado!</h2>
+              <p className="hint">Sua mensagem chegou. Ela ajuda a melhorar o Lombada.</p>
+              <div className="dialog-actions">
                 <button type="button" className="btn btn-primary" onClick={close}>Fechar</button>
-              </>
-            ) : (
-              <>
-                <h2 id="fb-title">Enviar feedback</h2>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 id="fb-title">Conte pra gente</h2>
+              <form className="dialog-form" onSubmit={submit}>
                 <div className="segmented" role="group" aria-label="Tipo de mensagem">
                   {KINDS.map((k) => (
                     <button type="button" key={k.value} aria-pressed={kind === k.value} onClick={() => setKind(k.value)}>
@@ -100,7 +113,7 @@ export function FeedbackButton() {
                   <label htmlFor="fb-msg">{PROMPT[kind]}</label>
                   <textarea
                     id="fb-msg"
-                    ref={textRef}
+                    data-autofocus
                     className="input"
                     rows={5}
                     required
@@ -126,16 +139,16 @@ export function FeedbackButton() {
                 </div>
                 {imageError && <p className="error" role="alert">{imageError}</p>}
                 {send.error && <p className="error" role="alert">{(send.error as Error).message}</p>}
-                <div className="head-actions">
+                <div className="dialog-actions">
                   <button className="btn btn-primary" type="submit" disabled={send.isPending || message.trim().length < 3}>
                     {send.isPending ? "Enviando…" : "Enviar feedback"}
                   </button>
                   <button type="button" className="btn btn-ghost" onClick={close}>Cancelar</button>
                 </div>
-              </>
-            )}
-          </form>
-        </div>
+              </form>
+            </>
+          )}
+        </Dialog>
       )}
     </>
   );

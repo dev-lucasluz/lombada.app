@@ -218,6 +218,12 @@ export const demoDb = {
     await tick(null);
   },
 
+  async updateReminder(id: string, patch: { remind_on: string; message: string; reading_entry_id: string | null }) {
+    db().reminders = db().reminders.map((m) => (m.id === id ? { ...m, ...patch, sent_at: null } : m));
+    save();
+    await tick(null);
+  },
+
   async deleteReminder(id: string) {
     db().reminders = db().reminders.filter((m) => m.id !== id);
     save();

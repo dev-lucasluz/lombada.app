@@ -156,6 +156,7 @@
 }
 
 .home-reading-info {
+  flex: 1;
   display: grid;
   gap: 0.15rem;
   min-width: 0;
@@ -211,7 +212,7 @@
 }
 
 .home-date small {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--ink-soft);
 }
@@ -472,3 +473,6 @@
     align-items: start;
   }
 }
+
+/* "Desfazer" na linha do mangá, entre o nome e o capítulo */
+.home-reading-undo { flex: none; padding: 0.4rem 0.2rem; }

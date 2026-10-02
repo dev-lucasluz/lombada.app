@@ -31,32 +31,14 @@
   .feedback-fab { bottom: 1.25rem; right: 1.25rem; }
 }
 
-.feedback-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.55);
-}
-
-.feedback-dialog {
-  display: grid;
-  gap: 1rem;
-  width: min(100%, 460px);
-  padding: 1.25rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-l);
-  background: var(--surface);
-  color: var(--ink);
-}
-
-.feedback-dialog h2 { margin: 0; font-family: var(--font-heading); font-size: var(--step-2); }
-.feedback-dialog textarea { resize: vertical; min-height: 7rem; }
-
 .feedback-attach { display: grid; gap: 0.5rem; justify-items: start; }
 .feedback-attach .btn { cursor: pointer; }
 .feedback-attach .btn.is-busy { cursor: progress; opacity: 0.7; }
 .feedback-thumb { display: flex; align-items: center; gap: 0.75rem; }
 .feedback-thumb img { max-height: 72px; max-width: 120px; border-radius: var(--radius-m); border: 1px solid var(--line); }
+
+/* Celular: com um campo em foco (teclado aberto) o botão sai do caminho */
+@media (max-width: 899px) {
+  .feedback-fab { transition: opacity 120ms, transform 120ms; }
+  .feedback-fab.is-away { opacity: 0; transform: translateY(8px); pointer-events: none; }
+}

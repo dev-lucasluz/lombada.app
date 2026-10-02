@@ -1,0 +1,5 @@
+.share { display: grid; gap: 1rem; }
+
+.share-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.share-more { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; }

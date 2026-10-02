@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { authErrorMessage, useAuth } from "../lib/auth";
-import { disableShare, enableShare, getMyAvatar, getShareToken, isAdmin, listCollection, listReading, renewShare, setMyAvatar } from "../lib/db";
+import { getMyAvatar, isAdmin, listCollection, listFeedback, listReading, setMyAvatar } from "../lib/db";
 import { missingVolumes } from "../lib/ranges";
 import { isStandalone } from "../components/BookShelf";
 import { Icon } from "../components/Icon";
@@ -11,6 +11,7 @@ import { useAvatar } from "../lib/useAvatar";
 import { prepareAvatar } from "../lib/quickAdd";
 import { seriesHues, volumeColor } from "../lib/spineColor";
 import { PasswordInput } from "../components/PasswordInput";
+import { ShareControls } from "../components/ShareControls";
 import "./pages.css";
 import "./ProfilePage.css";
 
@@ -26,6 +27,8 @@ export function ProfilePage() {
   const reading = useQuery({ queryKey: ["reading"], queryFn: listReading });
 
   const admin = useQuery({ queryKey: ["is-admin"], queryFn: isAdmin, staleTime: 5 * 60_000 });
+  const feedbackList = useQuery({ queryKey: ["feedback"], queryFn: listFeedback, enabled: admin.data === true });
+  const newFeedback = feedbackList.data?.filter((f) => f.status === "novo").length ?? 0;
 
   const items = collection.data ?? [];
   const volumes = items.reduce((sum, c) => sum + c.owned.length, 0);
@@ -123,6 +126,11 @@ export function ProfilePage() {
         <ShelfBand items={items} />
       </section>
 
+      <section className="profile-share" aria-labelledby="share-heading">
+        <h2 id="share-heading">Compartilhar minha estante</h2>
+        <ShareControls />
+      </section>
+
       <div className="profile-groups">
         <div className="profile-group">
           <h2>Conta</h2>
@@ -138,26 +146,16 @@ export function ProfilePage() {
               disabled={isDemo}
             />
           </details>
-
-          <div className="profile-row">
-            <div>
-              <strong>Sair da conta</strong>
-              <span className="hint">Encerra a sessão neste aparelho. Seus dados continuam salvos.</span>
-            </div>
-            <button className="btn btn-ghost" onClick={signOut}>Sair</button>
-          </div>
         </div>
 
         <div className="profile-group">
-          <h2>Estante e dados</h2>
-          {!isDemo && <SharePanel />}
-
+          <h2>Dados</h2>
           <div className="profile-row">
             <div>
               <strong>Baixar a coleção</strong>
               <span className="hint">
                 Planilha (CSV) que abre no Excel e no Google Planilhas. Para apagar a conta e todos os dados, peça pelo
-                e-mail da <a href="/privacidade">política de privacidade</a>.
+                e-mail da <Link to="/privacidade">política de privacidade</Link>.
               </span>
             </div>
             <button className="btn btn-ghost" onClick={exportCsv} disabled={!collection.data?.length}>Baixar CSV</button>
@@ -169,10 +167,17 @@ export function ProfilePage() {
                 <strong>Administração</strong>
                 <span className="hint">Mensagens enviadas pelos usuários pelo botão de feedback.</span>
               </div>
-              <Link to="/admin" className="btn btn-ghost">Ver feedbacks</Link>
+              <Link to="/admin" className="btn btn-ghost">
+                {newFeedback > 0 ? `Ver feedbacks (${newFeedback} ${newFeedback === 1 ? "nova" : "novas"})` : "Ver feedbacks"}
+              </Link>
             </div>
           )}
         </div>
+      </div>
+
+      <div className="profile-leave">
+        <span className="hint">Sair encerra a sessão neste aparelho. Seus dados continuam salvos.</span>
+        <button className="btn btn-ghost" onClick={signOut}>Sair da conta</button>
       </div>
     </div>
   );
@@ -236,7 +241,6 @@ function NameForm({ initial, onSave }: { initial: string; onSave: (name: string)
 
   return (
     <form className="panel" onSubmit={submit}>
-      <h2>Nome</h2>
       <div className="field">
         <label htmlFor="p-name">Como você quer ser chamado</label>
         <input id="p-name" className="input" required maxLength={60} value={name} onChange={(e) => { setName(e.target.value); setState("idle"); }} autoComplete="name" />
@@ -318,68 +322,5 @@ function PasswordForm({ onSave, verify, hasPassword, disabled }: { onSave: (pass
       </div>
       {error && <p className="error" role="alert">{error}</p>}
     </form>
-  );
-}
-
-
-function SharePanel() {
-  const qc = useQueryClient();
-  const share = useQuery({ queryKey: ["share-token"], queryFn: getShareToken });
-  const [copied, setCopied] = useState(false);
-  const set = (token: string | null) => {
-    qc.setQueryData(["share-token"], token);
-    setCopied(false);
-  };
-  const enable = useMutation({ mutationFn: enableShare, onSuccess: set });
-  const renew = useMutation({ mutationFn: renewShare, onSuccess: set });
-  const disable = useMutation({ mutationFn: disableShare, onSuccess: () => set(null) });
-
-  const token = share.data ?? null;
-  const url = token ? `${window.location.origin}/estante/${token}` : "";
-  const error = (share.error ?? enable.error ?? renew.error ?? disable.error) as Error | null;
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
-  };
-
-  return (
-    <section className="panel">
-      <h2>Compartilhar minha estante</h2>
-      <p className="hint">
-        Gere um link para os amigos verem a sua estante, só para ler. Eles não precisam de conta. Não aparecem o seu
-        e-mail, as anotações nem as séries +18.
-      </p>
-      {token ? (
-        <>
-          <div className="field">
-            <label htmlFor="share-url">Link da sua estante</label>
-            <input id="share-url" className="input" readOnly value={url} onFocus={(e) => e.currentTarget.select()} />
-          </div>
-          <div className="head-actions">
-            <button className="btn btn-primary" onClick={copy}>{copied ? "Link copiado" : "Copiar link"}</button>
-            <button
-              className="btn btn-ghost"
-              disabled={renew.isPending}
-              onClick={() => confirm("Gerar um link novo? O link atual deixa de funcionar.") && renew.mutate()}
-            >
-              Gerar novo link
-            </button>
-            <button className="btn btn-ghost" disabled={disable.isPending} onClick={() => disable.mutate()}>
-              Parar de compartilhar
-            </button>
-          </div>
-        </>
-      ) : (
-        <button className="btn btn-primary" style={{ justifySelf: "start" }} disabled={enable.isPending || share.isLoading} onClick={() => enable.mutate()}>
-          Criar link para compartilhar
-        </button>
-      )}
-      {error && <p className="error" role="alert">{share.error ? "O compartilhamento ainda não foi ativado neste servidor." : error.message}</p>}
-    </section>
   );
 }
