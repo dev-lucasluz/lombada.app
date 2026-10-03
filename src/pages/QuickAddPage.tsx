@@ -72,7 +72,7 @@ function PhotoInput() {
         <label className={busy ? "btn btn-primary is-busy" : "btn btn-primary"}>
           <Icon name="camera" size={20} />
           {busy ? "Lendo as lombadas…" : "Tirar ou escolher foto"}
-          <input type="file" accept="image/*" capture="environment" onChange={onFile} disabled={busy || noQuota} className="visually-hidden" />
+          <input type="file" accept="image/*" onChange={onFile} disabled={busy || noQuota} className="visually-hidden" />
         </label>
         {preview && <img src={preview} alt="Foto enviada da estante" className="quick-preview" />}
       </div>

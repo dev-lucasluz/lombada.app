@@ -151,7 +151,7 @@ export function AddPage() {
           <label className={coverState === "reading" ? "btn btn-ghost is-busy" : "btn btn-ghost"}>
             <Icon name="camera" size={18} />
             {coverState === "reading" ? "Lendo a capa…" : "Buscar pela foto da capa"}
-            <input type="file" accept="image/*" capture="environment" onChange={onCover} disabled={coverState === "reading" || quota.left === 0} className="visually-hidden" />
+            <input type="file" accept="image/*" onChange={onCover} disabled={coverState === "reading" || quota.left === 0} className="visually-hidden" />
           </label>
         )}
         <button type="button" className="btn btn-ghost" onClick={() => setManualOpen(true)}>
