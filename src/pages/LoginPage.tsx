@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type FormEvent } from "react";
+import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
 import { authErrorMessage, useAuth } from "../lib/auth";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { PasswordInput } from "../components/PasswordInput";
@@ -82,7 +82,49 @@ function Bookcase({ className, mini = false }: { className: string; mini?: boole
   );
 }
 
+/** Acompanha uma media query (ex.: celular, ou preferência por menos movimento). */
+function useMediaQuery(query: string) {
+  const get = () => (typeof window !== "undefined" ? window.matchMedia(query).matches : false);
+  const [matches, setMatches] = useState(get);
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    const onChange = () => setMatches(media.matches);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, [query]);
+  return matches;
+}
+
+/**
+ * Vídeo de apresentação do app (15 s). Toca sozinho, sem som e em laço. Sem o vídeo (erro de rede) ou com
+ * preferência por menos movimento, volta a estante animada.
+ */
+function IntroVideo({ className, mini = false }: { className: string; mini?: boolean }) {
+  const [failed, setFailed] = useState(false);
+  const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
+
+  if (failed || reduced) return <Bookcase className={className} mini={mini} />;
+
+  return (
+    <div className={`${className} login-video`}>
+      <video
+        src="/lombada-login.mp4"
+        poster="/lombada-login-poster.jpg"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="metadata"
+        aria-hidden="true"
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
+}
+
 export function LoginPage() {
+  // Só um dos dois lugares do vídeo existe por vez (celular: ao lado do título; PC: ao lado do formulário).
+  const mobile = useMediaQuery("(max-width: 899px)");
   return (
     <div className="login">
       <ThemeToggle className="btn btn-ghost login-theme" />
@@ -93,7 +135,7 @@ export function LoginPage() {
         </span>
         <div className="login-hero">
           <h1>Sua estante, volume por volume.</h1>
-          <Bookcase className="login-art login-art-mini" mini />
+          {mobile && <IntroVideo className="login-art login-art-mini" mini />}
         </div>
         <p>Para quem coleciona mangás e livros físicos e quer lembrar onde parou de ler.</p>
         <AuthPanel />
@@ -104,7 +146,7 @@ export function LoginPage() {
       </div>
 
       <div className="login-side">
-        <Bookcase className="login-art login-art-full" />
+        {!mobile && <IntroVideo className="login-art login-art-full" />}
 
         <section className="login-features" aria-labelledby="features-title">
           <h2 id="features-title">O que tem no app</h2>

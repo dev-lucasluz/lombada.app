@@ -539,3 +539,28 @@
     display: none;
   }
 }
+
+/* ---------- Vídeo de apresentação ---------- */
+.login-video {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  margin-left: auto;
+  aspect-ratio: 1;
+  border-radius: var(--radius-l);
+  overflow: hidden;
+  background: #141416;
+  border: 1px solid var(--line);
+}
+
+.login-video video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.login-art-mini.login-video {
+  max-width: none;
+  margin-left: 0;
+}
