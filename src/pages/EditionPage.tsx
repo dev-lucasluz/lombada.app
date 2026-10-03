@@ -17,6 +17,7 @@ import { Icon } from "../components/Icon";
 import { Cover } from "./CollectionPage";
 import { editionLabel } from "../lib/editionLabel";
 import { Skeleton } from "../components/Skeleton";
+import { SeriesFields, seriesPatch, type SeriesForm } from "../components/SeriesFields";
 import "./pages.css";
 
 export function EditionPage() {
@@ -191,10 +192,18 @@ function EditionSettings({ item }: { item: CollectionItem }) {
     total: edition.total_volumes?.toString() ?? "",
     finished: edition.is_finished,
   });
+  const isBook = edition.work.kind === "book";
+  const [series, setSeries] = useState<SeriesForm>({
+    inSeries: !!edition.series_name,
+    name: edition.series_name ?? "",
+    number: edition.series_number?.toString() ?? "",
+    total: edition.series_total?.toString() ?? "",
+  });
+  const inSeries = isBook && series.inSeries;
 
   const save = useMutation({
     mutationFn: async () => {
-      const total = form.total ? Number(form.total) : null;
+      const total = inSeries ? 1 : form.total ? Number(form.total) : null;
       // Total menor que os volumes marcados: oferece limpar os que passaram do limite.
       if (total !== null) {
         const extras = await volumesAbove(item.id, total);
@@ -210,6 +219,7 @@ function EditionSettings({ item }: { item: CollectionItem }) {
         publisher: form.publisher.trim() || null,
         total_volumes: total,
         is_finished: form.finished,
+        ...(isBook ? seriesPatch(series) : {}),
       });
     },
     onSuccess: () => {
@@ -248,10 +258,17 @@ function EditionSettings({ item }: { item: CollectionItem }) {
           <label htmlFor="ed-pub">Editora</label>
           <input id="ed-pub" className="input" placeholder="Ex.: Panini" value={form.publisher} onChange={(e) => setForm({ ...form, publisher: e.target.value })} />
         </div>
-        <div className="field">
-          <label htmlFor="ed-total">Total de volumes</label>
-          <input id="ed-total" className="input" type="number" min={1} max={999} inputMode="numeric" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} />
-        </div>
+        {!inSeries && (
+          <div className="field">
+            <label htmlFor="ed-total">Total de volumes</label>
+            <input id="ed-total" className="input" type="number" min={1} max={999} inputMode="numeric" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} />
+          </div>
+        )}
+        {isBook && (
+          <div className="field span-2">
+            <SeriesFields idPrefix="ed" value={series} onChange={setSeries} />
+          </div>
+        )}
         <label className="field" style={{ alignContent: "end" }}>
           <span style={{ display: "flex", gap: "0.5rem", alignItems: "center", minHeight: 44 }}>
             <input type="checkbox" checked={form.finished} onChange={(e) => setForm({ ...form, finished: e.target.checked })} />

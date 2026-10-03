@@ -36,16 +36,22 @@ function seed(): Store {
       work("w1", "One Punch-Man", null, 74347, null, "#f1a150"),
       work("w2", "Berserk", 42, 30002, null, "#1a1a1a"),
       work("w3", "Naruto", 72, 30011, null, "#e48a28"),
+      { ...work("w4", "A Seleção", null, 0, null), kind: "book", anilist_id: null, authors: ["Kiera Cass"] },
+      { ...work("w5", "A Elite", null, 0, null), kind: "book", anilist_id: null, authors: ["Kiera Cass"] },
     ],
     editions: [
       { id: "e1", work_id: "w1", name: "One Punch-Man", publisher: "Panini", total_volumes: 31, is_finished: false },
       { id: "e2", work_id: "w2", name: "Berserk Edição de Luxo", publisher: "Panini", total_volumes: 42, is_finished: true },
       { id: "e3", work_id: "w3", name: "Naruto Gold", publisher: "Panini", total_volumes: 72, is_finished: true },
+      { id: "e4", work_id: "w4", name: "Edição brasileira", publisher: "Seguinte", total_volumes: 1, is_finished: true, series_name: "A Seleção", series_number: 1, series_total: 5 },
+      { id: "e5", work_id: "w5", name: "Edição brasileira", publisher: "Seguinte", total_volumes: 1, is_finished: true, series_name: "A Seleção", series_number: 2, series_total: 5 },
     ],
     collections: [
       { id: "c1", edition_id: "e1", created_at: new Date(now).toISOString(), notes: null, owned: [...range(1, 7), ...range(9, 10), ...range(12, 31)] },
       { id: "c2", edition_id: "e2", created_at: new Date(now - 1000).toISOString(), notes: null, owned: range(1, 18) },
       { id: "c3", edition_id: "e3", created_at: new Date(now - 2000).toISOString(), notes: null, owned: [...range(1, 30), ...range(41, 48)] },
+      { id: "c4", edition_id: "e4", created_at: new Date(now - 3000).toISOString(), notes: null, owned: [1] },
+      { id: "c5", edition_id: "e5", created_at: new Date(now - 4000).toISOString(), notes: null, owned: [1] },
     ],
     reading: [
       { id: "r1", work_id: null, title: "Kagurabachi", cover_url: null, status: "reading", last_chapter: 57, latest_released_chapter: null, source_url: null, notes: null, last_read_at: new Date(now - 86400000).toISOString() },

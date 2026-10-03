@@ -16,6 +16,7 @@ import { ShareControls } from "../components/ShareControls";
 import { VolumeCount } from "../components/VolumeCount";
 import { BookShelf, isStandalone } from "../components/BookShelf";
 import { normalizeTitle } from "../lib/quickAdd";
+import { groupBookSeries, isInBookSeries, type BookSeries } from "../lib/bookSeries";
 import { editionLabel } from "../lib/editionLabel";
 import "./pages.css";
 
@@ -45,7 +46,10 @@ export function CollectionPage() {
   const [search, setSearch] = useState("");
   const wanted = normalizeTitle(search);
   const matches = (i: CollectionItem) => !wanted || normalizeTitle(i.edition.work.title).includes(wanted);
-  const books = (data?.filter(isStandalone) ?? []).filter(matches);
+  const books = (data?.filter((i) => isStandalone(i) && !isInBookSeries(i)) ?? []).filter(matches);
+  const bookSeries = groupBookSeries(data ?? []).filter(
+    (g) => !wanted || normalizeTitle(g.name).includes(wanted) || g.books.some(matches),
+  );
   // +18 fica escondido até o usuário clicar no botão; a escolha é lembrada neste aparelho.
   const [showAdult, setShowAdult] = useState(() => {
     try { return localStorage.getItem("lombada-show-adult") === "1"; } catch { return false; }
@@ -56,7 +60,7 @@ export function CollectionPage() {
       return !v;
     });
   };
-  const allSeries = data?.filter((i) => !isStandalone(i)) ?? [];
+  const allSeries = data?.filter((i) => !isStandalone(i) && !isInBookSeries(i)) ?? [];
   const series = (showAdult ? allSeries : allSeries.filter((i) => !i.edition.work.is_adult)).filter(matches);
 
   return (
@@ -151,7 +155,7 @@ export function CollectionPage() {
         </div>
       )}
 
-      {data && data.length > 0 && wanted && series.length === 0 && books.length === 0 && (
+      {data && data.length > 0 && wanted && series.length === 0 && books.length === 0 && bookSeries.length === 0 && (
         <p className="muted">
           Nenhuma obra com “{search.trim()}” na coleção. <button type="button" className="btn-text" onClick={() => setSearch("")}>Limpar busca</button>
         </p>
@@ -159,9 +163,17 @@ export function CollectionPage() {
 
       {data && data.length > 0 && (
         <ul className="series-list">
-          {packShelf(series, (i) => seriesUnits(seriesTotal(i)), cols * 2).placed.map(({ item, span }) => (
-            <SeriesRow key={item.id} item={item} span={span} hue={hues.get(item.id) ?? seriesHue(item.edition.id)} />
-          ))}
+          {packShelf<ShelfEntry>(
+            [...series.map((item): ShelfEntry => ({ type: "edition", item })), ...bookSeries.map((group): ShelfEntry => ({ type: "group", group }))],
+            (e) => seriesUnits(e.type === "edition" ? seriesTotal(e.item) : e.group.total),
+            cols * 2,
+          ).placed.map(({ item: entry, span }) =>
+            entry.type === "edition" ? (
+              <SeriesRow key={entry.item.id} item={entry.item} span={span} hue={hues.get(entry.item.id) ?? seriesHue(entry.item.edition.id)} />
+            ) : (
+              <BookSeriesRow key={entry.group.key} group={entry.group} span={span} hue={seriesHue(`serie:${entry.group.key}`)} />
+            ),
+          )}
           <li className="series-add is-full">
             <Link to="/adicionar">
               <Icon name="plus" size={20} /> Adicionar série
@@ -183,6 +195,8 @@ export function CollectionPage() {
     </div>
   );
 }
+
+type ShelfEntry = { type: "edition"; item: CollectionItem } | { type: "group"; group: BookSeries };
 
 function seriesTotal(item: CollectionItem) {
   return item.edition.total_volumes ?? Math.max(0, ...item.owned);
@@ -238,6 +252,50 @@ function SeriesRow({ item, span, hue }: { item: CollectionItem; span: number; hu
       >
         <Icon name="trash" size={18} />
       </button>
+    </li>
+  );
+}
+
+/** Série de livros com títulos diferentes: uma faixa de lombadas com os livros que a pessoa tem e os vãos do resto. */
+function BookSeriesRow({ group, span, hue }: { group: BookSeries; span: number; hue: number }) {
+  const owned = new Set(group.owned);
+  const missing = Array.from({ length: group.total }, (_, i) => i + 1).filter((n) => !owned.has(n));
+  const complete = missing.length === 0 && group.owned.length > 0;
+  const first = group.books[0];
+
+  return (
+    <li className={nicheClass(group.total)} style={{ gridColumn: `span ${span}` }}>
+      <div className="series-row is-group">
+        <Cover url={first.edition.work.cover_url} title={group.name} />
+        <div className="series-body">
+          <div className="series-title">
+            <div className="series-name">
+              <h2>{group.name}</h2>
+              <span className="series-edition">Série de livros</span>
+            </div>
+            <VolumeCount owned={group.books.length} total={group.total} />
+          </div>
+          <SpineStrip total={group.total} owned={owned} hue={hue} />
+          <p className="series-status">
+            {complete ? (
+              <span className="series-missing">Série completa</span>
+            ) : (
+              <span className="series-missing">
+                {missing.length === 1 ? "Falta o livro" : "Faltam os livros"} {formatRanges(missing)}
+              </span>
+            )}
+          </p>
+          <ul className="series-books">
+            {group.books.map((b) => (
+              <li key={b.id}>
+                <Link to={`/colecao/${b.id}`}>
+                  <span className="num">{b.edition.series_number ?? "?"}</span> {b.edition.work.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </li>
   );
 }

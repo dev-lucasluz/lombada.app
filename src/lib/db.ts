@@ -31,6 +31,10 @@ export type Edition = {
   publisher: string | null;
   total_volumes: number | null;
   is_finished: boolean;
+  /** Série de livros com títulos diferentes (migração 0016): nome, nº do livro e total da série. */
+  series_name?: string | null;
+  series_number?: number | null;
+  series_total?: number | null;
 };
 
 export type CollectionItem = {

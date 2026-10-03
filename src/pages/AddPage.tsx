@@ -7,6 +7,7 @@ import { prepareCover, prepareImage, scanCoverPhoto } from "../lib/quickAdd";
 import { isDemo } from "../lib/demo";
 import { Icon } from "../components/Icon";
 import { Dialog } from "../components/Dialog";
+import { EMPTY_SERIES, SeriesFields, seriesPatch, type SeriesForm } from "../components/SeriesFields";
 import { quotaText, useScanQuota } from "../lib/useScanQuota";
 import { Cover } from "./CollectionPage";
 import "./pages.css";
@@ -333,6 +334,7 @@ function ChooseEdition({ work, result, onBack }: { work: Work; result: CatalogRe
     total: result.volumes?.toString() ?? "",
   });
   const [haveAll, setHaveAll] = useState(false);
+  const [series, setSeries] = useState<SeriesForm>(EMPTY_SERIES);
 
   const add = useMutation({
     mutationFn: async (existing?: Edition) => {
@@ -342,8 +344,9 @@ function ChooseEdition({ work, result, onBack }: { work: Work; result: CatalogRe
           work_id: work.id,
           name: form.name.trim() || work.title,
           publisher: form.publisher.trim() || null,
-          total_volumes: form.total ? Number(form.total) : null,
+          total_volumes: work.kind === "book" && series.inSeries ? 1 : form.total ? Number(form.total) : null,
           is_finished: false,
+          ...(work.kind === "book" && series.inSeries ? seriesPatch(series) : {}),
         }));
       const collectionId = await addToCollection(edition.id);
       // "Já tenho todos": marca de 1 até o total da edição (se ela informar o total).
@@ -423,11 +426,14 @@ function ChooseEdition({ work, result, onBack }: { work: Work; result: CatalogRe
             <label htmlFor="new-pub">Editora</label>
             <input id="new-pub" className="input" placeholder="Ex.: Panini, JBC, NewPOP" value={form.publisher} onChange={(e) => setForm({ ...form, publisher: e.target.value })} />
           </div>
-          <div className="field">
-            <label htmlFor="new-total">Total de volumes</label>
-            <input id="new-total" className="input" type="number" min={1} max={999} inputMode="numeric" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} />
-          </div>
+          {!(work.kind === "book" && series.inSeries) && (
+            <div className="field">
+              <label htmlFor="new-total">Total de volumes</label>
+              <input id="new-total" className="input" type="number" min={1} max={999} inputMode="numeric" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} />
+            </div>
+          )}
         </div>
+        {work.kind === "book" && <SeriesFields idPrefix="new" value={series} onChange={setSeries} />}
         <button className="btn btn-primary" type="submit" disabled={add.isPending} style={{ justifySelf: "start" }}>
           Adicionar à coleção
         </button>
