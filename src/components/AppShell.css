@@ -1,10 +1,13 @@
 /* Celular: barra fixa embaixo. Tablet/PC (≥ 900px): trilho vertical à esquerda. */
 .shell {
-  min-height: 100dvh;
+  /* svh não muda quando a barra do navegador some ao rolar (dvh muda e desloca a área de toque) */
+  min-height: 100vh;
+  min-height: 100svh;
 }
 
 .shell-nav {
   position: fixed;
+  transform: translateZ(0);
   inset: auto 0 0 0;
   z-index: 10;
   height: calc(var(--nav-h) + env(safe-area-inset-bottom));
