@@ -18,6 +18,13 @@ Para cada uma, informe:
 - title: o título da série como aparece na lombada, sem o número do volume. Se estiver em japonês, use o título em romaji ou o nome pelo qual a série é conhecida no Brasil.
 - volume: o número do volume, se aparecer; senão null
 - confidence: "alta" se leu com clareza, "media" se deduziu parte, "baixa" se está difícil de ler
+
+Atenção a estes casos, que costumam passar despercebidos:
+- Livros DEITADOS (na horizontal) em cima de uma fileira, ou empilhados: a lombada fica virada para você, com o texto correndo na horizontal. Leia cada um como uma lombada normal. Ex.: um volume "30" deitado sobre a fileira de uma série.
+- Volumes que se destacam dos vizinhos: mais altos, mais baixos ou de outra série. Confira o título de cada um, não assuma que seguem a série ao lado.
+- Lombadas parcialmente cobertas por bonecos, objetos ou outros livros: informe se der para ler o título, com confidence "media" ou "baixa".
+- Títulos em fonte decorativa ou estilizada: use o contexto (editora, cores, logotipo) para identificar a série.
+- Cada volume vale uma entrada, mesmo que o título se repita. Percorra a foto inteira, prateleira por prateleira, sem parar no meio.
 Não invente lombadas que não estão na foto. Se a foto não mostrar lombadas, retorne uma lista vazia.`;
 
 const SCHEMA = {

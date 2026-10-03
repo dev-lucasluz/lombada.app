@@ -78,7 +78,7 @@ export async function callGemini<T>(env: AiEnv, parts: GeminiPart[], responseSch
     headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
     body: JSON.stringify({
       contents: [{ parts }],
-      generationConfig: { temperature: 0, responseMimeType: "application/json", responseSchema },
+      generationConfig: { temperature: 0, responseMimeType: "application/json", responseSchema, mediaResolution: "MEDIA_RESOLUTION_HIGH" },
     }),
   });
 

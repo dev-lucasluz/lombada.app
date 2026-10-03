@@ -122,10 +122,10 @@ export async function parseVoiceText(text: string): Promise<DetectedSeries[]> {
   return series.map((s, i) => ({ key: `v${i}`, ...s }));
 }
 
-/** Reduz a foto para no máximo 1600px no maior lado e converte para JPEG (base64 sem prefixo). */
+/** Reduz a foto para no máximo 2048px no maior lado e converte para JPEG (base64 sem prefixo). */
 export async function prepareImage(file: File): Promise<string> {
   const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+  const scale = Math.min(1, 2048 / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(bitmap.width * scale);
   canvas.height = Math.round(bitmap.height * scale);
