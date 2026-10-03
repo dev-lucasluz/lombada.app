@@ -204,7 +204,9 @@ async function searchWithRetry(term: string): Promise<CatalogResult[]> {
 }
 
 /** Opções de destino: a série da coleção (se houver) e até 5 obras do catálogo. */
-export async function suggestTargets(title: string, collection: CollectionItem[]): Promise<MatchTarget[]> {
+export async function suggestTargets(rawTitle: string, collection: CollectionItem[]): Promise<MatchTarget[]> {
+  // Tira um "Vol. 12" que tenha vindo colado no título: o número do volume já é lido à parte.
+  const title = rawTitle.replace(/[\s,.\-:]*(?:\b(?:vol(?:ume)?|v)\.?|#)\s*\d+\s*$/i, "").trim() || rawTitle;
   const targets: MatchTarget[] = [];
   const own = findInCollection(title, collection);
   if (own) targets.push(collectionTarget(own));
@@ -225,10 +227,16 @@ export async function suggestTargets(title: string, collection: CollectionItem[]
       const t = normalizeTitle(r.title);
       return t === wanted ? 2 : t.includes(wanted) || wanted.includes(t) ? 1 : 0;
     };
-    const candidates = [...results.slice(0, 4), ...books.slice(0, 3)]
-      .map((r, i) => ({ r, i }))
-      .sort((a, b) => score(b.r) - score(a.r) || a.i - b.i)
-      .map((x) => x.r);
+    // O AniList (mangá) vem primeiro quando acha um título tão parecido quanto o melhor livro: "My Hero
+    // Academia" é o mangá, não um livro "My Hero Academia, Vol. 12". Livro só passa na frente quando o
+    // nome dele é mais parecido (ex.: "Harry Potter", que não existe no AniList).
+    const mangaList = results.slice(0, 4);
+    const bookList = books.slice(0, 3);
+    const best = (list: CatalogResult[]) => Math.max(0, ...list.map(score));
+    const ordered = (list: CatalogResult[]) =>
+      list.map((r, i) => ({ r, i })).sort((a, b) => score(b.r) - score(a.r) || a.i - b.i).map((x) => x.r);
+    const candidates =
+      best(mangaList) >= best(bookList) ? [...ordered(mangaList), ...ordered(bookList)] : [...ordered(bookList), ...ordered(mangaList)];
     targets.push(...candidates.map(catalogTarget));
   } catch {
     // Sem catálogo agora: fica só a opção da coleção (ou nenhuma).

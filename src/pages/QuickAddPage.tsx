@@ -53,7 +53,7 @@ export function QuickAddPage() {
 // Entrada: foto
 // ---------------------------------------------------------------------------
 function PhotoInput() {
-  const { reading, error, preview, items, startPhoto } = useQuickAddJob();
+  const { reading, error, preview, items, startPhoto, retry } = useQuickAddJob();
   const busy = reading === "foto";
   const quota = useScanQuota();
   const noQuota = quota.left === 0;
@@ -92,7 +92,12 @@ function PhotoInput() {
           Você pode sair desta tela e usar o app: avisamos quando estiver pronto.
         </p>
       )}
-      {error && <p className="error" role="alert">{error}</p>}
+      {error && (
+        <div className="quick-error">
+          <p className="error" role="alert">{error}</p>
+          {retry && <button type="button" className="btn btn-ghost" onClick={retry}>Tentar de novo</button>}
+        </div>
+      )}
     </section>
   );
 }
@@ -101,7 +106,7 @@ function PhotoInput() {
 // Entrada: voz (ou texto digitado)
 // ---------------------------------------------------------------------------
 function VoiceInput() {
-  const { reading, error, startVoice } = useQuickAddJob();
+  const { reading, error, startVoice, retry } = useQuickAddJob();
   const [text, setText] = useState("");
   const busy = reading === "voz";
   const quota = useScanQuota();
@@ -154,7 +159,12 @@ function VoiceInput() {
           Interpretando. Leva alguns segundos. Você pode sair desta tela: avisamos quando estiver pronto.
         </p>
       )}
-      {error && <p className="error" role="alert">{error}</p>}
+      {error && (
+        <div className="quick-error">
+          <p className="error" role="alert">{error}</p>
+          {retry && <button type="button" className="btn btn-ghost" onClick={retry}>Tentar de novo</button>}
+        </div>
+      )}
     </section>
   );
 }

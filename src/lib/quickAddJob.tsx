@@ -38,6 +38,8 @@ type Job = {
   preview: string | null;
   startPhoto: (file: File) => void;
   startVoice: (text: string) => void;
+  /** Repete a última leitura (a mesma foto ou fala) sem a pessoa precisar enviar de novo. */
+  retry: (() => void) | null;
   clear: () => void;
 };
 
@@ -66,6 +68,8 @@ export function QuickAddJobProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<Toast | null>(null);
   // Identifica a leitura em andamento: se a pessoa começar outra, a antiga é ignorada.
   const runId = useRef(0);
+  // A última entrada fica na memória (só até recarregar a página) para "Tentar de novo".
+  const last = useRef<{ kind: "foto"; file: File } | { kind: "voz"; text: string } | null>(null);
   const announce = useRef<number | null>(null);
 
   const collection = useQuery({ queryKey: ["collection"], queryFn: listCollection });
@@ -109,6 +113,7 @@ export function QuickAddJobProvider({ children }: { children: ReactNode }) {
   };
 
   const startPhoto = (file: File) => {
+    last.current = { kind: "foto", file };
     const id = ++runId.current;
     announce.current = null;
     setItems(null);
@@ -128,6 +133,7 @@ export function QuickAddJobProvider({ children }: { children: ReactNode }) {
   };
 
   const startVoice = (text: string) => {
+    last.current = { kind: "voz", text };
     const id = ++runId.current;
     announce.current = null;
     setItems(null);
@@ -139,6 +145,13 @@ export function QuickAddJobProvider({ children }: { children: ReactNode }) {
         finish(id, series, "Não entendemos nenhuma série com volumes. Tente algo como “tenho Naruto do 1 ao 10”."),
       )
       .catch((err) => fail(id, err, "Não foi possível interpretar."));
+  };
+
+  const retry = () => {
+    const l = last.current;
+    if (!l) return;
+    if (l.kind === "foto") startPhoto(l.file);
+    else startVoice(l.text);
   };
 
   // Sugere a série de cada item (uma busca por vez: em paralelo o AniList recusa).
@@ -179,7 +192,7 @@ export function QuickAddJobProvider({ children }: { children: ReactNode }) {
   }, [items]);
 
   return (
-    <JobContext.Provider value={{ items, setItems, reading, error, preview, startPhoto, startVoice, clear }}>
+    <JobContext.Provider value={{ items, setItems, reading, error, preview, startPhoto, startVoice, retry: error && last.current ? retry : null, clear }}>
       {children}
       {toast && (
         <div className={`job-toast is-${toast.tone}`} role="status">
