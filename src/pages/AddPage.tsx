@@ -426,6 +426,11 @@ function ChooseEdition({ work, result, onBack }: { work: Work; result: CatalogRe
             <label htmlFor="new-pub">Editora</label>
             <input id="new-pub" className="input" placeholder="Ex.: Panini, JBC, NewPOP" value={form.publisher} onChange={(e) => setForm({ ...form, publisher: e.target.value })} />
           </div>
+          {work.kind === "book" && (
+            <div className="span-2">
+              <SeriesFields idPrefix="new" value={series} onChange={setSeries} />
+            </div>
+          )}
           {!(work.kind === "book" && series.inSeries) && (
             <div className="field">
               <label htmlFor="new-total">Total de volumes</label>
@@ -433,7 +438,6 @@ function ChooseEdition({ work, result, onBack }: { work: Work; result: CatalogRe
             </div>
           )}
         </div>
-        {work.kind === "book" && <SeriesFields idPrefix="new" value={series} onChange={setSeries} />}
         <button className="btn btn-primary" type="submit" disabled={add.isPending} style={{ justifySelf: "start" }}>
           Adicionar à coleção
         </button>
