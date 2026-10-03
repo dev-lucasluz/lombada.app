@@ -170,6 +170,15 @@
   color: var(--ink-soft);
 }
 
+/* "Faltam 41–42": só uma borda em amarelo claro (o amarelo do app é o realce de "o que falta"), sem brilho */
+.series-missing.is-gap {
+  color: var(--ink);
+  font-weight: 600;
+  padding: 0.15rem 0.65rem;
+  border-radius: var(--radius-s);
+  border: 1px solid color-mix(in oklab, var(--marker) 55%, transparent);
+}
+
 .tag-complete {
   background: var(--marker);
   color: var(--marker-ink);
@@ -918,3 +927,183 @@ form.panel {
   text-decoration: none;
 }
 .series-books a:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- Estante da Coleção em colunas de largura igual ----------
+   Todos os nichos têm a mesma largura; a altura segue o conteúdo e o seguinte sobe para o fim do anterior.
+   1 coluna no celular, 2 no tablet, 3 no PC, 4 em tela larga (cada coluna tem pelo menos 20rem). */
+.series-list.is-cols {
+  display: block;
+  columns: 20rem;
+  column-gap: 8px;
+}
+
+.series-list.is-cols > li {
+  break-inside: avoid;
+  margin-bottom: 8px;
+}
+
+.series-list.is-cols > li:last-child {
+  margin-bottom: 0;
+}
+
+.series-list.is-cols > li.series-add {
+  column-span: all;
+  /* a margem de baixo do último nicho de cada coluna é cortada na quebra: sem isto a moldura de 4px dele
+     (mais as tábuas de 8px) passaria por cima do "Adicionar série" */
+  margin-top: 14px;
+}
+
+/* Capa no topo, junto do título, em todos os nichos */
+.series-list.is-cols > li:not(.is-small) .series-row {
+  align-items: flex-start;
+}
+
+/* Série curta (2 a 4 volumes): capa à esquerda, nome e contador na mesma linha da lixeira, lombadas e status embaixo */
+.series-list.is-cols > li.is-small .series-row {
+  grid-template-columns: 50px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "cover title badge"
+    "cover strip strip"
+    "cover status status";
+  gap: 0.3rem 0.7rem;
+  align-content: start;
+  align-items: start;
+}
+
+.series-list.is-cols > li.is-small .cover-s {
+  grid-area: cover;
+  grid-row: 1 / span 3;
+}
+
+.series-list.is-cols > li.is-small .volume-count {
+  grid-area: badge;
+  justify-self: end;
+  align-self: start;
+  /* deixa o canto livre para a lixeira, que fica por cima do card */
+  margin-right: 2.9rem;
+}
+
+.series-list.is-cols > li.is-small .series-name {
+  grid-area: title;
+}
+
+.series-list.is-cols > li.is-small .strip-stack {
+  grid-area: strip;
+}
+
+.series-list.is-cols > li.is-small .series-status {
+  grid-area: status;
+}
+
+.series-list.is-cols > li.is-small .strip {
+  height: 40px;
+}
+
+/* Série de livros: um link por cima do card inteiro; os atalhos dos livros e a lixeira ficam acima dele */
+.series-row.is-group { position: relative; }
+.series-row-link {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.series-row-link:hover { background: color-mix(in oklab, var(--ink) 4%, transparent); }
+.series-row.is-group .series-books a { position: relative; z-index: 1; background: var(--surface); }
+
+/* Bloco duplo: duas séries curtas (2 ou 3 volumes) dividem a largura de uma coluna */
+.series-list.is-cols > li.pair-tile {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.pair-cell {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-areas:
+    "cover title"
+    "cover badge"
+    "strip strip"
+    "status status";
+  gap: 0.3rem 0.55rem;
+  align-content: start;
+  padding: 0.65rem 0.7rem 0.6rem;
+}
+
+.pair-cell + .pair-cell {
+  border-left: 3px solid var(--case);
+}
+
+.pair-cell:hover {
+  background: color-mix(in oklab, var(--ink) 4%, transparent);
+}
+
+.pair-link {
+  position: absolute;
+  inset: 0;
+}
+
+.pair-cell .cover-s {
+  grid-area: cover;
+  width: 40px;
+  height: 60px;
+}
+
+.pair-cell h2 {
+  grid-area: title;
+  min-width: 0;
+  font-size: var(--step-0);
+  line-height: 1.25;
+  /* deixa o canto livre para a lixeira */
+  padding-right: 2.2rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pair-cell .volume-count {
+  grid-area: badge;
+  justify-self: start;
+  align-self: start;
+}
+
+.pair-cell .strip-stack {
+  grid-area: strip;
+}
+
+.pair-cell .strip {
+  height: 36px;
+}
+
+.pair-cell .series-status {
+  grid-area: status;
+}
+
+.pair-cell .series-remove {
+  top: 0.55rem;
+  right: 0.45rem;
+  width: 30px;
+  height: 30px;
+  z-index: 1;
+}
+
+/* ---------- Alturas padronizadas por número de prateleiras ----------
+   Todo nicho com a mesma quantidade de prateleiras tem a mesma altura, qualquer que seja o número de volumes
+   (e o bloco duplo tem a altura de um nicho de 1 prateleira). Cada prateleira a mais soma 44px. */
+.series-list.is-cols {
+  --shelf-h1: 9.6rem;
+  --shelf-step: 44px;
+}
+
+.series-list.is-cols > li:not(.series-add) {
+  min-height: var(--shelf-h1);
+}
+
+.series-list.is-cols > li:has(.strip-stack > .strip:nth-child(2)) { min-height: calc(var(--shelf-h1) + var(--shelf-step) * 1); }
+.series-list.is-cols > li:has(.strip-stack > .strip:nth-child(3)) { min-height: calc(var(--shelf-h1) + var(--shelf-step) * 2); }
+.series-list.is-cols > li:has(.strip-stack > .strip:nth-child(4)) { min-height: calc(var(--shelf-h1) + var(--shelf-step) * 3); }
+.series-list.is-cols > li:has(.strip-stack > .strip:nth-child(5)) { min-height: calc(var(--shelf-h1) + var(--shelf-step) * 4); }
+.series-list.is-cols > li:has(.strip-stack > .strip:nth-child(6)) { min-height: calc(var(--shelf-h1) + var(--shelf-step) * 5); }
+.series-list.is-cols > li:has(.strip-stack > .strip:nth-child(7)) { min-height: calc(var(--shelf-h1) + var(--shelf-step) * 6); }
+.series-list.is-cols > li:has(.strip-stack > .strip:nth-child(8)) { min-height: calc(var(--shelf-h1) + var(--shelf-step) * 7); }

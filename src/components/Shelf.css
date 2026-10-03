@@ -49,6 +49,25 @@
   background: var(--line);
 }
 
+/* Vão com o número do volume que falta (só onde a lombada é larga o bastante) */
+.strip-spine.is-gap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--accent);
+  font-family: "Poppins", var(--font-body);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.strip-spine.is-gap[data-digits="3"] {
+  font-size: 8px;
+}
+
 /* Variação de altura como numa estante de verdade */
 .strip-spine.is-owned:nth-child(3n) { height: 92%; }
 .strip-spine.is-owned:nth-child(7n + 2) { height: 96%; }

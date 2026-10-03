@@ -12,7 +12,9 @@ import {
 } from "../lib/db";
 import { formatRanges, missingVolumes, parseRanges } from "../lib/ranges";
 import { seriesHue, seriesHues } from "../lib/spineColor";
-import { VolumeGrid } from "../components/Shelf";
+import { SpineStrip, VolumeGrid } from "../components/Shelf";
+import { groupBookSeries } from "../lib/bookSeries";
+import { normalizeTitle } from "../lib/quickAdd";
 import { Icon } from "../components/Icon";
 import { Cover } from "./CollectionPage";
 import { editionLabel } from "../lib/editionLabel";
@@ -70,6 +72,15 @@ export function EditionPage() {
   const total = edition.total_volumes ?? Math.max(item.owned.length ? Math.max(...item.owned) : 0, 10);
   const missing = missingVolumes(item.owned, edition.total_volumes);
 
+  // Livro de uma série (títulos diferentes): a página mostra a série inteira, não só este livro.
+  const inBookSeries = edition.work.kind === "book" && !!edition.series_name?.trim();
+  const group = inBookSeries
+    ? groupBookSeries(collection.data ?? []).find((g) => g.key === normalizeTitle(edition.series_name ?? ""))
+    : undefined;
+  const seriesMissing = group
+    ? Array.from({ length: group.total }, (_, n) => n + 1).filter((n) => !group.owned.includes(n))
+    : [];
+
   return (
     <div className="page">
       <Link to="/colecao" className="back-link"><Icon name="back" size={18} /> Coleção</Link>
@@ -83,6 +94,51 @@ export function EditionPage() {
         </div>
       </header>
 
+      {inBookSeries ? (
+        !group ? (
+          <Skeleton rows={1} />
+        ) : (
+          <>
+            <dl className="summary">
+              <dt>Tenho</dt>
+              <dd>
+                <span className="num">{group.books.length}</span> de {group.total} livros da série
+                {group.owned.length > 0 && `: ${formatRanges(group.owned)}`}
+              </dd>
+              <dt>Falta</dt>
+              <dd>
+                {seriesMissing.length === 0 ? (
+                  <mark>Nada, série completa</mark>
+                ) : (
+                  <mark>{seriesMissing.length === 1 ? "Livro" : "Livros"} {formatRanges(seriesMissing)}</mark>
+                )}
+              </dd>
+            </dl>
+
+            <section className="panel">
+              <h2>{group.name}</h2>
+              <p className="hint">
+                Cada livro da série tem a própria página. Para adicionar outro, use Adicionar série e marque que ele faz
+                parte desta série, com o mesmo nome.
+              </p>
+              <SpineStrip total={group.total} owned={new Set(group.owned)} hue={seriesHue(`serie:${group.key}`)} numberGaps />
+              <ul className="series-books">
+                {group.books.map((b) => (
+                  <li key={b.id}>
+                    <Link to={`/colecao/${b.id}`} aria-current={b.id === item.id ? "page" : undefined}>
+                      <span className="num">{b.edition.series_number ?? "?"}</span> {b.edition.work.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <div className="head-actions">
+                <Link to="/adicionar" className="btn btn-ghost"><Icon name="plus" size={18} /> Adicionar outro livro da série</Link>
+              </div>
+            </section>
+          </>
+        )
+      ) : (
+        <>
       <dl className="summary">
         <dt>Tenho</dt>
         <dd>
@@ -131,6 +187,9 @@ export function EditionPage() {
         <BulkMark onApply={(volumes, isOwned) => toggle.mutate({ volumes, owned: isOwned })} />
         {toggle.isError && <p className="error" role="alert">Não foi possível salvar. Verifique a conexão e tente de novo.</p>}
       </section>
+
+        </>
+      )}
 
       <EditionSettings item={item} />
 

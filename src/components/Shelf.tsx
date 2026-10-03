@@ -34,6 +34,9 @@ export function nicheClass(total: number) {
 
 /** Largura mínima de cada lombada na faixa (px, já contando o espaço entre elas). */
 const MIN_SPINE = 13;
+/** Largura mínima por lombada quando há vãos numerados (px, com o espaço entre elas) e menor largura que ainda mostra o número. */
+const MIN_SPINE_NUMBERED = 22;
+const MIN_NUMBERED_SLOT = 20;
 
 /**
  * Versão compacta da prateleira, para listas. Mede a própria largura e escolhe
@@ -41,7 +44,7 @@ const MIN_SPINE = 13;
  * finas demais: 110 volumes num bloco estreito viram 3 prateleiras; num bloco
  * largo, 1 ou 2.
  */
-export function SpineStrip({ total, owned, hue }: ShelfProps) {
+export function SpineStrip({ total, owned, hue, numberGaps = false }: ShelfProps & { numberGaps?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
 
@@ -56,9 +59,13 @@ export function SpineStrip({ total, owned, hue }: ShelfProps) {
   }, []);
 
   const count = Math.max(total, 1);
-  const perShelf = width > 0 ? Math.max(8, Math.floor(width / MIN_SPINE)) : count;
+  // Com os vãos numerados, cada lombada precisa de mais espaço para o número caber dentro do vão.
+  const minSpine = numberGaps && owned.size < total ? MIN_SPINE_NUMBERED : MIN_SPINE;
+  const perShelf = width > 0 ? Math.max(8, Math.floor(width / minSpine)) : count;
   const shelves = Math.ceil(count / perShelf);
   const cols = Math.ceil(count / shelves);
+  // Só numera o vão se a lombada tem largura para o número (senão os dígitos quebram).
+  const showNumbers = numberGaps && width > 0 && width / cols >= MIN_NUMBERED_SLOT;
 
   return (
     <div
@@ -74,7 +81,9 @@ export function SpineStrip({ total, owned, hue }: ShelfProps) {
             return owned.has(n) ? (
               <span key={n} className="strip-spine is-owned" style={{ "--spine": volumeColor(hue, n) } as CSSProperties} />
             ) : (
-              <span key={n} className="strip-spine" />
+              <span key={n} className={showNumbers ? "strip-spine is-gap" : "strip-spine"} data-digits={String(n).length}>
+                {showNumbers ? n : null}
+              </span>
             );
           })}
         </div>

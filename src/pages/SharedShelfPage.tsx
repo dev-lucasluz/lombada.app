@@ -141,7 +141,7 @@ function SharedSeries({ item, span, hue }: { item: SharedItem; span: number; hue
             {complete ? (
               <span className="series-missing">Coleção completa</span>
             ) : missing.length > 0 ? (
-              <span className="series-missing">Faltam {formatRanges(missing)}</span>
+              <span className="series-missing is-gap">Faltam {formatRanges(missing)}</span>
             ) : (
               <span className="muted">Total de volumes não informado</span>
             )}

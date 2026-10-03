@@ -5,3 +5,6 @@ dist
 .env.local
 .dev.vars
 *.log
+
+# Projetos de vídeo (HyperFrames): ficam fora do repositório do app
+videos/

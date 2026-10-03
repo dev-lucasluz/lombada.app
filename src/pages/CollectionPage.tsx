@@ -6,9 +6,7 @@ import { fetchAdultAnilistIds } from "../lib/catalog";
 import { formatRanges, missingVolumes } from "../lib/ranges";
 import { seriesHue, seriesHues } from "../lib/spineColor";
 import { PageCorner } from "../components/PageCorner";
-import { nicheClass, seriesUnits, SpineStrip } from "../components/Shelf";
-import { packShelf } from "../lib/packShelf";
-import { useColumns } from "../lib/useColumns";
+import { nicheClass, SpineStrip } from "../components/Shelf";
 import { Icon } from "../components/Icon";
 import { Dialog } from "../components/Dialog";
 import { Skeleton } from "../components/Skeleton";
@@ -41,7 +39,6 @@ export function CollectionPage() {
   }, [data, qc]);
 
   const totalOwned = data?.reduce((sum, c) => sum + c.owned.length, 0) ?? 0;
-  const cols = useColumns([[1400, 3], [900, 2]]);
   const hues = seriesHues(data ?? []);
   const [search, setSearch] = useState("");
   const wanted = normalizeTitle(search);
@@ -51,6 +48,17 @@ export function CollectionPage() {
     (g) => !wanted || normalizeTitle(g.name).includes(wanted) || g.books.some(matches),
   );
   // +18 fica escondido até o usuário clicar no botão; a escolha é lembrada neste aparelho.
+  // Ordem da estante: mais recentes primeiro (como sempre), A–Z ou as incompletas primeiro; lembrada neste aparelho.
+  const [order, setOrder] = useState<ShelfOrder>(() => {
+    try {
+      const saved = localStorage.getItem("lombada-shelf-order");
+      return saved === "az" || saved === "incomplete" ? saved : "recent";
+    } catch { return "recent"; }
+  });
+  const changeOrder = (next: ShelfOrder) => {
+    setOrder(next);
+    try { localStorage.setItem("lombada-shelf-order", next); } catch { /* sem armazenamento */ }
+  };
   const [showAdult, setShowAdult] = useState(() => {
     try { return localStorage.getItem("lombada-show-adult") === "1"; } catch { return false; }
   });
@@ -62,6 +70,36 @@ export function CollectionPage() {
   };
   const allSeries = data?.filter((i) => !isStandalone(i) && !isInBookSeries(i)) ?? [];
   const series = (showAdult ? allSeries : allSeries.filter((i) => !i.edition.work.is_adult)).filter(matches);
+
+  const entries: ShelfEntry[] = [
+    ...series.map((item): ShelfEntry => ({ type: "edition", item })),
+    ...bookSeries.map((group): ShelfEntry => ({ type: "group", group })),
+  ];
+  // A ordenação é estável: entre iguais, vale a ordem de atividade.
+  const ordered =
+    order === "az"
+      ? [...entries].sort((x, y) => entryTitle(x).localeCompare(entryTitle(y), "pt"))
+      : order === "incomplete"
+        ? [...entries].sort((x, y) => Number(isIncomplete(y)) - Number(isIncomplete(x)))
+        : entries;
+
+  // Séries bem curtas (2 ou 3 volumes) dividem um bloco: cada uma pega a próxima curta da lista e as duas
+  // ficam no lugar da primeira. O resto segue a ordem escolhida.
+  const tiles: Tile[] = [];
+  const paired = new Set<ShelfEntry>();
+  ordered.forEach((entry, i) => {
+    if (paired.has(entry)) return;
+    if (isShortEntry(entry)) {
+      const mate = ordered.slice(i + 1).find((e) => isShortEntry(e) && !paired.has(e));
+      if (mate && entry.type === "edition" && mate.type === "edition") {
+        paired.add(mate);
+        tiles.push({ type: "pair", a: entry.item, b: mate.item });
+        return;
+      }
+    }
+    tiles.push(entry);
+  });
+  const hueOf = (item: CollectionItem) => hues.get(item.id) ?? seriesHue(item.edition.id);
 
   return (
     <div className="page">
@@ -145,6 +183,11 @@ export function CollectionPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          <div className="segmented" role="group" aria-label="Ordem da estante">
+            <button aria-pressed={order === "recent"} onClick={() => changeOrder("recent")}>Recentes</button>
+            <button aria-pressed={order === "az"} onClick={() => changeOrder("az")}>A–Z</button>
+            <button aria-pressed={order === "incomplete"} onClick={() => changeOrder("incomplete")}>Incompletas</button>
+          </div>
           {allSeries.length > 0 && (
             <div className="segmented" role="group" aria-label="Conteúdo +18">
               <button aria-pressed={showAdult} onClick={toggleAdult}>
@@ -162,16 +205,17 @@ export function CollectionPage() {
       )}
 
       {data && data.length > 0 && (
-        <ul className="series-list">
-          {packShelf<ShelfEntry>(
-            [...series.map((item): ShelfEntry => ({ type: "edition", item })), ...bookSeries.map((group): ShelfEntry => ({ type: "group", group }))],
-            (e) => seriesUnits(e.type === "edition" ? seriesTotal(e.item) : e.group.total),
-            cols * 2,
-          ).placed.map(({ item: entry, span }) =>
-            entry.type === "edition" ? (
-              <SeriesRow key={entry.item.id} item={entry.item} span={span} hue={hues.get(entry.item.id) ?? seriesHue(entry.item.edition.id)} />
+        <ul className="series-list is-cols">
+          {tiles.map((tile) =>
+            tile.type === "pair" ? (
+              <li key={`${tile.a.id}+${tile.b.id}`} className="pair-tile">
+                <ShortSeriesCell item={tile.a} hue={hueOf(tile.a)} />
+                <ShortSeriesCell item={tile.b} hue={hueOf(tile.b)} />
+              </li>
+            ) : tile.type === "edition" ? (
+              <SeriesRow key={tile.item.id} item={tile.item} hue={hueOf(tile.item)} />
             ) : (
-              <BookSeriesRow key={entry.group.key} group={entry.group} span={span} hue={seriesHue(`serie:${entry.group.key}`)} />
+              <BookSeriesRow key={tile.group.key} group={tile.group} hue={seriesHue(`serie:${tile.group.key}`)} />
             ),
           )}
           <li className="series-add is-full">
@@ -197,12 +241,30 @@ export function CollectionPage() {
 }
 
 type ShelfEntry = { type: "edition"; item: CollectionItem } | { type: "group"; group: BookSeries };
+type ShelfOrder = "recent" | "az" | "incomplete";
+type Tile = ShelfEntry | { type: "pair"; a: CollectionItem; b: CollectionItem };
+
+/** Série de 2 ou 3 volumes: cabe em meia largura. */
+function isShortEntry(e: ShelfEntry) {
+  if (e.type !== "edition") return false;
+  const total = seriesTotal(e.item);
+  return total >= 2 && total <= 3;
+}
+
+const entryTitle = (e: ShelfEntry) => (e.type === "edition" ? e.item.edition.work.title : e.group.name);
+
+/** Falta algum volume: total conhecido e ainda não completo. */
+function isIncomplete(e: ShelfEntry) {
+  if (e.type === "group") return e.group.owned.filter((n) => n <= e.group.total).length < e.group.total;
+  return missingVolumes(e.item.owned, e.item.edition.total_volumes).length > 0;
+}
 
 function seriesTotal(item: CollectionItem) {
   return item.edition.total_volumes ?? Math.max(0, ...item.owned);
 }
 
-function SeriesRow({ item, span, hue }: { item: CollectionItem; span: number; hue: number }) {
+/** Metade de um bloco duplo: série de 2 ou 3 volumes, com capa pequena, nome, contador, lombadas e status. */
+function ShortSeriesCell({ item, hue }: { item: CollectionItem; hue: number }) {
   const { edition } = item;
   const total = seriesTotal(item);
   const missing = missingVolumes(item.owned, edition.total_volumes);
@@ -215,7 +277,51 @@ function SeriesRow({ item, span, hue }: { item: CollectionItem; span: number; hu
   const label = editionLabel(edition, edition.work.title);
 
   return (
-    <li className={`${nicheClass(total)} has-remove`} style={{ gridColumn: `span ${span}` }}>
+    <div className="pair-cell">
+      <Link to={`/colecao/${item.id}`} className="pair-link" aria-label={`Abrir ${edition.work.title}`} />
+      <Cover url={edition.work.cover_url} title={edition.work.title} />
+      <h2>{edition.work.title}{edition.work.is_adult && <span className="badge-adult">+18</span>}</h2>
+      <VolumeCount owned={item.owned.length} total={edition.total_volumes} />
+      <SpineStrip total={total} owned={new Set(item.owned)} hue={hue} numberGaps />
+      <p className="series-status">
+        {complete ? (
+          <span className="series-missing">Coleção completa</span>
+        ) : missing.length > 0 ? (
+          <span className="series-missing is-gap">Faltam {formatRanges(missing)}</span>
+        ) : (
+          <span className="muted">Total não informado</span>
+        )}
+      </p>
+      <button
+        type="button"
+        className="series-remove"
+        aria-label={`Remover ${edition.work.title} da coleção`}
+        title="Remover da coleção"
+        disabled={remove.isPending}
+        onClick={() => {
+          if (confirm(`Remover ${edition.work.title}${label ? ` (${label})` : ""} da sua coleção? Os volumes marcados serão apagados.`)) remove.mutate();
+        }}
+      >
+        <Icon name="trash" size={18} />
+      </button>
+    </div>
+  );
+}
+
+function SeriesRow({ item, hue }: { item: CollectionItem; hue: number }) {
+  const { edition } = item;
+  const total = seriesTotal(item);
+  const missing = missingVolumes(item.owned, edition.total_volumes);
+  const complete = edition.total_volumes !== null && missing.length === 0;
+  const qc = useQueryClient();
+  const remove = useMutation({
+    mutationFn: () => removeFromCollection(item.id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["collection"] }),
+  });
+  const label = editionLabel(edition, edition.work.title);
+
+  return (
+    <li className={`${nicheClass(total)} has-remove`}>
       <Link to={`/colecao/${item.id}`} className="series-row">
         <Cover url={edition.work.cover_url} title={edition.work.title} />
         <div className="series-body">
@@ -228,12 +334,12 @@ function SeriesRow({ item, span, hue }: { item: CollectionItem; span: number; hu
             </div>
             <VolumeCount owned={item.owned.length} total={edition.total_volumes} />
           </div>
-          <SpineStrip total={total} owned={new Set(item.owned)} hue={hue} />
+          <SpineStrip total={total} owned={new Set(item.owned)} hue={hue} numberGaps />
           <p className="series-status">
             {complete ? (
               <span className="series-missing">Coleção completa</span>
             ) : missing.length > 0 ? (
-              <span className="series-missing">Faltam {formatRanges(missing)}</span>
+              <span className="series-missing is-gap">Faltam {formatRanges(missing)}</span>
             ) : (
               <span className="muted">Total de volumes não informado</span>
             )}
@@ -257,15 +363,22 @@ function SeriesRow({ item, span, hue }: { item: CollectionItem; span: number; hu
 }
 
 /** Série de livros com títulos diferentes: uma faixa de lombadas com os livros que a pessoa tem e os vãos do resto. */
-function BookSeriesRow({ group, span, hue }: { group: BookSeries; span: number; hue: number }) {
+function BookSeriesRow({ group, hue }: { group: BookSeries; hue: number }) {
   const owned = new Set(group.owned);
   const missing = Array.from({ length: group.total }, (_, i) => i + 1).filter((n) => !owned.has(n));
   const complete = missing.length === 0 && group.owned.length > 0;
   const first = group.books[0];
+  const qc = useQueryClient();
+  const remove = useMutation({
+    mutationFn: () => Promise.all(group.books.map((b) => removeFromCollection(b.id))),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["collection"] }),
+  });
 
   return (
-    <li className={nicheClass(group.total)} style={{ gridColumn: `span ${span}` }}>
+    <li className={`${nicheClass(group.total)} has-remove`}>
       <div className="series-row is-group">
+        {/* O card inteiro abre a série (a página do primeiro livro mostra todos); cada livro tem o seu atalho por cima */}
+        <Link to={`/colecao/${first.id}`} className="series-row-link" aria-label={`Abrir a série ${group.name}`} />
         <Cover url={first.edition.work.cover_url} title={group.name} />
         <div className="series-body">
           <div className="series-title">
@@ -275,12 +388,12 @@ function BookSeriesRow({ group, span, hue }: { group: BookSeries; span: number; 
             </div>
             <VolumeCount owned={group.books.length} total={group.total} />
           </div>
-          <SpineStrip total={group.total} owned={owned} hue={hue} />
+          <SpineStrip total={group.total} owned={owned} hue={hue} numberGaps />
           <p className="series-status">
             {complete ? (
               <span className="series-missing">Série completa</span>
             ) : (
-              <span className="series-missing">
+              <span className="series-missing is-gap">
                 {missing.length === 1 ? "Falta o livro" : "Faltam os livros"} {formatRanges(missing)}
               </span>
             )}
@@ -296,6 +409,19 @@ function BookSeriesRow({ group, span, hue }: { group: BookSeries; span: number; 
           </ul>
         </div>
       </div>
+      <button
+        type="button"
+        className="series-remove"
+        aria-label={`Remover a série ${group.name} da coleção`}
+        title="Remover a série da coleção"
+        disabled={remove.isPending}
+        onClick={() => {
+          const n = group.books.length;
+          if (confirm(`Remover a série ${group.name} e ${n === 1 ? "o livro" : `os ${n} livros`} da sua coleção?`)) remove.mutate();
+        }}
+      >
+        <Icon name="trash" size={18} />
+      </button>
     </li>
   );
 }
