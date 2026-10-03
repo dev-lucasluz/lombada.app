@@ -2,7 +2,7 @@
  * POST /api/scan-shelf  { image: base64, mimeType }
  * Lê as lombadas de uma foto de estante. A foto não é guardada em lugar nenhum.
  */
-import { authorizeAndConsume, callGemini, HttpError, json, toResponse, type AiEnv } from "../../server/ai";
+import { authorize, callGemini, consumeQuota, HttpError, json, toResponse, type AiEnv } from "../../server/ai";
 
 export type DetectedSpine = {
   title: string;
@@ -56,13 +56,14 @@ export async function handleScanShelf(request: Request, env: AiEnv): Promise<Res
       throw new HttpError(413, "A foto é grande demais. Tente uma com menos de 4 MB.");
     }
 
-    await authorizeAndConsume(request, env);
+    const quota = await authorize(request, env);
 
     const spines = await callGemini<DetectedSpine[]>(
       env,
       [{ inline_data: { mime_type: body.mimeType, data: body.image } }, { text: PROMPT }],
       SCHEMA,
     );
+    await consumeQuota(quota);
     return json({ spines });
   } catch (err) {
     return toResponse(err);

@@ -3,7 +3,7 @@
  * Lê a capa de um livro ou mangá e devolve título e autor para a busca.
  * A foto não é guardada em lugar nenhum.
  */
-import { authorizeAndConsume, callGemini, HttpError, json, toResponse, type AiEnv } from "../../server/ai";
+import { authorize, callGemini, consumeQuota, HttpError, json, toResponse, type AiEnv } from "../../server/ai";
 
 type Cover = { title: string; author: string | null; kind: "manga" | "book"; found: boolean };
 
@@ -43,13 +43,14 @@ export async function handleScanCover(request: Request, env: AiEnv): Promise<Res
       throw new HttpError(413, "A foto é grande demais. Tente uma com menos de 4 MB.");
     }
 
-    await authorizeAndConsume(request, env);
+    const quota = await authorize(request, env);
 
     const raw = await callGemini<Cover>(
       env,
       [{ inline_data: { mime_type: body.mimeType, data: body.image } }, { text: PROMPT }],
       SCHEMA,
     );
+    await consumeQuota(quota);
     const title = String(raw.title ?? "").trim().slice(0, 200);
     const author = raw.author ? String(raw.author).trim().slice(0, 120) : null;
     return json({

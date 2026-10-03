@@ -1,6 +1,6 @@
 /**
  * Base comum das Pages Functions que usam o Gemini (foto da estante e voz):
- * confere o login no Supabase, consome a cota diária do usuário e chama a API.
+ * confere o login no Supabase e a cota diária do usuário, chama a API e só então desconta a leitura.
  */
 
 export interface AiEnv {
@@ -37,8 +37,13 @@ function assertConfigured(env: AiEnv) {
   }
 }
 
-/** Confere a sessão e consome 1 uso da cota diária. Devolve o header Authorization. */
-export async function authorizeAndConsume(request: Request, env: AiEnv): Promise<string> {
+export type QuotaContext = { auth: string; env: AiEnv; limit: number };
+
+/**
+ * Confere a sessão e se ainda há cota hoje, mas NÃO consome nada: a leitura só é descontada depois
+ * que o Gemini responde (`consumeQuota`). Se ele falhar (503, 429, resposta ilegível), a pessoa não perde a leitura.
+ */
+export async function authorize(request: Request, env: AiEnv): Promise<QuotaContext> {
   assertConfigured(env);
 
   const auth = request.headers.get("Authorization");
@@ -50,22 +55,36 @@ export async function authorizeAndConsume(request: Request, env: AiEnv): Promise
   if (!userRes.ok) throw new HttpError(401, "Sua sessão expirou. Entre de novo.");
 
   const limit = Number(env.SCAN_DAILY_LIMIT ?? 30);
-  const quotaRes = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/consume_scan_quota`, {
+  const usedRes = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/scan_usage_today`, {
     method: "POST",
     headers: { Authorization: auth, apikey: env.SUPABASE_PUBLISHABLE_KEY, "Content-Type": "application/json" },
-    body: JSON.stringify({ daily_limit: limit }),
+    body: "{}",
   });
-  if (!quotaRes.ok) {
-    console.error("consume_scan_quota", quotaRes.status, await quotaRes.text());
+  if (!usedRes.ok) {
+    console.error("scan_usage_today", usedRes.status, await usedRes.text());
     throw new HttpError(
       502,
-      `Não foi possível verificar sua cota (o banco respondeu ${quotaRes.status}). Se persistir, confira se os SQLs do Supabase foram executados.`,
+      `Não foi possível verificar sua cota (o banco respondeu ${usedRes.status}). Se persistir, confira se os SQLs do Supabase foram executados.`,
     );
   }
-  if (!(await quotaRes.json())) {
+  if (Number(await usedRes.json()) >= limit) {
     throw new HttpError(429, `Você já usou as ${limit} leituras por IA de hoje. Amanhã a cota renova.`);
   }
-  return auth;
+  return { auth, env, limit };
+}
+
+/** Desconta 1 leitura da cota. Chamada só depois de uma resposta boa do Gemini; falha aqui não derruba a resposta. */
+export async function consumeQuota({ auth, env, limit }: QuotaContext): Promise<void> {
+  try {
+    const res = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/consume_scan_quota`, {
+      method: "POST",
+      headers: { Authorization: auth, apikey: env.SUPABASE_PUBLISHABLE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ daily_limit: limit }),
+    });
+    if (!res.ok) console.error("consume_scan_quota", res.status, await res.text());
+  } catch (err) {
+    console.error("consume_scan_quota", err);
+  }
 }
 
 type GeminiPart = { text: string } | { inline_data: { mime_type: string; data: string } };
@@ -73,14 +92,21 @@ type GeminiPart = { text: string } | { inline_data: { mime_type: string; data: s
 /** Chama o Gemini pedindo JSON no formato do schema e devolve o objeto já lido. */
 export async function callGemini<T>(env: AiEnv, parts: GeminiPart[], responseSchema: unknown): Promise<T> {
   const model = env.GEMINI_MODEL || "gemini-flash-lite-latest";
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-    body: JSON.stringify({
-      contents: [{ parts }],
-      generationConfig: { temperature: 0, responseMimeType: "application/json", responseSchema, mediaResolution: "MEDIA_RESOLUTION_HIGH" },
-    }),
-  });
+  const call = () =>
+    fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: { temperature: 0, responseMimeType: "application/json", responseSchema, mediaResolution: "MEDIA_RESOLUTION_HIGH" },
+      }),
+    });
+  let res = await call();
+  // "Sobrecarregado" (503) costuma passar em segundos: uma segunda tentativa antes de mostrar o erro.
+  if (res.status === 503) {
+    await new Promise((r) => setTimeout(r, 1500));
+    res = await call();
+  }
 
   if (res.status === 429) {
     throw new HttpError(429, "A leitura por IA atingiu o limite do dia para todos os usuários. Tente amanhã.");

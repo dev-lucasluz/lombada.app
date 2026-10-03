@@ -3,7 +3,7 @@
  * Transforma uma frase falada ("tenho Naruto do 1 ao 10, falta o 11...")
  * em séries com os volumes que a pessoa tem e os que faltam.
  */
-import { authorizeAndConsume, callGemini, HttpError, json, toResponse, type AiEnv } from "../../server/ai";
+import { authorize, callGemini, consumeQuota, HttpError, json, toResponse, type AiEnv } from "../../server/ai";
 
 export type ParsedSeries = { title: string; owned: number[]; missing: number[] };
 
@@ -53,12 +53,13 @@ export async function handleParseVoice(request: Request, env: AiEnv): Promise<Re
     if (text.length < 3) throw new HttpError(400, "Fale ou digite quais volumes você tem.");
     if (text.length > MAX_TEXT) throw new HttpError(413, "Texto longo demais. Divida em partes menores.");
 
-    await authorizeAndConsume(request, env);
+    const quota = await authorize(request, env);
 
     const raw = await callGemini<ParsedSeries[]>(env, [{ text: PROMPT + text }], SCHEMA);
     const series = raw
       .map((s) => ({ title: String(s.title ?? "").trim(), owned: clean(s.owned), missing: clean(s.missing) }))
       .filter((s) => s.title && (s.owned.length > 0 || s.missing.length > 0));
+    await consumeQuota(quota);
     return json({ series });
   } catch (err) {
     return toResponse(err);
