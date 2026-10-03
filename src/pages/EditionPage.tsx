@@ -201,7 +201,7 @@ export function EditionPage() {
           }
         }}
       >
-        Remover da coleção
+        {inBookSeries ? "Remover este livro da coleção" : "Remover da coleção"}
       </button>
     </div>
   );
@@ -305,8 +305,10 @@ function EditionSettings({ item }: { item: CollectionItem }) {
     >
       <h2>Dados da edição</h2>
       <p className="hint">
-        Essas informações são compartilhadas com todos que colecionam esta edição.
-        {edition.work.original_volumes ? ` A edição original tem ${edition.work.original_volumes} volumes.` : ""}
+        Estes dados ficam só na sua conta.
+        {edition.work.original_volumes
+          ? ` A edição original tem ${edition.work.original_volumes} ${edition.work.original_volumes === 1 ? "volume" : "volumes"}.`
+          : ""}
       </p>
       <div className="form-grid">
         <div className="field">

@@ -5,10 +5,14 @@ compatibility_date = "2026-09-30"
 
 [assets]
 directory = "./dist"
+# O Worker lê os arquivos do site por este nome (usado para servir o vídeo com suporte a Range)
+binding = "ASSETS"
 # Rotas desconhecidas devolvem o index.html (o app é uma SPA)
 not_found_handling = "single-page-application"
 # Só /api/* roda o Worker; o resto é servido direto, de graça e sem limite
-run_worker_first = ["/api/*"]
+# Além de /api/*, o vídeo da tela de login passa pelo Worker: a entrega de arquivos estáticos da Cloudflare não
+# responde a pedidos parciais (Range), e o Safari/iPhone só toca vídeo de servidor que responde 206.
+run_worker_first = ["/api/*", "/media/login-intro-1.mp4"]
 
 # Variáveis públicas das rotas /api. Ficam aqui (e não só no painel) porque cada
 # `wrangler deploy` apaga variáveis comuns que existam apenas no painel.

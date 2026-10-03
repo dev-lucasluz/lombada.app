@@ -2,7 +2,7 @@
  * POST /api/scan-shelf  { image: base64, mimeType }
  * Lê as lombadas de uma foto de estante. A foto não é guardada em lugar nenhum.
  */
-import { authorize, callGemini, consumeQuota, HttpError, json, toResponse, type AiEnv } from "../../server/ai";
+import { authorize, callGemini, precheckRequest, readJsonBody, HttpError, json, toResponse, type AiEnv } from "../../server/ai";
 
 export type DetectedSpine = {
   title: string;
@@ -11,6 +11,8 @@ export type DetectedSpine = {
 };
 
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+/** A foto vai em base64 dentro do JSON: um pouco mais que 4/3 do tamanho. */
+const MAX_BODY_BYTES = Math.ceil(MAX_IMAGE_BYTES * 1.4);
 
 const PROMPT = `Você está olhando uma foto de uma estante com mangás e/ou livros físicos.
 Liste cada lombada visível, da esquerda para a direita e de cima para baixo.
@@ -43,12 +45,8 @@ const SCHEMA = {
 
 export async function handleScanShelf(request: Request, env: AiEnv): Promise<Response> {
   try {
-    let body: { image?: string; mimeType?: string };
-    try {
-      body = await request.json();
-    } catch {
-      throw new HttpError(400, "Envio inválido.");
-    }
+    precheckRequest(request, MAX_BODY_BYTES);
+    const body = await readJsonBody<{ image?: string; mimeType?: string }>(request, MAX_BODY_BYTES);
     if (!body.image || !body.mimeType || !/^image\/(jpeg|png|webp)$/.test(body.mimeType)) {
       throw new HttpError(400, "Envie uma foto em JPG, PNG ou WebP.");
     }
@@ -62,8 +60,8 @@ export async function handleScanShelf(request: Request, env: AiEnv): Promise<Res
       env,
       [{ inline_data: { mime_type: body.mimeType, data: body.image } }, { text: PROMPT }],
       SCHEMA,
+      quota,
     );
-    await consumeQuota(quota);
     return json({ spines });
   } catch (err) {
     return toResponse(err);

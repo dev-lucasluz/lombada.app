@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "pages:dev": "npm run build && wrangler dev --port 8788",
-    "pages:deploy": "npm run build && wrangler deploy"
+    "pages:deploy": "npm run build && wrangler deploy",
+    "test:logic": "node tests/server-ai.test.mjs && node tests/lib-logic.test.mjs",
+    "test:rls": "node supabase/tests/rls-test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

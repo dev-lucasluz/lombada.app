@@ -1,6 +1,6 @@
 /**
  * Base comum das Pages Functions que usam o Gemini (foto da estante e voz):
- * confere o login no Supabase e a cota diária do usuário, chama a API e só então desconta a leitura.
+ * confere o login no Supabase, consome a cota diária do usuário (devolvida se o Gemini falhar) e chama a API.
  */
 
 export interface AiEnv {
@@ -40,8 +40,54 @@ function assertConfigured(env: AiEnv) {
 export type QuotaContext = { auth: string; env: AiEnv; limit: number };
 
 /**
- * Confere a sessão e se ainda há cota hoje, mas NÃO consome nada: a leitura só é descontada depois
- * que o Gemini responde (`consumeQuota`). Se ele falhar (503, 429, resposta ilegível), a pessoa não perde a leitura.
+ * Antes de ler o corpo: exige login (o cabeçalho, sem consultar nada) e recusa de cara um corpo que já
+ * declara tamanho acima do limite. Assim, quem não está logado ou manda um corpo gigante é recusado sem custo.
+ */
+export function precheckRequest(request: Request, maxBytes: number) {
+  const auth = request.headers.get("Authorization");
+  if (!auth?.startsWith("Bearer ")) throw new HttpError(401, "Faça login para continuar.");
+  const declared = Number(request.headers.get("Content-Length"));
+  if (Number.isFinite(declared) && declared > maxBytes) throw new HttpError(413, TOO_BIG);
+}
+
+const TOO_BIG = "O envio é grande demais. Tente uma foto menor ou um texto mais curto.";
+
+/** Lê o JSON do corpo com teto de tamanho, valendo também para corpo em pedaços (sem Content-Length). */
+export async function readJsonBody<T>(request: Request, maxBytes: number): Promise<T> {
+  const reader = request.body?.getReader();
+  if (!reader) throw new HttpError(400, "Envio inválido.");
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new HttpError(413, TOO_BIG);
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    throw new HttpError(400, "Envio inválido.");
+  }
+  // O corpo tem de ser um objeto JSON ({...}); null, lista ou texto solto não servem.
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) throw new HttpError(400, "Envio inválido.");
+  return parsed as T;
+}
+
+/**
+ * Confere a sessão e consome 1 leitura da cota diária, de forma atômica (várias requisições ao mesmo tempo
+ * não passam do limite). Se o Gemini falhar depois, `callGemini` devolve a leitura (`refundQuota`).
  */
 export async function authorize(request: Request, env: AiEnv): Promise<QuotaContext> {
   assertConfigured(env);
@@ -55,42 +101,55 @@ export async function authorize(request: Request, env: AiEnv): Promise<QuotaCont
   if (!userRes.ok) throw new HttpError(401, "Sua sessão expirou. Entre de novo.");
 
   const limit = Number(env.SCAN_DAILY_LIMIT ?? 30);
-  const usedRes = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/scan_usage_today`, {
+  const quotaRes = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/consume_scan_quota`, {
     method: "POST",
     headers: { Authorization: auth, apikey: env.SUPABASE_PUBLISHABLE_KEY, "Content-Type": "application/json" },
-    body: "{}",
+    body: JSON.stringify({ daily_limit: limit }),
   });
-  if (!usedRes.ok) {
-    console.error("scan_usage_today", usedRes.status, await usedRes.text());
+  if (!quotaRes.ok) {
+    console.error("consume_scan_quota", quotaRes.status, await quotaRes.text());
     throw new HttpError(
       502,
-      `Não foi possível verificar sua cota (o banco respondeu ${usedRes.status}). Se persistir, confira se os SQLs do Supabase foram executados.`,
+      `Não foi possível verificar sua cota (o banco respondeu ${quotaRes.status}). Se persistir, confira se os SQLs do Supabase foram executados.`,
     );
   }
-  if (Number(await usedRes.json()) >= limit) {
+  if (!(await quotaRes.json())) {
     throw new HttpError(429, `Você já usou as ${limit} leituras por IA de hoje. Amanhã a cota renova.`);
   }
   return { auth, env, limit };
 }
 
-/** Desconta 1 leitura da cota. Chamada só depois de uma resposta boa do Gemini; falha aqui não derruba a resposta. */
-export async function consumeQuota({ auth, env, limit }: QuotaContext): Promise<void> {
+/**
+ * Devolve a leitura quando o Gemini falhou (503, limite do Google, resposta ilegível). O banco limita as
+ * devoluções (migração 0017: até 5 por dia por pessoa), então isto não abre brecha para leituras sem limite.
+ * Se a migração ainda não rodou, a chamada falha em silêncio e a leitura fica descontada, como antes.
+ */
+export async function refundQuota({ auth, env }: QuotaContext): Promise<void> {
   try {
-    const res = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/consume_scan_quota`, {
+    const res = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/refund_scan_quota`, {
       method: "POST",
       headers: { Authorization: auth, apikey: env.SUPABASE_PUBLISHABLE_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ daily_limit: limit }),
+      body: "{}",
     });
-    if (!res.ok) console.error("consume_scan_quota", res.status, await res.text());
+    if (!res.ok) console.error("refund_scan_quota", res.status);
   } catch (err) {
-    console.error("consume_scan_quota", err);
+    console.error("refund_scan_quota", err);
   }
 }
 
 type GeminiPart = { text: string } | { inline_data: { mime_type: string; data: string } };
 
 /** Chama o Gemini pedindo JSON no formato do schema e devolve o objeto já lido. */
-export async function callGemini<T>(env: AiEnv, parts: GeminiPart[], responseSchema: unknown): Promise<T> {
+export async function callGemini<T>(env: AiEnv, parts: GeminiPart[], responseSchema: unknown, quota?: QuotaContext): Promise<T> {
+  try {
+    return await callGeminiOnce<T>(env, parts, responseSchema);
+  } catch (err) {
+    if (quota) await refundQuota(quota);
+    throw err;
+  }
+}
+
+async function callGeminiOnce<T>(env: AiEnv, parts: GeminiPart[], responseSchema: unknown): Promise<T> {
   const model = env.GEMINI_MODEL || "gemini-flash-lite-latest";
   const call = () =>
     fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {

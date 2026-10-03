@@ -41,7 +41,8 @@
   font-size: clamp(2.4rem, 8vw, 4.2rem);
   font-stretch: 70%;
   font-weight: 900;
-  max-width: 12ch;
+  max-width: 18ch;
+  text-wrap: balance;
 }
 
 .login-copy > p {
@@ -354,8 +355,14 @@
 @media (min-width: 900px) {
   .login {
     grid-template-columns: 1fr 1.1fr;
-    align-items: center;
+    /* o formulário começa no alto: com a coluna do vídeo mais comprida, centralizar empurrava o "Entrar" para baixo da dobra */
+    align-items: start;
     padding-inline: 48px;
+  }
+
+  /* o título cabe em duas linhas na coluna do formulário ("Sua estante, / volume por volume.") */
+  .login-copy h1 {
+    font-size: clamp(2.4rem, 3.5vw, 3.25rem);
   }
 
   .case-row {
@@ -493,7 +500,9 @@
   }
 
   .login-copy > p:not(.login-legal) {
-    display: none;
+    font-size: var(--step--1);
+    line-height: 1.4;
+    max-width: none;
   }
 
   .login-side {
@@ -563,4 +572,23 @@
 .login-art-mini.login-video {
   max-width: none;
   margin-left: 0;
+}
+
+/* Telas baixas (notebooks): menos respiro para o botão Entrar aparecer sem rolar */
+@media (min-width: 900px) and (max-height: 860px) {
+  .login {
+    padding-block: 1.25rem;
+  }
+
+  .login-copy {
+    gap: 0.9rem;
+  }
+
+}
+
+/* Tablet: o painel de login não precisa esticar na largura toda */
+@media (min-width: 600px) and (max-width: 899px) {
+  .auth {
+    max-width: 460px;
+  }
 }

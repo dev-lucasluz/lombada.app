@@ -3,11 +3,13 @@
  * Lê a capa de um livro ou mangá e devolve título e autor para a busca.
  * A foto não é guardada em lugar nenhum.
  */
-import { authorize, callGemini, consumeQuota, HttpError, json, toResponse, type AiEnv } from "../../server/ai";
+import { authorize, callGemini, precheckRequest, readJsonBody, HttpError, json, toResponse, type AiEnv } from "../../server/ai";
 
 type Cover = { title: string; author: string | null; kind: "manga" | "book"; found: boolean };
 
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+/** A foto vai em base64 dentro do JSON: um pouco mais que 4/3 do tamanho. */
+const MAX_BODY_BYTES = Math.ceil(MAX_IMAGE_BYTES * 1.4);
 
 const PROMPT = `Você está olhando a foto da capa de um livro ou mangá físico.
 Informe:
@@ -30,12 +32,8 @@ const SCHEMA = {
 
 export async function handleScanCover(request: Request, env: AiEnv): Promise<Response> {
   try {
-    let body: { image?: string; mimeType?: string };
-    try {
-      body = await request.json();
-    } catch {
-      throw new HttpError(400, "Envio inválido.");
-    }
+    precheckRequest(request, MAX_BODY_BYTES);
+    const body = await readJsonBody<{ image?: string; mimeType?: string }>(request, MAX_BODY_BYTES);
     if (!body.image || !body.mimeType || !/^image\/(jpeg|png|webp)$/.test(body.mimeType)) {
       throw new HttpError(400, "Envie uma foto em JPG, PNG ou WebP.");
     }
@@ -49,8 +47,8 @@ export async function handleScanCover(request: Request, env: AiEnv): Promise<Res
       env,
       [{ inline_data: { mime_type: body.mimeType, data: body.image } }, { text: PROMPT }],
       SCHEMA,
+      quota,
     );
-    await consumeQuota(quota);
     const title = String(raw.title ?? "").trim().slice(0, 200);
     const author = raw.author ? String(raw.author).trim().slice(0, 120) : null;
     return json({

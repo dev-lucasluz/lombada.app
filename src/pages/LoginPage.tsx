@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { authErrorMessage, useAuth } from "../lib/auth";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { PasswordInput } from "../components/PasswordInput";
@@ -29,8 +29,10 @@ const FEATURES: { icon: IconName; title: string; text: string; soon?: boolean }[
   { icon: "list", title: "Lista de compras", text: "Tudo o que falta, série por série, para levar à loja." },
   { icon: "book", title: "Onde parei", text: "Anote o capítulo em que parou nos mangás que lê em outros sites." },
   { icon: "bell", title: "Lembretes", text: "Marque um dia, como a volta de um hiato, e ele aparece no seu Início." },
-  { icon: "camera", title: "Foto da estante", text: "Fotografe a prateleira e o app lê as lombadas para você revisar." },
+  { icon: "camera", title: "Foto da estante", text: "Fotografe a prateleira ou as capas e o app lê tudo para você revisar." },
   { icon: "mic", title: "Cadastro por voz", text: "Diga “tenho Naruto do 1 ao 10” e revise antes de salvar." },
+  { icon: "book", title: "Séries de livros", text: "Livros com títulos diferentes, como Harry Potter, ficam juntos na estante." },
+  { icon: "share", title: "Estante compartilhada", text: "Mande um link para os amigos verem a sua coleção, sem precisar de conta." },
   { icon: "user", title: "Perfil e backup", text: "Veja o resumo da coleção e baixe tudo em uma planilha." },
 ];
 
@@ -90,32 +92,54 @@ function useMediaQuery(query: string) {
     const media = window.matchMedia(query);
     const onChange = () => setMatches(media.matches);
     media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
+    // Reforço: alguns navegadores só avisam a mudança na hora de desenhar; o resize cobre o intervalo.
+    window.addEventListener("resize", onChange);
+    onChange();
+    return () => {
+      media.removeEventListener("change", onChange);
+      window.removeEventListener("resize", onChange);
+    };
   }, [query]);
   return matches;
 }
 
+/** O aparelho pediu para economizar dados (modo "economia de dados" do navegador). */
+function wantsLessData() {
+  const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+  return Boolean(connection?.saveData);
+}
+
+/** Quantas vezes o vídeo toca antes de parar no último quadro (poupa bateria e processador). */
+const INTRO_PLAYS = 3;
+
 /**
- * Vídeo de apresentação do app (15 s). Toca sozinho, sem som e em laço. Sem o vídeo (erro de rede) ou com
- * preferência por menos movimento, volta a estante animada.
+ * Vídeo de apresentação do app (15 s). Toca sozinho e sem som, 3 vezes, e fica parado no último quadro (o logo).
+ * Sem o vídeo (erro de rede), com preferência por menos movimento ou com economia de dados, usa a estante animada.
  */
 function IntroVideo({ className, mini = false }: { className: string; mini?: boolean }) {
   const [failed, setFailed] = useState(false);
+  const plays = useRef(0);
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
 
-  if (failed || reduced) return <Bookcase className={className} mini={mini} />;
+  if (failed || reduced || wantsLessData()) return <Bookcase className={className} mini={mini} />;
 
   return (
     <div className={`${className} login-video`}>
       <video
-        src="/lombada-login.mp4"
-        poster="/lombada-login-poster.jpg"
+        src="/media/login-intro-1.mp4"
+        poster="/media/login-intro-1.webp"
         autoPlay
-        loop
         muted
         playsInline
         preload="metadata"
         aria-hidden="true"
+        onEnded={(event) => {
+          plays.current += 1;
+          if (plays.current < INTRO_PLAYS) {
+            event.currentTarget.currentTime = 0;
+            void event.currentTarget.play().catch(() => {});
+          }
+        }}
         onError={() => setFailed(true)}
       />
     </div>

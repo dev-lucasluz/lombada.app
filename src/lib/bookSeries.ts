@@ -42,6 +42,10 @@ export function groupBookSeries(items: CollectionItem[]): BookSeries[] {
     const totals = books.map((b) => b.edition.series_total).filter((n): n is number => typeof n === "number");
     const declaredTotal = totals.length ? Math.max(...totals) : null;
     const total = Math.max(declaredTotal ?? 0, ...owned, books.length);
-    return { key, name: seriesName(books[0])!, books, owned, total, declaredTotal };
+    // Nome: a grafia mais usada entre os livros (empate: a do livro de menor número).
+    const spellings = new Map<string, number>();
+    for (const b of books) spellings.set(seriesName(b)!, (spellings.get(seriesName(b)!) ?? 0) + 1);
+    const name = [...spellings.entries()].sort((x, y) => y[1] - x[1])[0][0];
+    return { key, name, books, owned, total, declaredTotal };
   });
 }

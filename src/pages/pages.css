@@ -1107,3 +1107,10 @@ form.panel {
 .series-list.is-cols > li:has(.strip-stack > .strip:nth-child(6)) { min-height: calc(var(--shelf-h1) + var(--shelf-step) * 5); }
 .series-list.is-cols > li:has(.strip-stack > .strip:nth-child(7)) { min-height: calc(var(--shelf-h1) + var(--shelf-step) * 6); }
 .series-list.is-cols > li:has(.strip-stack > .strip:nth-child(8)) { min-height: calc(var(--shelf-h1) + var(--shelf-step) * 7); }
+
+/* Série de livros: o livro que você está vendo fica marcado no painel da série */
+.series-books a[aria-current="page"] {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}

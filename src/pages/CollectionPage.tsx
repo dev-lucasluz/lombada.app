@@ -71,10 +71,15 @@ export function CollectionPage() {
   const allSeries = data?.filter((i) => !isStandalone(i) && !isInBookSeries(i)) ?? [];
   const series = (showAdult ? allSeries : allSeries.filter((i) => !i.edition.work.is_adult)).filter(matches);
 
+  // Séries de mangá e séries de livros na mesma fila, pela atividade mais recente (a lista já vem nessa ordem;
+  // a série de livros fica no lugar do livro dela que mudou por último).
+  const activity = new Map((data ?? []).map((item, index) => [item.id, index]));
+  const rankOf = (e: ShelfEntry) =>
+    e.type === "edition" ? (activity.get(e.item.id) ?? 0) : Math.min(...e.group.books.map((b) => activity.get(b.id) ?? 0));
   const entries: ShelfEntry[] = [
     ...series.map((item): ShelfEntry => ({ type: "edition", item })),
     ...bookSeries.map((group): ShelfEntry => ({ type: "group", group })),
-  ];
+  ].sort((x, y) => rankOf(x) - rankOf(y));
   // A ordenação é estável: entre iguais, vale a ordem de atividade.
   const ordered =
     order === "az"
@@ -84,13 +89,14 @@ export function CollectionPage() {
         : entries;
 
   // Séries bem curtas (2 ou 3 volumes) dividem um bloco: cada uma pega a próxima curta da lista e as duas
-  // ficam no lugar da primeira. O resto segue a ordem escolhida.
+  // ficam no lugar da primeira. Em A–Z só se juntam as que já são vizinhas (senão uma série sairia do lugar
+  // alfabético). O resto segue a ordem escolhida.
   const tiles: Tile[] = [];
   const paired = new Set<ShelfEntry>();
   ordered.forEach((entry, i) => {
     if (paired.has(entry)) return;
     if (isShortEntry(entry)) {
-      const mate = ordered.slice(i + 1).find((e) => isShortEntry(e) && !paired.has(e));
+      const mate = (order === "az" ? ordered.slice(i + 1, i + 2) : ordered.slice(i + 1)).find((e) => isShortEntry(e) && !paired.has(e));
       if (mate && entry.type === "edition" && mate.type === "edition") {
         paired.add(mate);
         tiles.push({ type: "pair", a: entry.item, b: mate.item });
