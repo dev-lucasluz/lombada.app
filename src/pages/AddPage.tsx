@@ -1,5 +1,5 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { searchBooks, searchManga, type CatalogResult } from "../lib/catalog";
 import { addToCollection, createEdition, createManualWork, ensureWork, listEditions, setVolumesOwned, type Edition, type Work } from "../lib/db";
@@ -152,7 +152,7 @@ export function AddPage() {
           <>
             <label className={coverState === "reading" ? "btn btn-ghost is-busy" : "btn btn-ghost"}>
               <Icon name="camera" size={18} />
-              {coverState === "reading" ? "Lendo a capa…" : "Fotografar a capa"}
+              {coverState === "reading" ? "Lendo a capa…" : "Fotografar a capa de um livro"}
               <input type="file" accept="image/*" capture="environment" onChange={onCover} disabled={coverState === "reading" || quota.left === 0} className="visually-hidden" />
             </label>
             {coverState !== "reading" && (
@@ -163,6 +163,11 @@ export function AddPage() {
               </label>
             )}
           </>
+        )}
+        {!isDemo && (
+          <Link to="/foto-e-voz" className="btn btn-ghost">
+            <Icon name="camera" size={18} /> Fotografar a estante (várias lombadas)
+          </Link>
         )}
         <button type="button" className="btn btn-ghost" onClick={() => setManualOpen(true)}>
           <Icon name="plus" size={18} /> Adicionar manualmente
