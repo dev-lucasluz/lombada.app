@@ -20,7 +20,7 @@ Para cada uma, informe:
 - confidence: "alta" se leu com clareza, "media" se deduziu parte, "baixa" se está difícil de ler
 
 Atenção a estes casos, que costumam passar despercebidos:
-- Foto da CAPA de um único livro ou mangá (de frente, não a lombada): devolva uma só entrada, com o título principal da capa, e o volume se o número aparecer na capa (ex.: "Vol. 3"); senão null.
+- Capas à mostra (livros de frente, não só lombadas), seja um livro ou vários espalhados numa cama, mesa ou pilha: devolva UMA entrada para cada livro, com o título principal da capa, e o volume se o número aparecer na capa (ex.: "Vol. 3"); senão null. Não pare no primeiro livro.
 - Livros DEITADOS (na horizontal) em cima de uma fileira, ou empilhados: a lombada fica virada para você, com o texto correndo na horizontal. Leia cada um como uma lombada normal. Ex.: um volume "30" deitado sobre a fileira de uma série.
 - Volumes que se destacam dos vizinhos: mais altos, mais baixos ou de outra série. Confira o título de cada um, não assuma que seguem a série ao lado.
 - Lombadas parcialmente cobertas por bonecos, objetos ou outros livros: informe se der para ler o título, com confidence "media" ou "baixa".
