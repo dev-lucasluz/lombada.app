@@ -71,9 +71,16 @@ function PhotoInput() {
       <div className="quick-photo">
         <label className={busy ? "btn btn-primary is-busy" : "btn btn-primary"}>
           <Icon name="camera" size={20} />
-          {busy ? "Lendo as lombadas…" : "Tirar ou escolher foto"}
-          <input type="file" accept="image/*" onChange={onFile} disabled={busy || noQuota} className="visually-hidden" />
+          {busy ? "Lendo as lombadas…" : "Tirar foto"}
+          <input type="file" accept="image/*" capture="environment" onChange={onFile} disabled={busy || noQuota} className="visually-hidden" />
         </label>
+        {!busy && (
+          <label className={noQuota ? "btn btn-ghost is-disabled" : "btn btn-ghost"}>
+            <Icon name="image" size={20} />
+            Escolher da galeria
+            <input type="file" accept="image/*" onChange={onFile} disabled={noQuota} className="visually-hidden" />
+          </label>
+        )}
         {preview && <img src={preview} alt="Foto enviada da estante" className="quick-preview" />}
       </div>
       {quotaText(quota.left, quota.limit) && <p className="hint">{quotaText(quota.left, quota.limit)}</p>}
