@@ -1,9 +1,10 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { searchBooks, searchManga, type CatalogResult } from "../lib/catalog";
 import { addToCollection, createEdition, createManualWork, ensureWork, listEditions, setVolumesOwned, type Edition, type Work } from "../lib/db";
-import { prepareCover, prepareImage, scanCoverPhoto } from "../lib/quickAdd";
+import { prepareCover } from "../lib/quickAdd";
+import { useQuickAddJob } from "../lib/quickAddJob";
 import { isDemo } from "../lib/demo";
 import { Icon } from "../components/Icon";
 import { Dialog } from "../components/Dialog";
@@ -30,7 +31,7 @@ export function AddPage() {
   };
   const [work, setWork] = useState<{ work: Work; result: CatalogResult } | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
-  const qc = useQueryClient();
+  const navigate = useNavigate();
   const quota = useScanQuota();
 
   // Busca enquanto digita: espera uma pausa de 400 ms para não consultar a cada letra.
@@ -54,32 +55,15 @@ export function AddPage() {
     onSuccess: setWork,
   });
 
-  // Foto da capa: a IA lê título e autor e a busca abaixo é preenchida sozinha.
-  const [coverState, setCoverState] = useState<"idle" | "reading">("idle");
-  const [coverError, setCoverError] = useState<string | null>(null);
-  const onCover = async (e: ChangeEvent<HTMLInputElement>) => {
+  // Foto da capa ou da estante: a mesma leitura da tela Foto e voz. A revisão abre lá e a pessoa
+  // pode sair da tela enquanto a IA lê (o aviso chega quando termina).
+  const job = useQuickAddJob();
+  const onPhoto = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    setCoverError(null);
-    setCoverState("reading");
-    try {
-      const read = await scanCoverPhoto(await prepareImage(file));
-      if (!read.found) {
-        setCoverError("Não conseguimos ler o título nessa capa. Tente de frente, com boa luz e a capa inteira na foto.");
-      } else {
-        setKind(read.kind);
-        // Para livros, o autor ajuda a achar a edição certa; no AniList só o título funciona bem.
-        const next = read.kind === "book" && read.author ? `${read.title} ${read.author}` : read.title;
-        setTerm(next);
-        setSubmitted(next.trim());
-      }
-    } catch (err) {
-      setCoverError(err instanceof Error ? err.message : "A leitura da capa falhou.");
-    } finally {
-      setCoverState("idle");
-      qc.invalidateQueries({ queryKey: ["scan-quota"] });
-    }
+    job.startPhoto(file);
+    navigate("/foto-e-voz");
   };
 
   const onSearch = (e: FormEvent) => {
@@ -150,32 +134,23 @@ export function AddPage() {
       <div className="cover-scan">
         {!isDemo && (
           <>
-            <label className={coverState === "reading" ? "btn btn-ghost is-busy" : "btn btn-ghost"}>
+            <label className="btn btn-ghost">
               <Icon name="camera" size={18} />
-              {coverState === "reading" ? "Lendo a capa…" : "Fotografar a capa de um livro"}
-              <input type="file" accept="image/*" capture="environment" onChange={onCover} disabled={coverState === "reading" || quota.left === 0} className="visually-hidden" />
+              Fotografar capa ou estante
+              <input type="file" accept="image/*" capture="environment" onChange={onPhoto} disabled={quota.left === 0 || job.reading !== null} className="visually-hidden" />
             </label>
-            {coverState !== "reading" && (
-              <label className="btn btn-ghost">
-                <Icon name="image" size={18} />
-                Capa da galeria
-                <input type="file" accept="image/*" onChange={onCover} disabled={quota.left === 0} className="visually-hidden" />
-              </label>
-            )}
+            <label className="btn btn-ghost">
+              <Icon name="image" size={18} />
+              Foto da galeria
+              <input type="file" accept="image/*" onChange={onPhoto} disabled={quota.left === 0 || job.reading !== null} className="visually-hidden" />
+            </label>
           </>
-        )}
-        {!isDemo && (
-          <Link to="/foto-e-voz" className="btn btn-ghost">
-            <Icon name="camera" size={18} /> Fotografar a estante (várias lombadas)
-          </Link>
         )}
         <button type="button" className="btn btn-ghost" onClick={() => setManualOpen(true)}>
           <Icon name="plus" size={18} /> Adicionar manualmente
         </button>
-        {coverState === "reading" && <span className="hint" role="status">Leva alguns segundos.</span>}
       </div>
       {!isDemo && quotaText(quota.left, quota.limit) && <p className="hint">{quotaText(quota.left, quota.limit)}</p>}
-      {coverError && <p className="error" role="alert">{coverError}</p>}
 
       {search.isFetching && !search.data && <p className="muted">Buscando…</p>}
       {search.error && <p className="error" role="alert">{(search.error as Error).message}</p>}

@@ -122,7 +122,7 @@ export function QuickAddJobProvider({ children }: { children: ReactNode }) {
     prepareImage(file)
       .then(scanShelfPhoto)
       .then((series) =>
-        finish(id, series, "Não encontramos lombadas nessa foto. Tente de frente, mais perto e com boa luz."),
+        finish(id, series, "Não encontramos lombadas nem capa nessa foto. Tente de frente, mais perto e com boa luz."),
       )
       .catch((err) => fail(id, err, "A leitura da foto falhou."));
   };
