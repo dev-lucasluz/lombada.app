@@ -65,6 +65,7 @@
 
 .home-series > li {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   background: var(--surface);
   box-shadow: inset 0 8px 10px -10px rgb(0 0 0 / 0.55);
 }
@@ -86,6 +87,7 @@
   flex: 1;
   min-width: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.3rem;
   align-content: start;
 }
