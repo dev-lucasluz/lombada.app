@@ -15,7 +15,7 @@ export function seriesPatch(form: SeriesForm) {
   };
 }
 
-/** "Esse livro faz parte de uma série?" — para livros com títulos diferentes (A Seleção, A Elite…). */
+/** "Esse livro faz parte de uma série?" — para livros com títulos diferentes (Harry Potter…). */
 export function SeriesFields({ value, onChange, idPrefix }: { value: SeriesForm; onChange: (v: SeriesForm) => void; idPrefix: string }) {
   const collection = useQuery({ queryKey: ["collection"], queryFn: listCollection });
   const names = [...new Set((collection.data ?? []).map((c) => c.edition.series_name?.trim()).filter((n): n is string => !!n))];
@@ -27,7 +27,7 @@ export function SeriesFields({ value, onChange, idPrefix }: { value: SeriesForm;
         <input type="checkbox" checked={value.inSeries} onChange={(e) => set({ inSeries: e.target.checked })} />
         <span>
           Esse livro faz parte de uma série
-          <small className="hint"> Para livros com títulos diferentes, como A Seleção, A Elite e A Escolhida: eles ficam juntos na estante.</small>
+          <small className="hint"> Para livros com títulos diferentes, como Harry Potter: A Pedra Filosofal, A Câmara Secreta e O Prisioneiro de Azkaban. Eles ficam juntos na estante.</small>
         </span>
       </label>
       {value.inSeries && (
@@ -40,7 +40,7 @@ export function SeriesFields({ value, onChange, idPrefix }: { value: SeriesForm;
               list={`${idPrefix}-snames`}
               maxLength={120}
               required
-              placeholder="Ex.: A Seleção"
+              placeholder="Ex.: Harry Potter"
               value={value.name}
               onChange={(e) => set({ name: e.target.value })}
             />
@@ -54,7 +54,7 @@ export function SeriesFields({ value, onChange, idPrefix }: { value: SeriesForm;
           </div>
           <div className="field">
             <label htmlFor={`${idPrefix}-stotal`}>Livros na série (opcional)</label>
-            <input id={`${idPrefix}-stotal`} className="input" type="number" min={1} max={999} inputMode="numeric" placeholder="Ex.: 5" value={value.total} onChange={(e) => set({ total: e.target.value })} />
+            <input id={`${idPrefix}-stotal`} className="input" type="number" min={1} max={999} inputMode="numeric" placeholder="Ex.: 7" value={value.total} onChange={(e) => set({ total: e.target.value })} />
           </div>
         </div>
       )}
