@@ -14,8 +14,15 @@ export interface AiEnv {
 export function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json" },
+    // Respostas da API são pessoais (cota, leitura da foto): nada de cache e nada de adivinhar o tipo.
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" },
   });
+}
+
+/** Leituras por IA por dia. Valor ausente, não numérico ou ≤ 0 volta ao padrão (30): nunca desliga o limite. */
+export function dailyLimit(env: Pick<AiEnv, "SCAN_DAILY_LIMIT">) {
+  const value = Math.floor(Number(env.SCAN_DAILY_LIMIT));
+  return Number.isFinite(value) && value > 0 ? value : 30;
 }
 
 /** Erro que já sabe virar resposta HTTP com mensagem para o usuário. */
@@ -100,7 +107,7 @@ export async function authorize(request: Request, env: AiEnv): Promise<QuotaCont
   });
   if (!userRes.ok) throw new HttpError(401, "Sua sessão expirou. Entre de novo.");
 
-  const limit = Number(env.SCAN_DAILY_LIMIT ?? 30);
+  const limit = dailyLimit(env);
   const quotaRes = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/consume_scan_quota`, {
     method: "POST",
     headers: { Authorization: auth, apikey: env.SUPABASE_PUBLISHABLE_KEY, "Content-Type": "application/json" },
@@ -171,11 +178,14 @@ async function callGeminiOnce<T>(env: AiEnv, parts: GeminiPart[], responseSchema
     throw new HttpError(429, "A leitura por IA atingiu o limite do dia para todos os usuários. Tente amanhã.");
   }
   if (!res.ok) {
-    console.error("Gemini", res.status, await res.text());
+    const detail = await res.text();
+    console.error("Gemini", res.status, detail);
     // Diz o que o Gemini respondeu, para o problema ser achado rápido (sem expor chaves)
-    const hint =
-      res.status === 400 || res.status === 403
-        ? "A chave GEMINI_API_KEY foi recusada: confira se é a chave do Google AI Studio e se está sem espaços."
+    const badKey = res.status === 403 || (res.status === 400 && /api[ _]key/i.test(detail));
+    const hint = badKey
+      ? "A chave GEMINI_API_KEY foi recusada: confira se é a chave do Google AI Studio e se está sem espaços."
+      : res.status === 400
+        ? "O Gemini não aceitou esta foto ou pedido. Tente outra foto, menor ou mais nítida."
         : res.status === 404
           ? "O modelo não existe: confira GEMINI_MODEL."
           : res.status === 503

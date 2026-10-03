@@ -8,3 +8,11 @@ dist
 
 # Projetos de vídeo (HyperFrames): ficam fora do repositório do app
 videos/
+
+# Ferramentas locais (agentes, vídeo, design): não fazem parte do app
+.claude/
+.hyperframes/
+.impeccable/
+.thumbnails/
+.waveform-cache/
+renders/

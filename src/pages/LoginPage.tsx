@@ -110,29 +110,53 @@ function wantsLessData() {
 }
 
 /** Quantas vezes o vídeo toca antes de parar no último quadro (poupa bateria e processador). */
-const INTRO_PLAYS = 3;
+const INTRO_PLAYS = 1;
 
 /**
- * Vídeo de apresentação do app (15 s). Toca sozinho e sem som, 3 vezes, e fica parado no último quadro (o logo).
- * Sem o vídeo (erro de rede), com preferência por menos movimento ou com economia de dados, usa a estante animada.
+ * Vídeo de apresentação do app (15 s). Toca sozinho e sem som, uma vez, e fica parado no último quadro (o logo); o botão reproduz de novo.
+ * Tem botão de pausa (quem se incomoda com movimento precisa poder parar). Sem o vídeo (erro de rede), com
+ * preferência por menos movimento ou com economia de dados, usa a estante animada.
  */
 function IntroVideo({ className, mini = false }: { className: string; mini?: boolean }) {
   const [failed, setFailed] = useState(false);
+  const [playing, setPlaying] = useState(false); // vira true no evento "play", então o botão não mente se o autoplay for bloqueado
   const plays = useRef(0);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
 
   if (failed || reduced || wantsLessData()) return <Bookcase className={className} mini={mini} />;
 
+  const toggle = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (!video.paused) {
+      video.pause();
+      return;
+    }
+    if (video.ended) {
+      plays.current = INTRO_PLAYS - 1; // quem pediu para rever assiste mais uma vez e para de novo no logo
+      video.currentTime = 0;
+    }
+    void video.play().catch(() => {});
+  };
+
   return (
     <div className={`${className} login-video`}>
       <video
-        src="/media/login-intro-1.mp4"
-        poster="/media/login-intro-1.webp"
+        ref={(el) => {
+          videoRef.current = el;
+          // O React não escreve o atributo "muted"; o Safari/iPhone só libera o autoplay com ele no HTML.
+          if (el) el.defaultMuted = true;
+        }}
+        src="/media/login-intro-2.mp4"
+        poster="/media/login-intro-2.webp"
         autoPlay
         muted
         playsInline
         preload="metadata"
         aria-hidden="true"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
         onEnded={(event) => {
           plays.current += 1;
           if (plays.current < INTRO_PLAYS) {
@@ -142,6 +166,14 @@ function IntroVideo({ className, mini = false }: { className: string; mini?: boo
         }}
         onError={() => setFailed(true)}
       />
+      <button
+        type="button"
+        className="login-video-toggle"
+        aria-label={playing ? "Pausar a animação" : "Reproduzir a animação"}
+        onClick={toggle}
+      >
+        <Icon name={playing ? "pause" : "play"} size={20} />
+      </button>
     </div>
   );
 }

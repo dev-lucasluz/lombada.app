@@ -191,26 +191,6 @@ async function searchGoogleBooks(term: string): Promise<CatalogResult[]> {
   }));
 }
 
-/** Cores de capa de várias obras do AniList de uma vez (para obras antigas sem cor salva). */
-export async function fetchAniListColors(ids: number[]): Promise<Map<number, string>> {
-  const colors = new Map<number, string>();
-  if (ids.length === 0) return colors;
-  const res = await fetch("https://graphql.anilist.co", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
-      query: "query ($ids: [Int]) { Page(perPage: 50) { media(id_in: $ids, type: MANGA) { id coverImage { color } } } }",
-      variables: { ids: ids.slice(0, 50) },
-    }),
-  });
-  if (!res.ok) return colors;
-  const json = (await res.json()) as { data?: { Page: { media: { id: number; coverImage: { color: string | null } | null }[] } } };
-  for (const m of json.data?.Page.media ?? []) {
-    if (m.coverImage?.color) colors.set(m.id, m.coverImage.color);
-  }
-  return colors;
-}
-
 /** Dos ids do AniList informados, devolve os que são conteúdo +18. */
 export async function fetchAdultAnilistIds(ids: number[]): Promise<number[]> {
   if (ids.length === 0) return [];

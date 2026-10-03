@@ -20,6 +20,8 @@ const PATHS = {
   trash: "M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13",
   share: "M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4",
   out: "M14 4h5v16h-5M10 8l-4 4 4 4M6 12h9",
+  play: "M8 5l11 7-11 7z",
+  pause: "M8 5v14M16 5v14",
 } as const;
 
 export type IconName = keyof typeof PATHS;

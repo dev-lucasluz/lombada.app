@@ -78,7 +78,7 @@
   --radius-m: 8px;
   --radius-l: 14px;
 
-  --nav-h: 64px;
+  --nav-h: max(64px, 4rem); /* cresce com o tamanho de texto do navegador */
   --rail-w: 88px;
   /* Telas largas: ~80% da largura (≈10% de margem de cada lado); menores: quase tudo */
   --content-max: clamp(1100px, 82vw, 1700px);
@@ -139,6 +139,10 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+h1, h2, h3 {
+  overflow-wrap: anywhere;
+}
+
 body {
   margin: 0;
   background: var(--paper);
@@ -191,6 +195,11 @@ textarea {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--radius-s);
+}
+
+/* O foco que o app põe no título ao trocar de tela (useRouteA11y) não é um controle: sem anel */
+h1[tabindex="-1"]:focus-visible {
+  outline: none;
 }
 
 .visually-hidden {
@@ -252,8 +261,10 @@ textarea {
 
 .btn-sub span {
   display: grid;
+  min-width: 0;
   gap: 0.05rem;
   line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .btn-sub small {
@@ -318,8 +329,15 @@ textarea {
   margin: 0 auto;
   padding: 1.5rem var(--gutter) calc(var(--nav-h) + 2rem);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.75rem;
   align-content: start;
+}
+
+/* Grid sem colunas declaradas ganha uma coluna que pode encolher (especificidade zero: qualquer grid com colunas
+   próprias continua valendo). Sem isso, texto grande ou títulos longos alargam a coluna e empurram a página para o lado. */
+:where(.page, .page *, .login, .login *, .dialog, .dialog *) {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .page-head {

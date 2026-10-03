@@ -3,7 +3,7 @@
  * Devolve quantas leituras por IA a pessoa já usou hoje e qual é o limite diário.
  * Não consome nada da cota.
  */
-import { HttpError, json, toResponse, type AiEnv } from "../../server/ai";
+import { HttpError, dailyLimit, json, toResponse, type AiEnv } from "../../server/ai";
 
 export async function handleScanQuota(request: Request, env: AiEnv): Promise<Response> {
   try {
@@ -19,7 +19,7 @@ export async function handleScanQuota(request: Request, env: AiEnv): Promise<Res
     if (!res.ok) throw new HttpError(502, `Não foi possível consultar a cota (o banco respondeu ${res.status}).`);
 
     const used = Number(await res.json());
-    const limit = Number(env.SCAN_DAILY_LIMIT ?? 30);
+    const limit = dailyLimit(env);
     return json({ used: Number.isFinite(used) ? used : 0, limit });
   } catch (err) {
     return toResponse(err);

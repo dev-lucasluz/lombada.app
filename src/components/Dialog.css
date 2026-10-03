@@ -51,8 +51,8 @@
 /* Seletor Erro | Ideia | Elogio ocupa a largura toda, em partes iguais */
 .dialog .segmented {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
+  /* três partes iguais; com texto grande as opções passam para linhas de baixo em vez de vazar */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.5rem), 1fr));
 }
 
 .dialog .segmented button { width: 100%; }

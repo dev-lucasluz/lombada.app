@@ -56,7 +56,8 @@
   justify-content: center;
   overflow: hidden;
   white-space: nowrap;
-  color: var(--accent);
+  /* o laranja puro dá só 3,9:1 no tema claro; misturado com a tinta passa de 4,5:1 nos dois temas */
+  color: color-mix(in oklab, var(--accent) 76%, var(--ink));
   font-family: "Poppins", var(--font-body);
   font-variant-numeric: tabular-nums;
   font-weight: 700;

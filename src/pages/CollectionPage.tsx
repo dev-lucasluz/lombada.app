@@ -327,7 +327,7 @@ function SeriesRow({ item, hue }: { item: CollectionItem; hue: number }) {
   const label = editionLabel(edition, edition.work.title);
 
   return (
-    <li className={`${nicheClass(total)} has-remove`}>
+    <li className={nicheClass(total) ? `${nicheClass(total)} has-remove` : "has-remove"}>
       <Link to={`/colecao/${item.id}`} className="series-row">
         <Cover url={edition.work.cover_url} title={edition.work.title} />
         <div className="series-body">
@@ -381,7 +381,7 @@ function BookSeriesRow({ group, hue }: { group: BookSeries; hue: number }) {
   });
 
   return (
-    <li className={`${nicheClass(group.total)} has-remove`}>
+    <li className={nicheClass(group.total) ? `${nicheClass(group.total)} has-remove` : "has-remove"}>
       <div className="series-row is-group">
         {/* O card inteiro abre a série (a página do primeiro livro mostra todos); cada livro tem o seu atalho por cima */}
         <Link to={`/colecao/${first.id}`} className="series-row-link" aria-label={`Abrir a série ${group.name}`} />

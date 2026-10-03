@@ -17,6 +17,7 @@ export { groupBookSeries } from "${root}src/lib/bookSeries";
 export { normalizeTitle, groupSpines } from "${root}src/lib/quickAdd";
 export { ownedWithinTotal } from "${root}src/lib/db";
 export { editionLabel } from "${root}src/lib/editionLabel";
+export { csvCell } from "${root}src/lib/csv";
 export { packShelf } from "${root}src/lib/packShelf";
 export { isStandalone } from "${root}src/components/BookShelf";
 export { seriesUnits } from "${root}src/components/Shelf";`,
@@ -54,6 +55,11 @@ eq("ownedWithinTotal sem total", L.ownedWithinTotal([5, 1], null), [1, 5]);
 eq("normalizeTitle tira acento, caixa e pontuação", L.normalizeTitle("  A Seleção — Vol. 1!"), "a selecao vol 1");
 eq("editionLabel não repete o título", L.editionLabel({ name: "One Piece", publisher: "Panini" }, "One Piece"), "Panini");
 eq("editionLabel de edição diferente", L.editionLabel({ name: "Naruto Gold", publisher: "Panini" }, "Naruto"), "Naruto Gold, Panini");
+
+// CSV: aspas escapadas e fórmulas neutralizadas
+eq("csvCell: texto comum e aspas", [L.csvCell("One Piece"), L.csvCell('Diz "oi"'), L.csvCell(12)], ['"One Piece"', '"Diz ""oi"""', '"12"']);
+eq("csvCell: = + - @ viram texto (apóstrofo na frente)", ["=1+1", "+cmd", "-2", "@SOMA(A1)", "\tx"].map(L.csvCell), [`"'=1+1"`, `"'+cmd"`, `"'-2"`, `"'@SOMA(A1)"`, `"'\tx"`]);
+eq("csvCell: número negativo não leva apóstrofo", L.csvCell(-3), '"-3"');
 
 // séries de livros
 const mk = (id, title, series, num, total, owned = [1]) => ({

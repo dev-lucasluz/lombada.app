@@ -22,7 +22,7 @@
   padding: 0;
   height: var(--nav-h);
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 5px;
   padding: 6px 6px 0;
 }
@@ -45,7 +45,13 @@
   text-decoration: none;
   font-size: 0.78rem;
   font-weight: 600;
-  white-space: nowrap;
+  min-width: 0;
+  padding-inline: 2px;
+  text-align: center;
+  line-height: 1.1;
+  /* com texto grande o nome quebra (com hífen, quando o navegador sabe) em vez de empurrar o dock para fora da tela */
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .shell-link.active {

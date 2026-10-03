@@ -7,13 +7,12 @@ import type { AiEnv } from "../server/ai";
 import { json } from "../server/ai";
 import { handleScanShelf } from "./api/scan-shelf";
 import { handleParseVoice } from "./api/parse-voice";
-import { handleScanCover } from "./api/scan-cover";
 import { handleScanQuota } from "./api/scan-quota";
 
 type Env = AiEnv & { ASSETS: Fetcher };
 
 /** Vídeos servidos com suporte a Range (o nome leva versão: ao trocar o vídeo, troque o nome aqui e no wrangler.toml). */
-const RANGE_VIDEOS = new Set(["/media/login-intro-1.mp4"]);
+const RANGE_VIDEOS = new Set(["/media/login-intro-2.mp4"]);
 
 /**
  * Entrega um arquivo pequeno de /media respondendo a pedidos parciais (Range → 206), que o Safari exige para
@@ -67,7 +66,6 @@ export default {
     const handlers: Record<string, { method: "GET" | "POST"; run: (request: Request, env: AiEnv) => Promise<Response> }> = {
       "/api/scan-shelf": { method: "POST", run: handleScanShelf },
       "/api/parse-voice": { method: "POST", run: handleParseVoice },
-      "/api/scan-cover": { method: "POST", run: handleScanCover },
       "/api/scan-quota": { method: "GET", run: handleScanQuota },
     };
     const handler = handlers[pathname];

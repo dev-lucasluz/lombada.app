@@ -6,6 +6,7 @@ import { AppShell } from "./components/AppShell";
 import { LoginPage, ResetPasswordPage } from "./pages/LoginPage";
 import { SetupPage } from "./pages/SetupPage";
 import { HomePage } from "./pages/HomePage";
+import { useRouteA11y } from "./lib/useRouteA11y";
 
 // As demais telas só são baixadas quando a pessoa abre cada uma.
 const PrivacyPage = lazy(() => import("./pages/LegalPage").then((m) => ({ default: m.PrivacyPage })));
@@ -21,9 +22,37 @@ const AdminPage = lazy(() => import("./pages/AdminPage").then((m) => ({ default:
 const SharedShelfPage = lazy(() => import("./pages/SharedShelfPage").then((m) => ({ default: m.SharedShelfPage })));
 const QuickAddPage = lazy(() => import("./pages/QuickAddPage").then((m) => ({ default: m.QuickAddPage })));
 
+/** Nome de cada tela na aba do navegador. Telas ausentes (obra, estante compartilhada) usam o próprio título (h1). */
+const PAGE_TITLES: Record<string, string> = {
+  "/": "Início",
+  "/colecao": "Coleção",
+  "/compras": "Lista de compras",
+  "/adicionar": "Adicionar série",
+  "/onde-parei": "Onde parei",
+  "/lembretes": "Lembretes",
+  "/foto-e-voz": "Foto e voz",
+  "/perfil": "Perfil",
+  "/admin": "Feedback dos usuários",
+  "/privacidade": "Política de privacidade",
+  "/termos": "Termos de uso",
+};
+
 export function App() {
   const { session, loading, recovering } = useAuth();
   const { pathname } = useLocation();
+
+  const route = pathname.replace(/\/+$/, "") || "/";
+  const signedOutPublic = route === "/privacidade" || route === "/termos" || route.startsWith("/estante/");
+  const pageTitle = !isSupabaseConfigured
+    ? "Configuração"
+    : signedOutPublic
+      ? PAGE_TITLES[route] ?? null
+      : !session
+        ? "Entrar"
+        : recovering
+          ? "Nova senha"
+          : PAGE_TITLES[route] ?? null;
+  useRouteA11y(route, pageTitle, signedOutPublic || !loading);
 
   // Páginas públicas: abrem sem login (linkadas na tela de login).
   if (pathname === "/privacidade" || pathname === "/termos") {

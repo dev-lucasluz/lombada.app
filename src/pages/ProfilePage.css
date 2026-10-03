@@ -81,8 +81,10 @@
   display: grid;
   gap: 0.2rem;
   align-content: start;
-  padding: 0 0.9rem;
+  padding: 0 min(0.9rem, 4vw);
   border-left: 1px solid var(--line);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .profile-figures li:nth-child(3n + 1) { border-left: 0; padding-left: 0; }

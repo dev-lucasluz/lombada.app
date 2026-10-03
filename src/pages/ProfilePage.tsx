@@ -9,6 +9,7 @@ import { Icon } from "../components/Icon";
 import { isDemo } from "../lib/demo";
 import { useAvatar } from "../lib/useAvatar";
 import { prepareAvatar } from "../lib/quickAdd";
+import { csvCell } from "../lib/csv";
 import { seriesHues, volumeColor } from "../lib/spineColor";
 import { PasswordInput } from "../components/PasswordInput";
 import { ShareControls } from "../components/ShareControls";
@@ -16,9 +17,6 @@ import "./pages.css";
 import "./ProfilePage.css";
 
 const dateFmt = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric" });
-
-/** Aspas e quebras de linha escapadas para CSV (Excel em português usa ponto e vírgula). */
-const csv = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
 
 export function ProfilePage() {
   const { session, updateName, updatePassword, verifyPassword, signOut } = useAuth();
@@ -44,10 +42,10 @@ export function ProfilePage() {
   const exportCsv = () => {
     const rows = (collection.data ?? []).map((c) =>
       [c.edition.work.title, c.edition.name, c.edition.publisher ?? "", c.owned.length, c.edition.total_volumes ?? "", c.owned.join(" ")]
-        .map(csv)
+        .map(csvCell)
         .join(";"),
     );
-    const header = ["Série", "Edição", "Editora", "Volumes que tenho", "Total de volumes", "Números dos volumes"].map(csv).join(";");
+    const header = ["Série", "Edição", "Editora", "Volumes que tenho", "Total de volumes", "Números dos volumes"].map(csvCell).join(";");
     const blob = new Blob(["﻿" + [header, ...rows].join("\r\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

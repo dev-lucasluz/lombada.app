@@ -12,7 +12,7 @@ not_found_handling = "single-page-application"
 # Só /api/* roda o Worker; o resto é servido direto, de graça e sem limite
 # Além de /api/*, o vídeo da tela de login passa pelo Worker: a entrega de arquivos estáticos da Cloudflare não
 # responde a pedidos parciais (Range), e o Safari/iPhone só toca vídeo de servidor que responde 206.
-run_worker_first = ["/api/*", "/media/login-intro-1.mp4"]
+run_worker_first = ["/api/*", "/media/login-intro-2.mp4"]
 
 # Variáveis públicas das rotas /api. Ficam aqui (e não só no painel) porque cada
 # `wrangler deploy` apaga variáveis comuns que existam apenas no painel.

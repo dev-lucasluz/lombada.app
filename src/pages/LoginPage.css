@@ -574,6 +574,31 @@
   margin-left: 0;
 }
 
+/* Pausar/reproduzir: alvo de toque de 44px, discreto sobre o vídeo */
+.login-video-toggle {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(20 20 22 / 0.62);
+  color: #f2efe9;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.login-video-toggle:hover,
+.login-video-toggle:focus-visible {
+  opacity: 1;
+  background: rgb(20 20 22 / 0.85);
+}
+
 /* Telas baixas (notebooks): menos respiro para o botão Entrar aparecer sem rolar */
 @media (min-width: 900px) and (max-height: 860px) {
   .login {
