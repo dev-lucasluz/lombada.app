@@ -1,6 +1,39 @@
 # Lombada
 
-Coleção de mangás e livros físicos + histórico de leitura online. Visão geral e fases em [PLANO.md](PLANO.md).
+Aplicativo web para organizar coleções de mangás e livros físicos e acompanhar o histórico de leitura online. Dá para cadastrar a estante inteira por **foto** ou por **voz**, com IA. Visão geral e fases em [PLANO.md](PLANO.md).
+
+## O que o app faz
+
+- Estante visual com lombadas coloridas, coleções, séries de livros e lista de compras (o que falta de cada edição).
+- Cadastro manual, cadastro rápido, importação por CSV, **foto da estante** e **voz** (Gemini), sempre com uma tela de revisão antes de salvar.
+- Histórico de leitura online com status e lembretes por data.
+- Compartilhamento da estante por link, perfil com foto, tema claro e escuro, interface em português e responsiva.
+- Login com e-mail e senha (confirmação de conta e redefinição de senha), painel de administração e envio de feedback.
+- Modo demonstração com dados de exemplo, sem precisar de conta (`npm run dev:demo`).
+
+## Tecnologias
+
+| Parte | Tecnologia |
+|---|---|
+| Front | React 19, TypeScript, Vite, React Router, TanStack Query |
+| Backend | Cloudflare Workers (rotas `/api` e Worker com cron para lembretes) |
+| Banco e login | Supabase (Postgres, Auth e Row Level Security) |
+| IA | Gemini API (foto da estante e voz) |
+| Catálogos | Google Books e Open Library |
+| Deploy | Cloudflare, com publicação automática a cada push na `main` |
+
+## Decisões de projeto
+
+- A segurança dos dados fica no banco: toda tabela tem RLS, as 18 migrations ficam em `supabase/migrations/` e `npm run test:rls` verifica as políticas.
+- As chamadas de IA passam pelo Worker, que guarda a chave do Gemini e aplica uma cota diária por usuário.
+- Fotos da estante não são armazenadas.
+
+## Testes
+
+```bash
+npm run test:logic   # lógica da IA no servidor e funções do front
+npm run test:rls     # políticas de segurança do banco
+```
 
 ## Rodar localmente
 
@@ -10,7 +43,7 @@ cp .env.example .env.local   # preencha com os dados do Supabase
 npm run dev                  # http://localhost:5173
 ```
 
-Para testar **foto e voz** localmente (Pages Functions + Gemini):
+Para testar **foto e voz** localmente (Worker + Gemini):
 1. Copie `.dev.vars.example` para `.dev.vars` e preencha (a `GEMINI_API_KEY` vem do AI Studio).
 2. Em um terminal: `npm run pages:dev` (site + rotas `/api` pelo Worker, em http://localhost:8788).
 3. Em outro: `npm run dev` e abra http://localhost:5173. As chamadas `/api` são repassadas para o 8788.
@@ -56,7 +89,7 @@ O e-mail padrão do Supabase só entrega para os membros do projeto e tem limite
 
 ### 4. Gemini (foto e voz)
 1. aistudio.google.com → **Get API key** → crie a chave (grátis, sem cartão).
-2. Local: cole em `.dev.vars` (`GEMINI_API_KEY=`). Produção: variável secreta `GEMINI_API_KEY` no projeto da Cloudflare Pages.
+2. Local: cole em `.dev.vars` (`GEMINI_API_KEY=`). Produção: variável secreta `GEMINI_API_KEY` no Worker da Cloudflare.
 3. Veja os limites da sua conta em aistudio.google.com/rate-limit e ajuste `SCAN_DAILY_LIMIT` (cota por pessoa por dia, somando foto e voz).
 4. Se o modelo padrão (`gemini-flash-lite-latest`) errar muito nas lombadas, troque `GEMINI_MODEL` por um Flash maior.
 
