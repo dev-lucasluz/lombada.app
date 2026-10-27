@@ -1,15 +1,36 @@
-# Lombada
+<h1 align="center">Lombada</h1>
 
-Aplicativo web para organizar coleções de mangás e livros físicos e acompanhar o histórico de leitura online. Dá para cadastrar a estante inteira por **foto** ou por **voz**, com IA.
+<p align="center">
+  Organize sua coleção de mangás e livros físicos, acompanhe o que está lendo online e cadastre a estante inteira por <strong>foto</strong> ou por <strong>voz</strong>, com IA.
+</p>
+
+<p align="center">
+  <a href="https://lombada-app.meuslivros.workers.dev"><strong>Ver o app online</strong></a>
+</p>
+
+<p align="center">
+  <img alt="React" src="https://img.shields.io/badge/React-19-20232a?logo=react&logoColor=61dafb">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white">
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white">
+  <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Postgres-3ecf8e?logo=supabase&logoColor=white">
+  <img alt="Cloudflare Workers" src="https://img.shields.io/badge/Cloudflare-Workers-f38020?logo=cloudflare&logoColor=white">
+  <img alt="Licença MIT" src="https://img.shields.io/badge/licen%C3%A7a-MIT-blue">
+</p>
+
+![Tela inicial do Lombada](docs/img/inicio.png)
 
 ## O que o app faz
 
-- Estante visual com lombadas coloridas, coleções, séries de livros e lista de compras (o que falta de cada edição).
-- Cadastro manual, cadastro rápido, importação por CSV, **foto da estante** e **voz** (Gemini), sempre com uma tela de revisão antes de salvar.
-- Histórico de leitura online com status e lembretes por data.
-- Compartilhamento da estante por link, perfil com foto, tema claro e escuro, interface em português e responsiva.
-- Login com e-mail e senha (confirmação de conta e redefinição de senha), painel de administração e envio de feedback.
-- Modo demonstração com dados de exemplo, sem precisar de conta (`npm run dev:demo`).
+- **Estante visual:** cada volume vira uma lombada colorida, e o que falta de cada edição aparece em destaque ("Faltam 31–40, 49–72").
+- **Cadastro rápido:** manual, importação por CSV, **foto da estante** ou **voz** ("tenho Naruto do 1 ao 10, falta o 11"), com IA (Gemini) e sempre com uma tela de revisão antes de salvar.
+- **Onde parei:** histórico de leitura online com status e lembretes por data.
+- **Lista de compras** gerada a partir do que falta na coleção.
+- **Compartilhamento** da estante por link, perfil com foto, tema claro e escuro, interface em português e responsiva.
+- **Conta:** login com e-mail e senha (confirmação e redefinição por e-mail), painel de administração e envio de feedback.
+
+| Coleção | No celular |
+|---|---|
+| ![Coleção](docs/img/colecao.png) | <img src="docs/img/colecao-mobile.png" alt="Coleção no celular" width="260"> |
 
 ## Tecnologias
 
@@ -24,16 +45,10 @@ Aplicativo web para organizar coleções de mangás e livros físicos e acompanh
 
 ## Decisões de projeto
 
-- A segurança dos dados fica no banco: toda tabela tem RLS, as 18 migrations ficam em `supabase/migrations/` e `npm run test:rls` verifica as políticas.
-- As chamadas de IA passam pelo Worker, que guarda a chave do Gemini e aplica uma cota diária por usuário.
-- Fotos da estante não são armazenadas.
-
-## Testes
-
-```bash
-npm run test:logic   # lógica da IA no servidor e funções do front
-npm run test:rls     # políticas de segurança do banco
-```
+- **Segurança no banco:** toda tabela tem Row Level Security. As 18 migrations ficam em `supabase/migrations/` e `npm run test:rls` verifica as políticas.
+- **IA no servidor:** as chamadas ao Gemini passam pelo Worker, que guarda a chave e aplica uma cota diária por usuário.
+- **Privacidade:** as fotos da estante não são armazenadas.
+- **Custo zero:** a stack inteira roda em planos gratuitos.
 
 ## Rodar localmente
 
@@ -43,60 +58,36 @@ cp .env.example .env.local   # preencha com os dados do Supabase
 npm run dev                  # http://localhost:5173
 ```
 
-Para testar **foto e voz** localmente (Worker + Gemini):
-1. Copie `.dev.vars.example` para `.dev.vars` e preencha (a `GEMINI_API_KEY` vem do AI Studio).
-2. Em um terminal: `npm run pages:dev` (site + rotas `/api` pelo Worker, em http://localhost:8788).
-3. Em outro: `npm run dev` e abra http://localhost:5173. As chamadas `/api` são repassadas para o 8788.
-
-Para ver as telas internas sem fazer login, use o **modo demonstração** (dados de exemplo só no navegador, nada vai para o Supabase):
+Para ver as telas internas **sem criar conta**, use o modo demonstração (dados de exemplo só no navegador, nada vai para o Supabase):
 
 ```bash
-npm run dev:demo   # http://localhost:5174
+npm run dev:demo             # http://localhost:5174
 ```
 
-## Configuração (uma vez só)
+Para testar **foto e voz** localmente (Worker + Gemini):
 
-### 1. Supabase (banco + login)
-1. Crie uma conta em supabase.com e um projeto novo (região São Paulo).
-2. **SQL Editor** → cole o conteúdo de `supabase/migrations/0001_schema.sql` → **Run**.
-3. Preencha o `.env.local`:
-   - `VITE_SUPABASE_URL`: `https://<Project ID>.supabase.co` (o Project ID fica em **Project Settings → General**).
-   - `VITE_SUPABASE_PUBLISHABLE_KEY`: a chave `sb_publishable_...` em **Project Settings → API Keys**.
+1. Copie `.dev.vars.example` para `.dev.vars` e preencha a `GEMINI_API_KEY` (vem do AI Studio).
+2. Em um terminal: `npm run pages:dev` (site e rotas `/api` pelo Worker, em http://localhost:8788).
+3. Em outro: `npm run dev` e abra http://localhost:5173. As chamadas `/api` são repassadas para o 8788.
 
-### 2. Login (e-mail e senha)
-O e-mail padrão do Supabase só entrega para os membros do projeto e tem limite de poucos envios por hora, então amigos não receberiam a confirmação de conta. Sem domínio próprio, a opção grátis é o SMTP do Gmail (cerca de 500 e-mails/dia por conta). A Brevo foi descartada porque exige domínio autenticado.
-1. Na conta Gmail que vai enviar: ative a **verificação em duas etapas** e gere uma **senha de app** em myaccount.google.com/apppasswords.
-2. No Supabase: **Authentication → Emails → SMTP Settings** → ative *Custom SMTP*:
-   - Host `smtp.gmail.com`, porta `587`
-   - Username e Sender email: o endereço Gmail completo
-   - Password: a senha de app (16 letras). Se a senha da conta Google mudar, gere outra.
-   - Sender name: `Lombada`
-3. Em **Authentication → Emails → Templates**, cole os modelos em português de `supabase/templates/`:
-   - *Confirm signup* ← `confirmacao.html` (assunto: `Confirme sua conta no Lombada`)
-   - *Reset password* ← `redefinir-senha.html` (assunto: `Crie uma nova senha no Lombada`)
-4. Em **Authentication → URL Configuration**:
-   - *Site URL*: a URL de produção (ex.: `https://lombada.pages.dev`)
-   - *Redirect URLs*: adicione `http://localhost:5173` e a URL de produção.
+Para publicar a sua própria versão (Supabase, e-mail, Cloudflare, Gemini e lembretes), veja o [passo a passo de configuração](docs/configuracao.md).
 
-### 3. Cloudflare (Workers + site estático, ligado ao GitHub)
-1. Em dash.cloudflare.com → **Workers & Pages → Create → Import a repository** → escolha o repositório. Cada `git push` na `main` publica sozinho.
-2. Comandos: build `npm run build`, deploy `npx wrangler deploy` (o `wrangler.toml` já configura tudo).
-3. **Settings → Build → Variables and secrets** (usadas só na hora do build; ficam embutidas no site e são públicas):
-   `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_GOOGLE_BOOKS_API_KEY`
-4. **Settings → Variables and secrets** do Worker (usadas pelas rotas `/api`):
-   `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `GEMINI_API_KEY` (tipo *Secret*), `GEMINI_MODEL`, `SCAN_DAILY_LIMIT`
-5. Depois de publicar: no Supabase, troque a *Site URL* e adicione o endereço em *Redirect URLs*; na chave do Google Books, adicione `https://SEU-ENDERECO/*`.
+## Testes
 
-### 4. Gemini (foto e voz)
-1. aistudio.google.com → **Get API key** → crie a chave (grátis, sem cartão).
-2. Local: cole em `.dev.vars` (`GEMINI_API_KEY=`). Produção: variável secreta `GEMINI_API_KEY` no Worker da Cloudflare.
-3. Veja os limites da sua conta em aistudio.google.com/rate-limit e ajuste `SCAN_DAILY_LIMIT` (cota por pessoa por dia, somando foto e voz).
-4. Se o modelo padrão (`gemini-flash-lite-latest`) errar muito nas lombadas, troque `GEMINI_MODEL` por um Flash maior.
+```bash
+npm run test:logic   # lógica da IA no servidor e funções do front
+npm run test:rls     # políticas de segurança do banco
+```
 
-### 5. Lembretes (fase 2)
-O aviso principal é por notificação no aparelho (web push, grátis). E-mail de lembrete fica para quando houver domínio próprio.
-1. Em `workers/reminders/`: `npx wrangler deploy` e cadastre os segredos listados no `wrangler.toml`.
-   A `SUPABASE_SECRET_KEY` é uma chave `sb_secret_...` criada em **Project Settings → API Keys → Secret keys**. Nunca use essa chave no front.
+## Estrutura
+
+```
+src/            app em React (páginas, componentes, consultas ao banco)
+worker/         rotas /api no Cloudflare Worker (foto, voz, cota de IA)
+workers/        Worker com cron dos lembretes
+supabase/       migrations, modelos de e-mail e teste das regras de acesso
+tests/          testes da lógica
+```
 
 ## Licença
 
