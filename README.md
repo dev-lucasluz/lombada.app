@@ -1,6 +1,6 @@
 # Lombada
 
-Aplicativo web para organizar coleções de mangás e livros físicos e acompanhar o histórico de leitura online. Dá para cadastrar a estante inteira por **foto** ou por **voz**, com IA. Visão geral e fases em [PLANO.md](PLANO.md).
+Aplicativo web para organizar coleções de mangás e livros físicos e acompanhar o histórico de leitura online. Dá para cadastrar a estante inteira por **foto** ou por **voz**, com IA.
 
 ## O que o app faz
 
@@ -97,3 +97,7 @@ O e-mail padrão do Supabase só entrega para os membros do projeto e tem limite
 O aviso principal é por notificação no aparelho (web push, grátis). E-mail de lembrete fica para quando houver domínio próprio.
 1. Em `workers/reminders/`: `npx wrangler deploy` e cadastre os segredos listados no `wrangler.toml`.
    A `SUPABASE_SECRET_KEY` é uma chave `sb_secret_...` criada em **Project Settings → API Keys → Secret keys**. Nunca use essa chave no front.
+
+## Licença
+
+Código sob a licença [MIT](LICENSE).

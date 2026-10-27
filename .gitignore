@@ -16,3 +16,7 @@ videos/
 .thumbnails/
 .waveform-cache/
 renders/
+
+# Arquivos de trabalho com IA: ficam só no computador local
+CLAUDE.md
+PLANO.md
