@@ -1,0 +1,15 @@
+name = "lombada-keepalive"
+main = "index.ts"
+compatibility_date = "2026-09-30"
+# Só roda pelo cron; não precisa de endereço público.
+workers_dev = false
+
+# Todo dia às 09:00 UTC (06:00 em Brasília). O Supabase grátis pausa
+# o projeto depois de 7 dias sem uso; 1 consulta por dia evita isso.
+[triggers]
+crons = ["0 9 * * *"]
+
+# Segredos (rodar dentro de workers/keepalive). São os mesmos valores
+# públicos do .env.local, mas ficam fora do repositório:
+#   npx wrangler secret put SUPABASE_URL
+#   npx wrangler secret put SUPABASE_PUBLISHABLE_KEY
